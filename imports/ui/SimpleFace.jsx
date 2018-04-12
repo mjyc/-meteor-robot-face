@@ -45,6 +45,9 @@ class SimpleFace extends Component {
 }
 
 export default withTracker(() => {
+  Meteor.subscribe('messages');
+  Meteor.subscribe('choices');
+
   return {
     messages: Messages.find().fetch(),
     choices: Choices.find().fetch(),
