@@ -1,8 +1,10 @@
+import * as log from 'loglevel';
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 
 import { Face } from '../api/face.js';
 
+const logger = log.getLogger("SimpleFace");
 
 class Message extends Component {
   constructor(props) {
@@ -13,9 +15,23 @@ class Message extends Component {
     if (!this.props.message.text) {
       return null;
     }
-    this.props.onDisplayed();
+    this.props.onDisplay();
     return (
       <span>{this.props.message.text}</span>
+    );
+  }
+}
+
+class Choice extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <button onClick={this.props.choice.onClick}>
+        {this.props.choice.text}
+      </button>
     );
   }
 }
@@ -25,23 +41,33 @@ class SpeechBubble extends Component {
     super(props);
   }
 
+  setDisplayed() {
+    Meteor.call('face.setDisplayed', this.props.speechBubble._id);
+  }
+
+  setClicked(choiceID) {
+    Meteor.call('face.setClicked', this.props.speechBubble._id, choiceID);
+  }
+
   render() {
     switch (this.props.speechBubble.type) {
       case 'message':
         return (
           <Message
             message={this.props.speechBubble.data}
-            onDisplayed={() => {
-              Face.upsert(this.props.speechBubble._id, {$set: {
-                'data.displayed': true
-              }})
-            }}
+            onDisplay={this.setDisplayed.bind(this)}
           />
         )
-      case 'choice':
-        return (
-          <div>Display choice here</div>
-        )
+      case 'choices':
+        return this.props.speechBubble.data.map((choice, index) => {
+          choice.onClick = this.setClicked.bind(this, choice._id)
+          return (
+            <Choice
+              key={choice._id}
+              choice={choice}
+            />
+          );
+        });
       default:
         return null;
     }

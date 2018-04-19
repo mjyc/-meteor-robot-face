@@ -2,7 +2,7 @@ import * as log from 'loglevel';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
-const logger = log.getLogger("face");
+const logger = log.getLogger('face');
 
 export const Face = new Mongo.Collection('face');
 
@@ -15,24 +15,57 @@ if (Meteor.isServer) {
     Face.insert({
       _id: 'robot',
       type: '',
-      data: {}
+      data: null,  // {} or []
+    })
+  }
+
+  if (!Face.findOne('human')) {
+    Face.insert({
+      _id: 'human',
+      type: '',
+      data: null,  // {} or []
     })
   }
 
   Meteor.methods({
-    'display_message'(text) {
-      this.unblock();
+    'face.setDisplayed'(id) {
+      check(id, String);
 
-      check(text, String);
-      Face.upsert('robot', {$set: {
+      Face.update({
+        _id: id,
+        'type': 'message'
+      }, {$set: {
+        'data.displayed': true
+      }});
+    },
+
+    'face.setClicked'(id, choiceID) {
+      check(id, String);
+      check(choiceID, Number);
+
+      Face.update({
+        _id: id,
+        'type': 'choices',
+        'data._id': choiceID
+      }, {$set: {
+        'data.$.clicked': true
+      }});
+    },
+
+    display_message(id, message) {
+      this.unblock();
+      check(message, String);
+
+      Face.upsert(id, {$set: {
         type: 'message',
         data: {
-          text: text
+          text: message
         }
       }});
 
       return Meteor.wrapAsync((callback) => {
-        const handle = Face.find('robot').observeChanges({
+        // TODO: update find(id) to more specific query
+        const handle = Face.find(id).observeChanges({
           changed(id, fields) {
             logger.debug(id, fields);
             if (fields.data.displayed) {
@@ -42,22 +75,38 @@ if (Meteor.isServer) {
           }
         })
       })();
+    },
+
+    ask_question(id, choices) {
+      this.unblock();
+      check(choices, [String]);
+
+      Face.upsert(id, {$set: {
+        type: 'choices',
+        data: choices.map((choice, index) => {
+          return {
+            _id: index,
+            text: choice,
+          };
+        })
+      }});
+
+      return Meteor.wrapAsync((callback) => {
+        const handle = Face.find(id).observeChanges({
+          changed(id, fields) {
+            logger.debug(id, fields);
+            const clicked = fields.data.find((choice) => {
+              return choice.clicked;
+            })
+            handle.stop();
+            Face.upsert(id, {$set: {
+              type: '',
+              data: null
+            }});
+            callback (null, clicked.text);
+          }
+        })
+      })();
     }
   });
 }
-
-
-  // // robot = {  // speechbubble
-  //   type: 'message, choice, etc.',
-  //   data: {  // message
-  //     message: //
-  //     displayed: false,
-  //     canceled: false,
-  //   },
-  //   // onClick
-  //   data: { // choice
-  //     choices: ['choice1', 'choice2', ..]  // take one with id
-  //     selected: null, // filled with a string
-  //     canceled: false,
-  //   }
-  // }
