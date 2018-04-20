@@ -1,11 +1,78 @@
+import * as log from 'loglevel';
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { Messages } from '../api/messages.js';
-import { Choices } from '../api/choices.js';
+import { Face } from '../api/face.js';
 
-import Message from './Message.jsx';
-import Choice from './Choice.jsx';
+const logger = log.getLogger("SimpleFace");
+
+class Message extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    if (!this.props.message.text) {
+      return null;
+    }
+    this.props.onDisplay();
+    return (
+      <span>{this.props.message.text}</span>
+    );
+  }
+}
+
+class Choice extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <button onClick={this.props.choice.onClick}>
+        {this.props.choice.text}
+      </button>
+    );
+  }
+}
+
+class SpeechBubble extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  setDisplayed() {
+    Meteor.call('face.setDisplayed', this.props.speechBubble._id);
+  }
+
+  setClicked(choiceID) {
+    Meteor.call('face.setClicked', this.props.speechBubble._id, choiceID);
+  }
+
+  render() {
+    switch (this.props.speechBubble.type) {
+      case 'message':
+        return (
+          <Message
+            message={this.props.speechBubble.data}
+            onDisplay={this.setDisplayed.bind(this)}
+          />
+        )
+      case 'choices':
+        return this.props.speechBubble.data.map((choice, index) => {
+          choice.onClick = this.setClicked.bind(this, choice._id)
+          return (
+            <Choice
+              key={choice._id}
+              choice={choice}
+            />
+          );
+        });
+      default:
+        return null;
+    }
+  }
+}
 
 // SimpleFace component - represents the whole app
 class SimpleFace extends Component {
@@ -13,43 +80,40 @@ class SimpleFace extends Component {
     super(props);
   }
 
-  renderMessages() {
-    return this.props.messages.map((message) => {
-      return (
-        <Message
-          key={message._id}
-          message={message}
-        />
-      );
-    });
-  }
-  renderChoices() {
-    return this.props.choices.map((choice) => {
-      return (
-        <Choice
-          key={choice._id}
-          choice={choice}
-        />
-      );
-    });
-  }
-
   render() {
+    const robot = this.props.robot ? this.props.robot : {};
+    const human = this.props.human ? this.props.human : {};
+    const eyes = this.props.eyes ? this.props.eyes : {};
+
     return (
       <div>
-        {this.renderMessages()}
-        {this.renderChoices()}
+        <div>
+          <strong>Robot: </strong><SpeechBubble
+            key={robot._id}
+            speechBubble={robot}
+          />
+        </div>
+        <div>
+          <strong>Human: </strong><SpeechBubble
+            key={human._id}
+            speechBubble={human}
+          />
+        </div>
       </div>
     );
   }
 }
 
 export default withTracker(() => {
-  Meteor.subscribe('messages');
-  Meteor.subscribe('choices');
+  Meteor.subscribe('face');
+
+  const robot = Face.findOne('robot');
+  const human = Face.findOne('human');
+  const eyes = Face.findOne('eyes');
 
   return {
-    messages: Messages.find().fetch(),
-    choices: Choices.find().fetch(),
+    robot: Face.findOne('robot'),
+    human: Face.findOne('human'),
+    eyes: Face.findOne('eyes'),
   };
 })(SimpleFace);
