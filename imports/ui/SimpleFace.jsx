@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { Face } from '../api/face.js';
+import { Face } from '../api/face';
 
  const logger = log.getLogger("SimpleFace");
 

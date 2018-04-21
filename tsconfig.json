@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "alwaysStrict": true,
+    "sourceMap": true,
+    "jsx": "react",
+    "allowJs": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false
+  },
+  "formatCodeOptions": {
+    "indentSize": 2,
+    "tabSize": 2
+  },
+    "files": [
+      "client/**/*",
+      "server/**/*"
+    ],
+    "exclude": [
+      "node_modules",
+      ".meteor"
+   ]
+}

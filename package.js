@@ -14,6 +14,7 @@ Npm.depends({
 Package.onUse(function(api) {
   api.versionsFrom('1.6');
   api.use('ecmascript');
+  api.use('barbatus:typescript');
   api.use('mongo');
   api.use('react-meteor-data', 'client');
   api.mainModule('client/main.js', 'client');
