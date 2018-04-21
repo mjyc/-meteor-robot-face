@@ -31,7 +31,7 @@ if (Meteor.isServer) {
     'face.setDisplayed'(id) {
       check(id, String);
 
-      if (!this.userId) {  // TODO: make it configurable
+      if (!this.userId && !this.connection) {  // TODO: make it configurable
         throw new Meteor.Error('not-authorized');
       }
 
@@ -47,7 +47,7 @@ if (Meteor.isServer) {
       check(id, String);
       check(choiceID, Number);
 
-      if (!this.userId) {  // TODO: make it configurable
+      if (!this.userId && !this.connection) {  // TODO: make it configurable
         throw new Meteor.Error('not-authorized');
       }
 
@@ -64,7 +64,7 @@ if (Meteor.isServer) {
       this.unblock();
       check(message, String);
 
-      if (!this.userId) {  // TODO: make it configurable
+      if (!this.userId && this.connection) {  // TODO: make it configurable
         throw new Meteor.Error('not-authorized');
       }
 
@@ -93,7 +93,7 @@ if (Meteor.isServer) {
       this.unblock();
       check(choices, [String]);
 
-      if (!this.userId) {  // TODO: make it configurable
+      if (!this.userId && !this.connection) {  // TODO: make it configurable
         throw new Meteor.Error('not-authorized');
       }
 
