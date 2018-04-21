@@ -7,8 +7,8 @@ Package.describe({
 });
 
 Npm.depends({
-  "loglevel": "1.6.0",
-  "react": "16.1.1"
+  'loglevel': '1.6.0',
+  'react': '16.1.1'
 });
 
 Package.onUse(function(api) {
