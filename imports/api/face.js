@@ -7,9 +7,9 @@ const logger = log.getLogger('face');
 export const Face = new Mongo.Collection('face');
 
 if (Meteor.isServer) {
-  Meteor.publish('face', () => {
-    return Face.find();
-  });
+  // Meteor.publish('face', () => {
+  //   return Face.find();
+  // });
 
   if (!Face.findOne('robot')) {
     Face.insert({
