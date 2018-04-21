@@ -31,6 +31,10 @@ if (Meteor.isServer) {
     'face.setDisplayed'(id) {
       check(id, String);
 
+      if (!this.userId) { // TODO: make it configurable
+        throw new Meteor.Error('not-authorized');
+      }
+
       Face.update({
         _id: id,
         'type': 'message'
@@ -42,6 +46,10 @@ if (Meteor.isServer) {
     'face.setClicked'(id, choiceID) {
       check(id, String);
       check(choiceID, Number);
+
+      if (!this.userId) { // TODO: make it configurable
+        throw new Meteor.Error('not-authorized');
+      }
 
       Face.update({
         _id: id,
@@ -55,6 +63,10 @@ if (Meteor.isServer) {
     display_message(id, message) {
       this.unblock();
       check(message, String);
+
+      if (!this.userId) { // TODO: make it configurable
+        throw new Meteor.Error('not-authorized');
+      }
 
       Face.upsert(id, {$set: {
         type: 'message',
@@ -80,6 +92,10 @@ if (Meteor.isServer) {
     ask_question(id, choices) {
       this.unblock();
       check(choices, [String]);
+
+      if (!this.userId) {. // TODO: make it configurable
+        throw new Meteor.Error('not-authorized');
+      }
 
       Face.upsert(id, {$set: {
         type: 'choices',
