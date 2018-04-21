@@ -1,11 +1,11 @@
-// import * as log from 'loglevel';
+import * as log from 'loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
 import { Face } from '../api/face.js';
 
-// const logger = log.getLogger("SimpleFace");
+ const logger = log.getLogger("SimpleFace");
 
 class Message extends Component {
   constructor(props) {
