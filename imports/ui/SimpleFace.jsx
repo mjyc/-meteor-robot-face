@@ -5,7 +5,7 @@ import { withTracker } from 'meteor/react-meteor-data';
 
 import { Face } from '../api/face';
 
- const logger = log.getLogger("SimpleFace");
+ const logger = log.getLogger('SimpleFace');
 
 class Message extends Component {
   constructor(props) {
