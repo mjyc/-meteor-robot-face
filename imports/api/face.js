@@ -89,7 +89,7 @@ if (Meteor.isServer) {
       })();
     },
 
-    ask_question(id, choices) {
+    ask_multiple_choice(id, choices) {
       this.unblock();
       check(choices, [String]);
 
