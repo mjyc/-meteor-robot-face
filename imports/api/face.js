@@ -7,6 +7,11 @@ const logger = log.getLogger('face');
 export const Face = new Mongo.Collection('face');
 
 if (Meteor.isServer) {
+  // TODO: reorganize files in "imports"
+  //   create "./client", "./server", and "./shared (or ./common or ./)"
+  import rosnodejs from 'rosnodejs'
+  import ROS from '../startup/ros'
+
   Meteor.publish('face', () => {
     return Face.find();
   });
@@ -89,7 +94,7 @@ if (Meteor.isServer) {
       })();
     },
 
-    ask_question(id, choices) {
+    ask_multiple_choice(id, choices) {
       this.unblock();
       check(choices, [String]);
 
@@ -125,4 +130,20 @@ if (Meteor.isServer) {
       })();
     }
   });
+
+  const nh = ROS.getInstance();
+  const as = new rosnodejs.ActionServer({
+    nh,
+    type: 'simple_face/AskMultipleChoice',
+    actionServer: '/ask_multiple_choice'
+  });
+
+  as.on('goal', Meteor.bindEnvironment((handle) => {  // Wrap this with fiber
+    handle.setAccepted();
+    const goal = handle.getGoal();
+    console.log(goal);
+    handle.setSucceeded(as._createMessage('result'));
+  }));
+
+  as.start();
 }
