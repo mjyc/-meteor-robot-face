@@ -2,7 +2,7 @@
 <package format="2">
   <name>simple_face</name>
   <version>0.0.0</version>
-  <description>TODO</description>
+  <description>Action definitions for interacting with the UI in simple-face Meteor package.</description>
   <maintainer email="mjyc@cs.washington.edu">Michael Jae-Yoon Chung</maintainer>
   <license>MIT</license>
 
