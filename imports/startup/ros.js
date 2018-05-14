@@ -1,4 +1,6 @@
 // TODO: move this out to "imports/server"
+// TODO: organize this file according to https://guide.meteor.com/structure.html#example-app-structure
+//   Connect immediately and use `rosnodejs.ok` to check the connection later in the startup file
 import * as log from 'loglevel';
 import rosnodejs from 'rosnodejs'
 import { EventEmitter } from 'events';
