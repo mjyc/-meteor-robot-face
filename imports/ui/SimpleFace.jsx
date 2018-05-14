@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { Face } from '../api/face';
+import { Faces } from '../api/faces.js';
 
  const logger = log.getLogger('SimpleFace');
 
@@ -82,6 +82,8 @@ class SimpleFace extends Component {
   }
 
   render() {
+    console.log(this.props.face);
+
     const robot = this.props.robot ? this.props.robot : {};
     const human = this.props.human ? this.props.human : {};
     const eyes = this.props.eyes ? this.props.eyes : {};
@@ -106,15 +108,9 @@ class SimpleFace extends Component {
 }
 
 export default withTracker(() => {
-  Meteor.subscribe('face');
-
-  const robot = Face.findOne('robot');
-  const human = Face.findOne('human');
-  const eyes = Face.findOne('eyes');
+  Meteor.subscribe('faces');
 
   return {
-    robot: Face.findOne('robot'),
-    human: Face.findOne('human'),
-    eyes: Face.findOne('eyes'),
+    face: Faces.findOne({owner: Meteor.userId()}),
   };
 })(SimpleFace);
