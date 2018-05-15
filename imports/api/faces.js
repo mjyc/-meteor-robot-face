@@ -16,7 +16,7 @@ if (Meteor.isServer) {
     Meteor.users.after.insert((userId, doc) => {
       logger.debug(`user created: ${userId} ${util.inspect(doc,true,null)}`);
       Faces.insert({
-        owner: doc._id.insertedIds[0],
+        owner: doc._id,
         speechBubbles: [
           {
             _id: 'robot',
@@ -44,55 +44,59 @@ if (Meteor.isServer) {
   });
 
   Meteor.methods({
-  //   'face.setDisplayed'(id) {
-  //     check(id, String);
-
-  //     if (!this.userId && !this.connection) {  // TODO: make it configurable
-  //       throw new Meteor.Error('not-authorized');
-  //     }
-
-  //     Face.update({
-  //       _id: id,
-  //       'type': 'message'
-  //     }, {$set: {
-  //       'data.displayed': true
-  //     }});
-  //   },
-
-  //   'face.setClicked'(id, choiceID) {
-  //     check(id, String);
-  //     check(choiceID, Number);
-
-  //     if (!this.userId && !this.connection) {  // TODO: make it configurable
-  //       throw new Meteor.Error('not-authorized');
-  //     }
-
-  //     Face.update({
-  //       _id: id,
-  //       'type': 'choices',
-  //       'data._id': choiceID
-  //     }, {$set: {
-  //       'data.$.clicked': true
-  //     }});
-  //   },
-
-    display_message(message) {
-      this.unblock();
-      check(message, String);
+    'face.setDisplayed'(id) {
+      check(id, String);
 
       if (!this.userId) {
         throw new Meteor.Error('not-authorized');
       }
 
-      // db.faces.update({owner: "93s7FsiWn9PqNKAxm", "speechBubbles._id": "robot"}, { $set: { "speechBubbles.$.data" : "100" } });
+      Faces.update({
+        _id: id,
+        'speechBubbles._id': 'robot'
+      }, {$set: {
+        'speechBubbles.$.data.displayed': true
+      }});
+    },
+
+    'face.setClicked'(id, choiceID) {
+      check(id, String);
+      check(choiceID, Number);
+
+      if (!this.userId && !this.connection) {  // TODO: make it configurable
+        throw new Meteor.Error('not-authorized');
+      }
+
+      // Face.update({
+      //   _id: id,
+      //   'type': 'choices',
+      //   'data._id': choiceID
+      // }, {$set: {
+      //   'data.$.clicked': true
+      // }});
+    },
+
+    display_message(text) {
+      this.unblock();
+      check(text, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('not-authorized');
+      }
+
+      Faces.update({
+        owner: this.userId,  // TODO: allow selecting a face
+        'speechBubbles._id': 'robot',
+      }, {
+        $set: {
+          'speechBubbles.$.type' : 'message',
+          'speechBubbles.$.data' : {
+            text,
+          }
+        }
+      });
 
       return;
-      // Face.upsert(this.userId, {$set: {
-      //   type: 'message',
-      //   data: {
-      //     text: message
-      //   }
-      // }});
 
       // return Meteor.wrapAsync((callback) => {
       //   // TODO: update find(id) to more specific query

@@ -43,11 +43,11 @@ class SpeechBubble extends Component {
   }
 
   setDisplayed() {
-    Meteor.call('face.setDisplayed', this.props.speechBubble._id);
+    Meteor.call('face.setDisplayed', Meteor.userId());
   }
 
   setClicked(choiceID) {
-    Meteor.call('face.setClicked', this.props.speechBubble._id, choiceID);
+    Meteor.call('face.setClicked', Meteor.userId(), choiceID);
   }
 
   render() {
@@ -115,7 +115,7 @@ class SimpleFace extends Component {
 export default withTracker(() => {
   const facesHandle = Meteor.subscribe('faces');
   const loading = !facesHandle.ready();
-  const face = Faces.findOne();  // server publishes only one doc
+  const face = Faces.findOne();  // server publishes only one doc  // TODO: allow selecting a face
 
 
   return {
