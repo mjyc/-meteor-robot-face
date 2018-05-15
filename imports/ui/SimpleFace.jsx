@@ -43,7 +43,7 @@ class SpeechBubble extends Component {
   }
 
   setDisplayed() {
-    Meteor.call('face.setDisplayed', Meteor.userId());
+    Meteor.call('faces.speechBubbles.setDisplayed', this.props.speechBubble._id);
   }
 
   setClicked(choiceID) {
