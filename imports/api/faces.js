@@ -16,24 +16,32 @@ if (Meteor.isServer) {
 
   Meteor.startup(() => {
 
+    const face = {
+      speechBubbles: [
+        {
+          _id: 'robot',
+          type: '',
+          data: null,  // {} or []
+        },
+        {
+          _id: 'human',
+          type: '',
+          data: null,  // {} or []
+        },
+      ],
+    };
+
+    // insert a test face
+    if (!Faces.findOne('test')) {
+      Object.assign({_id: 'test', owner: 'test'}, face);
+      Faces.insert(face)
+    }
+
     // insert a face obj on user creation
     Meteor.users.after.insert((userId, doc) => {
+      Object.assign({owner: doc._id}, face);
       logger.debug(`user created: ${userId} ${obj2str(doc)}`);
-      Faces.insert({
-        owner: doc._id,
-        speechBubbles: [
-          {
-            _id: 'robot',
-            type: '',
-            data: null,  // {} or []
-          },
-          {
-            _id: 'human',
-            type: '',
-            data: null,  // {} or []
-          },
-        ],
-      })
+      Faces.insert(face);
     })
 
     // remove a face ob on user deletion
