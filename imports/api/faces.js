@@ -9,6 +9,14 @@ logger.setLevel('debug');  // centralize setLevel somewhere
 
 export const Faces = new Mongo.Collection('faces');
 
+let facesObserveHandle = null;
+const stopFacesObserveHandle = () => {
+  if (facesObserveHandle) {
+    facesObserveHandle.stop();
+    facesObserveHandle = null;
+  }
+}
+
 if (Meteor.isServer) {
 
   Meteor.startup(() => {
@@ -45,8 +53,8 @@ if (Meteor.isServer) {
   });
 
   Meteor.methods({
-    'faces.speechBubbles.setDisplayed'(id) {
-      check(id, String);
+    'faces.speechBubbles.setDisplayed'(speechBubbleId) {
+      check(speechBubbleId, String);
 
       if (!this.userId) {  // TODO: allow calling it from servers
         throw new Meteor.Error('not-authorized');
@@ -54,28 +62,31 @@ if (Meteor.isServer) {
 
       Faces.update({
         owner: this.userId,  // TODO: allow using someone else's face
-        'speechBubbles._id': id,
+        'speechBubbles._id': speechBubbleId,
+        'speechBubbles.type':'message',
       }, {$set: {
         'speechBubbles.$.data.displayed': true,
       }});
     },
 
-    // 'faces.speechBubbles.setClicked'(id, choiceID) {
-    //   check(id, String);
-    //   check(choiceID, Number);
+    'faces.speechBubbles.choices.setClicked'(speechBubbleId, choiceId) {
+      check(speechBubbleId, String);
+      check(choiceId, Number);
 
-    //   if (!this.userId) {
-    //     throw new Meteor.Error('not-authorized');
-    //   }
+      if (!this.userId) {
+        throw new Meteor.Error('not-authorized');
+      }
 
-    //   Face.update({
-    //     _id: id,
-    //     'type': 'choices',
-    //     'data._id': choiceID
-    //   }, {$set: {
-    //     'data.$.clicked': true
-    //   }});
-    // },
+      // Workaround for multiple positional operators, which MongoDB doesn't support:
+      //   https://jira.mongodb.org/browse/SERVER-831
+      const modifier = {};
+      modifier[`speechBubbles.$.data.${choiceId}.clicked`] = true;
+      Faces.update({
+        owner: this.userId,  // TODO: allow using someone else's face
+        'speechBubbles._id': speechBubbleId,
+        'speechBubbles.type': 'choices',
+      }, {$set: modifier});
+    },
 
     display_message(text) {
       this.unblock();
@@ -86,28 +97,32 @@ if (Meteor.isServer) {
       }
 
       const speechBubbleId = 'robot';
-      Faces.update({
-        owner: this.userId,  // TODO: allow selecting a face
-        'speechBubbles._id': speechBubbleId,
-      }, {
-        $set: {
-          'speechBubbles.$.type' : 'message',
-          'speechBubbles.$.data' : {
+      stopFacesObserveHandle();
+      Faces.update(
+        {
+          owner: this.userId,  // TODO: allow selecting a face
+          'speechBubbles._id': speechBubbleId,
+        }, {$set: {
+          'speechBubbles.$.type': 'message',
+          'speechBubbles.$.data': {
             text,
           }
-        }
-      });
+        }}
+      );
 
       const userId = this.userId;
       return Meteor.wrapAsync((callback) => {
-        const handle = Faces.find({owner: userId}).observeChanges({
+        facesObserveHandle = Faces.find({owner: userId}).observeChanges({  // TODO: allow selecting a face
           changed(id, fields) {
-            logger.debug(id, fields);
+            logger.debug(`(display_message) id: ${id}; fields: ${util.inspect(fields,true,null)}`);
+
             const speechBubble = fields.speechBubbles.find((elem) => {
               return elem._id === speechBubbleId;
             });
+            logger.debug(`(display_message) speechBubble: ${util.inspect(speechBubble,true,null)}`);
+
             if (speechBubble.data.displayed) {
-              handle.stop();
+              stopFacesObserveHandle();
               callback(null, true);
             }
           }
@@ -115,61 +130,60 @@ if (Meteor.isServer) {
       })();
     },
 
-  //   ask_multiple_choice(id, choices) {
-  //     this.unblock();
-  //     check(choices, [String]);
+    ask_multiple_choice(choices) {
+      this.unblock();
+      check(choices, [String]);
 
-  //     if (!this.userId && !this.connection) {  // TODO: make it configurable
-  //       throw new Meteor.Error('not-authorized');
-  //     }
+      if (!this.userId) {  // TODO: allow selecting a face
+        throw new Meteor.Error('not-authorized');
+      }
 
-  //     Face.upsert(id, {$set: {
-  //       type: 'choices',
-  //       data: choices.map((choice, index) => {
-  //         return {
-  //           _id: index,
-  //           text: choice,
-  //         };
-  //       })
-  //     }});
+      const speechBubbleId = 'robot';
+      stopFacesObserveHandle();
+      Faces.update(
+        {
+          owner: this.userId,  // TODO: allow selecting a face
+          'speechBubbles._id': speechBubbleId,
+        }, {$set: {
+          'speechBubbles.$.type': 'choices',
+          'speechBubbles.$.data': choices.map((choice, index) => {
+            return {
+              _id: index,
+              text: choice,
+            };
+        }
+      )
+      }});
 
-  //     return Meteor.wrapAsync((callback) => {
-  //       const handle = Face.find(id).observeChanges({
-  //         changed(id, fields) {
-  //           logger.debug(id, fields);
-  //           const clicked = fields.data.find((choice) => {
-  //             return choice.clicked;
-  //           })
-  //           handle.stop();
-  //           Face.upsert(id, {$set: {
-  //             type: '',
-  //             data: null
-  //           }});
-  //           callback (null, clicked.text);
-  //         }
-  //       })
-  //     })();
-  //   }
-  // });
+      const userId = this.userId;
+      return Meteor.wrapAsync((callback) => {
+        facesObserveHandle = Faces.find({owner: userId}).observeChanges({  // TODO: allow selecting a face
+          changed(id, fields) {
+            logger.debug(`(ask_multiple_choice) id: ${id}; fields: ${util.inspect(fields,true,null)}`);
 
-  // if (Meteor.settings.ros.enabled) {
-  //   import rosnodejs from 'rosnodejs'
-  //   import ROS from '../startup/ros'
+            const speechBubble = fields.speechBubbles.find((elem) => {
+              return elem._id === speechBubbleId;
+            });
+            logger.debug(`(ask_multiple_choice) speechBubble: ${util.inspect(speechBubble,true,null)}`);
 
-  //   const nh = ROS.getInstance();
-  //   const as = new rosnodejs.ActionServer({
-  //     nh,
-  //     type: 'simple_face/AskMultipleChoice',
-  //     actionServer: '/ask_multiple_choice'
-  //   });
-
-  //   as.on('goal', Meteor.bindEnvironment((handle) => {
-  //     handle.setAccepted();
-  //     const goal = handle.getGoal();
-  //     logger.log(`goal: ${goal}`);
-  //     handle.setSucceeded(as._createMessage('result'));
-  //   }));
-
-  //   as.start();
+            const clickedChoice = speechBubble.data.find((choice) => {
+              return !!choice.clicked;
+            })
+            stopFacesObserveHandle();
+            Faces.update(  // TODO: allow selecting a face
+              {
+                owner: userId,
+                'speechBubbles._id': speechBubbleId,
+              },
+              {$set: {
+                'speechBubbles.$.type': '',
+                'speechBubbles.$.data': null
+              }}
+            );
+            callback (null, clickedChoice.text);
+          }
+        })
+      })();
+    }
   });
 }
