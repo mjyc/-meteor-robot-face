@@ -52,11 +52,13 @@ if (Meteor.isServer) {
 
 
   const isValidCaller = (userId, clientAddress = '') => {
-    // return userId || clientAddress === '127.0.0.1';
-    return userId;
+    return !!userId;
+    // return !!userId;
   }
 
   Meteor.publish('faces', function facesPublication() {
+    console.log('publish faces', this.userId);
+    console.log('publish user', Meteor.users.findOne(this.userId));
     if (!isValidCaller(this.userId, this.connection.clientAddress)) {
       return Faces.find({owner: 'demo'});
     }
@@ -79,7 +81,8 @@ if (Meteor.isServer) {
       check(speechBubbleId, String);
 
       if (!isValidCaller(this.userId, this.connection.clientAddress)) {
-        throw new Meteor.Error('not-authorized');
+        // throw new Meteor.Error('not-authorized');
+        this.userId = 'demo';
       }
 
       const userId = this.userId;
@@ -97,7 +100,8 @@ if (Meteor.isServer) {
       check(choiceId, Number);
 
       if (!isValidCaller(this.userId, this.connection.clientAddress)) {
-        throw new Meteor.Error('not-authorized');
+        // throw new Meteor.Error('not-authorized');
+        this.userId = 'demo';
       }
 
       // Workaround for multiple positional operators, which MongoDB doesn't support:
@@ -117,7 +121,8 @@ if (Meteor.isServer) {
       check(text, String);
 
       if (!isValidCaller(this.userId, this.connection.clientAddress)) {
-        throw new Meteor.Error('not-authorized');
+        // throw new Meteor.Error('not-authorized');
+        this.userId = 'demo';
       }
 
       const userId = this.userId;
@@ -159,7 +164,8 @@ if (Meteor.isServer) {
       check(choices, [String]);
 
       if (!isValidCaller(this.userId, this.connection.clientAddress)) {
-        throw new Meteor.Error('not-authorized');
+        // throw new Meteor.Error('not-authorized');
+        this.userId = 'demo';
       }
 
       const userId = this.userId;
