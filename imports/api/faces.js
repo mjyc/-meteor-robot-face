@@ -5,11 +5,12 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 const logger = log.getLogger('faces');
-logger.setLevel('debug');  // centralize setLevel somewhere
+logger.setLevel('debug');  // TODO: centralize 'setLevel's somewhere and configure them based on Meteor.settings
 
 export const Faces = new Mongo.Collection('faces');
 
 let facesObserveHandle = null;
+
 const stopFacesObserveHandle = () => {
   if (facesObserveHandle) {
     facesObserveHandle.stop();
@@ -17,12 +18,16 @@ const stopFacesObserveHandle = () => {
   }
 }
 
+const obj2str = (obj) => { return util.inspect(obj,true,null); }
+
+
 if (Meteor.isServer) {
 
   Meteor.startup(() => {
+
     // insert a face obj on user creation
     Meteor.users.after.insert((userId, doc) => {
-      logger.debug(`user created: ${userId} ${util.inspect(doc,true,null)}`);
+      logger.debug(`user created: ${userId} ${obj2str(doc)}`);
       Faces.insert({
         owner: doc._id,
         speechBubbles: [
@@ -42,17 +47,21 @@ if (Meteor.isServer) {
 
     // remove a face ob on user deletion
     Meteor.users.after.remove((userId, doc) => {
-      logger.debug(`user removed: ${userId} ${util.inspect(doc,true,null)}`);
+      logger.debug(`user removed: ${userId} ${obj2str(doc)}`);
       Faces.remove({owner: doc._id});
     });
+
   });
+
 
   Meteor.publish('faces', function facesPublication() {
     // TODO: allow using someone else's face
     return Faces.find({owner: this.userId});
   });
 
+
   Meteor.methods({
+
     'faces.speechBubbles.setDisplayed'(speechBubbleId) {
       check(speechBubbleId, String);
 
@@ -114,12 +123,12 @@ if (Meteor.isServer) {
       return Meteor.wrapAsync((callback) => {
         facesObserveHandle = Faces.find({owner: userId}).observeChanges({  // TODO: allow selecting a face
           changed(id, fields) {
-            logger.debug(`(display_message) id: ${id}; fields: ${util.inspect(fields,true,null)}`);
+            logger.debug(`(display_message) id: ${id}; fields: ${obj2str(fields)}`);
 
             const speechBubble = fields.speechBubbles.find((elem) => {
               return elem._id === speechBubbleId;
             });
-            logger.debug(`(display_message) speechBubble: ${util.inspect(speechBubble,true,null)}`);
+            logger.debug(`(display_message) speechBubble: ${obj2str(speechBubble)}`);
 
             if (speechBubble.data.displayed) {
               stopFacesObserveHandle();
@@ -159,12 +168,12 @@ if (Meteor.isServer) {
       return Meteor.wrapAsync((callback) => {
         facesObserveHandle = Faces.find({owner: userId}).observeChanges({  // TODO: allow selecting a face
           changed(id, fields) {
-            logger.debug(`(ask_multiple_choice) id: ${id}; fields: ${util.inspect(fields,true,null)}`);
+            logger.debug(`(ask_multiple_choice) id: ${id}; fields: ${obj2str(fields)}`);
 
             const speechBubble = fields.speechBubbles.find((elem) => {
               return elem._id === speechBubbleId;
             });
-            logger.debug(`(ask_multiple_choice) speechBubble: ${util.inspect(speechBubble,true,null)}`);
+            logger.debug(`(ask_multiple_choice) speechBubble: ${obj2str(speechBubble)}`);
 
             const clickedChoice = speechBubble.data.find((choice) => {
               return !!choice.clicked;

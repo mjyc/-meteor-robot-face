@@ -8,8 +8,7 @@ Package.describe({
 
 Npm.depends({
   'loglevel': '1.6.0',
-  'react': '16.1.1',
-  'rosnodejs': 'git+https://github.com/mjyc/rosnodejs#with_dist'
+  'react': '16.1.1'
 });
 
 Package.onUse(function(api) {

@@ -1,8 +1,0 @@
-bool id
-string text
-
-bool ROBOT = False
-bool HUMAN = True
----
-bool displayed
----

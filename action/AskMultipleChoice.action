@@ -1,9 +1,0 @@
-bool id
-string text
-string[] choices
-
-bool ROBOT = False
-bool HUMAN = True
----
-string choice
----
