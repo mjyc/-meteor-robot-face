@@ -9,10 +9,10 @@ logger.setLevel('debug');  // TODO: centralize 'setLevel's somewhere and configu
 
 export const Faces = new Mongo.Collection('faces');
 
-const obj2str = (obj) => { return util.inspect(obj,true,null); }
-
 
 if (Meteor.isServer) {
+
+  const obj2str = (obj) => { return util.inspect(obj,true,null); }
 
   Meteor.startup(() => {
 
@@ -32,16 +32,14 @@ if (Meteor.isServer) {
     };
 
     // insert a test face
-    if (!Faces.findOne('test')) {
-      Object.assign({_id: 'test', owner: 'test'}, face);
-      Faces.insert(face)
+    if (!Faces.findOne('demo')) {
+      Faces.insert(Object.assign({_id: 'demo', owner: 'demo'}, face));
     }
 
     // insert a face obj on user creation
     Meteor.users.after.insert((userId, doc) => {
-      Object.assign({owner: doc._id}, face);
       logger.debug(`user created: ${userId} ${obj2str(doc)}`);
-      Faces.insert(face);
+      Faces.insert(Object.assign({owner: doc._id}, face));
     })
 
     // remove a face ob on user deletion
@@ -53,17 +51,25 @@ if (Meteor.isServer) {
   });
 
 
+  const isValidCaller = (userId, clientAddress = '') => {
+    // return userId || clientAddress === '127.0.0.1';
+    return userId;
+  }
+
   Meteor.publish('faces', function facesPublication() {
+    if (!isValidCaller(this.userId, this.connection.clientAddress)) {
+      return Faces.find({owner: 'demo'});
+    }
     // TODO: allow using someone else's face
     return Faces.find({owner: this.userId});
   });
 
 
   let facesObserveHandle = {};
-  const stopFacesObserveHandle = (id) => {
-    if (facesObserveHandle[id]) {
-      facesObserveHandle[id].stop();
-      facesObserveHandle[id] = null;
+  const stopFacesObserveHandle = (owner) => {
+    if (facesObserveHandle[owner]) {
+      facesObserveHandle[owner].stop();
+      facesObserveHandle[owner] = null;
     }
   }
 
@@ -72,12 +78,13 @@ if (Meteor.isServer) {
     'faces.speechBubbles.setDisplayed'(speechBubbleId) {
       check(speechBubbleId, String);
 
-      if (!this.userId) {  // TODO: allow calling it from servers
+      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
         throw new Meteor.Error('not-authorized');
       }
 
+      const userId = this.userId;
       Faces.update({
-        owner: this.userId,  // TODO: allow using someone else's face
+        owner: userId,  // TODO: allow using someone else's face
         'speechBubbles._id': speechBubbleId,
         'speechBubbles.type':'message',
       }, {$set: {
@@ -89,7 +96,7 @@ if (Meteor.isServer) {
       check(speechBubbleId, String);
       check(choiceId, Number);
 
-      if (!this.userId) {
+      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
         throw new Meteor.Error('not-authorized');
       }
 
@@ -97,8 +104,9 @@ if (Meteor.isServer) {
       //   https://jira.mongodb.org/browse/SERVER-831
       const modifier = {};
       modifier[`speechBubbles.$.data.${choiceId}.clicked`] = true;
+      const userId = this.userId;
       Faces.update({
-        owner: this.userId,  // TODO: allow using someone else's face
+        owner: userId,  // TODO: allow using someone else's face
         'speechBubbles._id': speechBubbleId,
         'speechBubbles.type': 'choices',
       }, {$set: modifier});
@@ -108,13 +116,13 @@ if (Meteor.isServer) {
       this.unblock();
       check(text, String);
 
-      const userId = this.userId;
-      if (!userId) {
+      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
         throw new Meteor.Error('not-authorized');
       }
 
-      const speechBubbleId = 'robot';
+      const userId = this.userId;
       stopFacesObserveHandle(userId);
+      const speechBubbleId = 'robot';
       Faces.update(
         {
           owner: userId,  // TODO: allow selecting a face
@@ -150,13 +158,13 @@ if (Meteor.isServer) {
       this.unblock();
       check(choices, [String]);
 
-      const userId = this.userId;
-      if (!userId) {  // TODO: allow selecting a face
+      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
         throw new Meteor.Error('not-authorized');
       }
 
-      const speechBubbleId = 'robot';
+      const userId = this.userId;
       stopFacesObserveHandle(userId);
+      const speechBubbleId = 'robot';
       Faces.update(
         {
           owner: this.userId,  // TODO: allow selecting a face
