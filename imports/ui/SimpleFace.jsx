@@ -82,11 +82,16 @@ class SimpleFace extends Component {
   }
 
   render() {
-    console.log(this.props.face);
+    if (this.props.loading) {
+      return (
+        <div>Loading...</div>
+      )
+    }
 
-    const robot = this.props.robot ? this.props.robot : {};
-    const human = this.props.human ? this.props.human : {};
-    const eyes = this.props.eyes ? this.props.eyes : {};
+    const face = this.props.face;
+    // speechBubbles: [{_id: 'robot', ...}, {_id: 'human', ...}] is inserted on creation
+    const robot = face.speechBubbles.find((elem) => { return elem._id === 'robot'; });
+    const human = face.speechBubbles.find((elem) => { return elem._id === 'human'; });
 
     return (
       <div>
@@ -108,9 +113,13 @@ class SimpleFace extends Component {
 }
 
 export default withTracker(() => {
-  Meteor.subscribe('faces');
+  const facesHandle = Meteor.subscribe('faces');
+  const loading = !facesHandle.ready();
+  const face = Faces.findOne();  // server publishes only one doc
+
 
   return {
-    face: Faces.findOne({owner: Meteor.userId()}),
+    loading,
+    face,
   };
 })(SimpleFace);
