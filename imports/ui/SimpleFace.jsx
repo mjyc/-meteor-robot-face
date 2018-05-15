@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { Face } from '../api/face';
+import { Faces } from '../api/faces.js';
 
  const logger = log.getLogger('SimpleFace');
 
@@ -43,11 +43,11 @@ class SpeechBubble extends Component {
   }
 
   setDisplayed() {
-    Meteor.call('face.setDisplayed', this.props.speechBubble._id);
+    Meteor.call('faces.speechBubbles.setDisplayed', this.props.speechBubble._id);
   }
 
-  setClicked(choiceID) {
-    Meteor.call('face.setClicked', this.props.speechBubble._id, choiceID);
+  setClicked(choiceId) {
+    Meteor.call('faces.speechBubbles.choices.setClicked', this.props.speechBubble._id, choiceId);
   }
 
   render() {
@@ -82,9 +82,16 @@ class SimpleFace extends Component {
   }
 
   render() {
-    const robot = this.props.robot ? this.props.robot : {};
-    const human = this.props.human ? this.props.human : {};
-    const eyes = this.props.eyes ? this.props.eyes : {};
+    if (this.props.loading) {
+      return (
+        <div>Loading...</div>
+      )
+    }
+
+    const face = this.props.face;
+    // speechBubbles: [{_id: 'robot', ...}, {_id: 'human', ...}] is inserted on creation
+    const robot = face.speechBubbles.find((elem) => { return elem._id === 'robot'; });
+    const human = face.speechBubbles.find((elem) => { return elem._id === 'human'; });
 
     return (
       <div>
@@ -106,15 +113,13 @@ class SimpleFace extends Component {
 }
 
 export default withTracker(() => {
-  Meteor.subscribe('face');
+  const facesHandle = Meteor.subscribe('faces');
+  const loading = !facesHandle.ready();
+  const face = Faces.findOne();  // server publishes only one doc  // TODO: allow selecting a face
 
-  const robot = Face.findOne('robot');
-  const human = Face.findOne('human');
-  const eyes = Face.findOne('eyes');
 
   return {
-    robot: Face.findOne('robot'),
-    human: Face.findOne('human'),
-    eyes: Face.findOne('eyes'),
+    loading,
+    face,
   };
 })(SimpleFace);

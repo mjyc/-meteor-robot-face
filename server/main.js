@@ -1,3 +1,2 @@
-import '../imports/startup/ros'
-import '../imports/api/face'
-export { Face as Face } from '../imports/api/face'
+import '../imports/api/faces.js'
+export { Faces as Faces } from '../imports/api/faces.js'

@@ -77,9 +77,9 @@
       "integrity": "sha1-DwiGD2oVUSey+t1PnOJLGqtuTSI="
     },
     "iconv-lite": {
-      "version": "0.4.21",
-      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.4.21.tgz",
-      "integrity": "sha512-En5V9za5mBt2oUA03WGD3TwDv0MKAruqsuxstbMUZaj9W9k/m1CV/9py3l0L5kw9Bln8fdHQmzHSYtvpvTLpKw=="
+      "version": "0.4.23",
+      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.4.23.tgz",
+      "integrity": "sha512-neyTUVFtahjf0mB3dZT77u+8O0QB89jFdnBkd5P1JgYPbPaia3gXXOVL2fq8VyU2gMMD7SaN7QukTB/pmXYvDA=="
     },
     "inflight": {
       "version": "1.0.6",
@@ -112,9 +112,9 @@
       "integrity": "sha1-mGbfOVECEw449/mWvOtlRDIJwls="
     },
     "lodash": {
-      "version": "4.17.5",
-      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.5.tgz",
-      "integrity": "sha512-svL3uiZf1RwhH+cWrfZn3A4+U58wbP0tGVTLQPbjplZxZ8ROD9VLuNgsRniTlLe7OlSqR79RUehXgpBW/s0IQw=="
+      "version": "4.17.10",
+      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.10.tgz",
+      "integrity": "sha512-UejweD1pDoXu+AD825lWwp4ZGtSwgnpZxb3JDViD7StjQz+Nb/6l093lx4OQ0foGWNRoc19mWy7BzL+UAK2iVg=="
     },
     "loglevel": {
       "version": "1.6.0",
@@ -214,7 +214,7 @@
     "rosnodejs": {
       "version": "git+https://github.com/mjyc/rosnodejs.git#with_dist",
       "resolved": "git+https://github.com/mjyc/rosnodejs.git#8acb5a71d7377fb919d0d2154132fb69665782ef",
-      "integrity": "sha1-wadiUskOrSnM/lPC7GEJbnkbci0="
+      "integrity": "sha1-5nCFWsm0dJ0NozdWVm4ki/bA6UA="
     },
     "safe-json-stringify": {
       "version": "1.1.0",
@@ -247,9 +247,9 @@
       "integrity": "sha1-I2QN17QtAEM5ERQIIOXPRA5SHdE="
     },
     "ua-parser-js": {
-      "version": "0.7.17",
-      "resolved": "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.17.tgz",
-      "integrity": "sha512-uRdSdu1oA1rncCQL7sCj8vSyZkgtL7faaw9Tc9rZ3mGgraQ7+Pdx7w5mnOSF3gw9ZNG6oc+KXfkon3bKuROm0g=="
+      "version": "0.7.18",
+      "resolved": "https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.18.tgz",
+      "integrity": "sha512-LtzwHlVHwFGTptfNSgezHp7WUlwiqb0gA9AALRbKaERfxwJoiX0A73QbTToxteIAuIaFshhgIZfqK8s7clqgnA=="
     },
     "ultron": {
       "version": "1.1.0",
@@ -279,7 +279,7 @@
     "xmlrpc": {
       "version": "1.3.2",
       "resolved": "github:chfritz/node-xmlrpc#948db2fbd0260e5d56ed5ba58df0f5b6599bbe38",
-      "integrity": "sha1-7ltecrb8+ucearRJ0PK2+MS85ns="
+      "integrity": "sha1-kEZfPyosLa9nWE4+f/XhLICU8V8="
     }
   }
 }

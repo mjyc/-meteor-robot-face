@@ -11,9 +11,3 @@ Meteor package providing a simple face React component.
     cd ../
     meteor add simple-face
     ```
-* Download this repository as `simple_face` (**IMPORTANT! Use underscore, NOT hyphen**) to your ROS catkin workspace and build it. For example, do:
-    ```
-    cd your_catkin_workspace/src
-    git clone git@gitlab.cs.washington.edu:mjyc/simple-face.git simple_face
-    catkin build simple_face
-    ```
