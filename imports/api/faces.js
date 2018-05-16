@@ -52,22 +52,22 @@ if (Meteor.isServer) {
 
 
   const isValidCaller = (userId, clientAddress = '') => {
-    return !!userId;
-    // return !!userId;
+    return !!userId || clientAddress === '127.0.0.1';
   }
 
-  Meteor.publish('faces', function facesPublication() {
-    console.log('publish faces', this.userId);
-    console.log('publish user', Meteor.users.findOne(this.userId));
-    if (!isValidCaller(this.userId, this.connection.clientAddress)) {
-      return Faces.find({owner: 'demo'});
+  Meteor.publish('faces', function facesPublication(query) {
+    logger.debug(`facesPublication query: ${obj2str(query)}`);
+    if (query && query._id) {
+      return Faces.find({_id: query._id});
+    } else {
+      logger.warn(`publishing 'demo' face`);
+      return Faces.find({_id: 'demo'});
     }
-    // TODO: allow using someone else's face
-    return Faces.find({owner: this.userId});
   });
 
 
   let facesObserveHandle = {};
+  // TODO: update to use faceId
   const stopFacesObserveHandle = (owner) => {
     if (facesObserveHandle[owner]) {
       facesObserveHandle[owner].stop();
@@ -80,8 +80,11 @@ if (Meteor.isServer) {
     'faces.speechBubbles.setDisplayed'(speechBubbleId) {
       check(speechBubbleId, String);
 
-      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
+      if (!this.userId) {
         // throw new Meteor.Error('not-authorized');
+        // TODO: use 'faceId' as identification, e.g.:
+        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
+        logger.warn(`using 'demo' as userId`);
         this.userId = 'demo';
       }
 
@@ -99,8 +102,11 @@ if (Meteor.isServer) {
       check(speechBubbleId, String);
       check(choiceId, Number);
 
-      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
+      if (!this.userId) {
         // throw new Meteor.Error('not-authorized');
+        // TODO: use 'faceId' as identification, e.g.:
+        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
+        logger.warn(`using 'demo' as userId`);
         this.userId = 'demo';
       }
 
@@ -120,8 +126,11 @@ if (Meteor.isServer) {
       this.unblock();
       check(text, String);
 
-      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
+      if (!this.userId) {
         // throw new Meteor.Error('not-authorized');
+        // TODO: use 'faceId' as identification, e.g.:
+        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
+        logger.warn(`using 'demo' as userId`);
         this.userId = 'demo';
       }
 
@@ -163,8 +172,11 @@ if (Meteor.isServer) {
       this.unblock();
       check(choices, [String]);
 
-      if (!isValidCaller(this.userId, this.connection.clientAddress)) {
+      if (!this.userId) {
         // throw new Meteor.Error('not-authorized');
+        // TODO: use 'faceId' as identification, e.g.:
+        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
+        logger.warn(`using 'demo' as userId`);
         this.userId = 'demo';
       }
 
@@ -173,7 +185,7 @@ if (Meteor.isServer) {
       const speechBubbleId = 'robot';
       Faces.update(
         {
-          owner: this.userId,  // TODO: allow selecting a face
+          owner: userId,  // TODO: allow selecting a face
           'speechBubbles._id': speechBubbleId,
         }, {$set: {
           'speechBubbles.$.type': 'choices',
