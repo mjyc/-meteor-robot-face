@@ -57,11 +57,12 @@ if (Meteor.isServer) {
 
   Meteor.publish('faces', function facesPublication(query) {
     logger.debug(`facesPublication query: ${obj2str(query)}`);
+    // TODO: restrict access based on user permission
     if (query && query._id) {
       return Faces.find({_id: query._id});
     } else {
-      logger.warn(`publishing 'demo' face`);
-      return Faces.find({_id: 'demo'});
+      logger.warn(`using user(${this.userId})'s face`);
+      return Faces.find({owner: this.userId});
     }
   });
 
@@ -80,7 +81,9 @@ if (Meteor.isServer) {
     'faces.speechBubbles.setDisplayed'(speechBubbleId) {
       check(speechBubbleId, String);
 
-      if (!this.userId) {
+      const faceId = 'demo';
+
+      if (!this.userId && faceId !== 'demo') {
         // throw new Meteor.Error('not-authorized');
         // TODO: use 'faceId' as identification, e.g.:
         //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'

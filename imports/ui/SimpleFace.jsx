@@ -113,7 +113,6 @@ class SimpleFace extends Component {
 }
 
 export default withTracker(({faceId}) => {
-  console.log(Meteor.userId());
   const facesHandle = Meteor.subscribe('faces', {_id: faceId});
   const loading = !facesHandle.ready();
   const face = Faces.findOne();  // server publishes only one doc  // TODO: allow selecting a face
