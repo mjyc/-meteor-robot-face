@@ -7,16 +7,25 @@ import { check } from 'meteor/check';
 const logger = log.getLogger('faces');
 logger.setLevel('debug');  // TODO: centralize 'setLevel's somewhere and configure them based on Meteor.settings
 
+const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
+
 export const Faces = new Mongo.Collection('faces');
+
+let facesObserveHandle = {};
+
+const stopFacesObserveHandle = (key) => {
+  if (facesObserveHandle[key]) {
+    facesObserveHandle[key].stop();
+    facesObserveHandle[key] = null;
+  }
+}
 
 
 if (Meteor.isServer) {
 
-  const obj2str = (obj) => { return util.inspect(obj,true,null); }
-
   Meteor.startup(() => {
 
-    const face = {
+    const initialFace = {
       speechBubbles: [
         {
           _id: 'robot',
@@ -33,13 +42,13 @@ if (Meteor.isServer) {
 
     // insert a test face
     if (!Faces.findOne('demo')) {
-      Faces.insert(Object.assign({_id: 'demo', owner: 'demo'}, face));
+      Faces.insert(Object.assign({_id: 'demo', owner: 'demo'}, initialFace));
     }
 
     // insert a face obj on user creation
     Meteor.users.after.insert((userId, doc) => {
       logger.debug(`user created: ${userId} ${obj2str(doc)}`);
-      Faces.insert(Object.assign({owner: doc._id}, face));
+      Faces.insert(Object.assign({owner: doc._id}, initialFace));
     })
 
     // remove a face ob on user deletion
@@ -51,49 +60,25 @@ if (Meteor.isServer) {
   });
 
 
-  const isValidCaller = (userId, clientAddress = '') => {
-    return !!userId || clientAddress === '127.0.0.1';
-  }
-
   Meteor.publish('faces', function facesPublication(query) {
     logger.debug(`facesPublication query: ${obj2str(query)}`);
     // TODO: restrict access based on user permission
-    if (query && query._id) {
-      return Faces.find({_id: query._id});
-    } else {
-      logger.warn(`using user(${this.userId})'s face`);
-      return Faces.find({owner: this.userId});
-    }
+    return Faces.find(query);
   });
 
 
-  let facesObserveHandle = {};
-  // TODO: update to use faceId
-  const stopFacesObserveHandle = (owner) => {
-    if (facesObserveHandle[owner]) {
-      facesObserveHandle[owner].stop();
-      facesObserveHandle[owner] = null;
-    }
-  }
-
   Meteor.methods({
 
-    'faces.speechBubbles.setDisplayed'(speechBubbleId) {
+    'faces.speechBubbles.setDisplayed'(faceId, speechBubbleId) {
+      check(faceId, String);
       check(speechBubbleId, String);
 
-      const faceId = 'demo';
-
       if (!this.userId && faceId !== 'demo') {
-        // throw new Meteor.Error('not-authorized');
-        // TODO: use 'faceId' as identification, e.g.:
-        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
-        logger.warn(`using 'demo' as userId`);
-        this.userId = 'demo';
+        throw new Meteor.Error('not-authorized');
       }
 
-      const userId = this.userId;
       Faces.update({
-        owner: userId,  // TODO: allow using someone else's face
+        _id: faceId,
         'speechBubbles._id': speechBubbleId,
         'speechBubbles.type':'message',
       }, {$set: {
@@ -101,59 +86,54 @@ if (Meteor.isServer) {
       }});
     },
 
-    'faces.speechBubbles.choices.setClicked'(speechBubbleId, choiceId) {
+    'faces.speechBubbles.choices.setClicked'(faceId, speechBubbleId, choiceId) {
+      check(faceId, String);
       check(speechBubbleId, String);
       check(choiceId, Number);
 
-      if (!this.userId) {
-        // throw new Meteor.Error('not-authorized');
-        // TODO: use 'faceId' as identification, e.g.:
-        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
-        logger.warn(`using 'demo' as userId`);
-        this.userId = 'demo';
+      if (!this.userId && faceId !== 'demo') {
+        throw new Meteor.Error('not-authorized');
       }
 
       // Workaround for multiple positional operators, which MongoDB doesn't support:
       //   https://jira.mongodb.org/browse/SERVER-831
       const modifier = {};
       modifier[`speechBubbles.$.data.${choiceId}.clicked`] = true;
-      const userId = this.userId;
       Faces.update({
-        owner: userId,  // TODO: allow using someone else's face
+        _id: faceId,
         'speechBubbles._id': speechBubbleId,
         'speechBubbles.type': 'choices',
       }, {$set: modifier});
     },
 
-    display_message(text) {
+    'faces.display_message'(faceId, text) {
       this.unblock();
+      check(faceId, String);
       check(text, String);
 
-      if (!this.userId) {
-        // throw new Meteor.Error('not-authorized');
-        // TODO: use 'faceId' as identification, e.g.:
-        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
-        logger.warn(`using 'demo' as userId`);
-        this.userId = 'demo';
+      if (!this.userId && faceId !== 'demo') {
+        throw new Meteor.Error('not-authorized');
       }
 
-      const userId = this.userId;
-      stopFacesObserveHandle(userId);
-      const speechBubbleId = 'robot';
-      Faces.update(
-        {
-          owner: userId,  // TODO: allow selecting a face
-          'speechBubbles._id': speechBubbleId,
-        }, {$set: {
-          'speechBubbles.$.type': 'message',
-          'speechBubbles.$.data': {
-            text,
-          }
-        }}
-      );
-
       return Meteor.wrapAsync((callback) => {
-        facesObserveHandle[userId] = Faces.find({owner: userId}).observeChanges({  // TODO: allow selecting a face
+        stopFacesObserveHandle(faceId);
+        const speechBubbleId = 'robot';
+        Faces.update(
+          {
+            _id: faceId,
+            'speechBubbles._id': speechBubbleId,
+          }, {$set: {
+            'speechBubbles.$.type': 'message',
+            'speechBubbles.$.data': {
+              text,
+            }
+          }}
+        );
+
+        facesObserveHandle[faceId] = Faces.find({
+          _id: faceId,
+          'speechBubbles._id': speechBubbleId,
+        }).observeChanges({
           changed(id, fields) {
             logger.debug(`(display_message) id: ${id}; fields: ${obj2str(fields)}`);
 
@@ -163,7 +143,7 @@ if (Meteor.isServer) {
             logger.debug(`(display_message) speechBubble: ${obj2str(speechBubble)}`);
 
             if (speechBubble.data.displayed) {
-              stopFacesObserveHandle();
+              stopFacesObserveHandle(faceId);
               callback(null, true);
             }
           }
@@ -171,38 +151,37 @@ if (Meteor.isServer) {
       })();
     },
 
-    ask_multiple_choice(choices) {
+    'faces.ask_multiple_choice'(faceId, choices) {
       this.unblock();
+      check(faceId, String);
       check(choices, [String]);
 
-      if (!this.userId) {
-        // throw new Meteor.Error('not-authorized');
-        // TODO: use 'faceId' as identification, e.g.:
-        //   allow Face.findOne({_id: faceId}).owner === userId or key === 'demo'
-        logger.warn(`using 'demo' as userId`);
-        this.userId = 'demo';
+      if (!this.userId && faceId !== 'demo') {
+        throw new Meteor.Error('not-authorized');
       }
 
-      const userId = this.userId;
-      stopFacesObserveHandle(userId);
-      const speechBubbleId = 'robot';
-      Faces.update(
-        {
-          owner: userId,  // TODO: allow selecting a face
-          'speechBubbles._id': speechBubbleId,
-        }, {$set: {
-          'speechBubbles.$.type': 'choices',
-          'speechBubbles.$.data': choices.map((choice, index) => {
-            return {
-              _id: index,
-              text: choice,
-            };
-          }
-        )
-      }});
-
       return Meteor.wrapAsync((callback) => {
-        facesObserveHandle[userId] = Faces.find({owner: userId}).observeChanges({  // TODO: allow selecting a face
+        stopFacesObserveHandle(faceId);
+        const speechBubbleId = 'human';
+        Faces.update(
+          {
+            _id: faceId,
+            'speechBubbles._id': speechBubbleId,
+          }, {$set: {
+            'speechBubbles.$.type': 'choices',
+            'speechBubbles.$.data': choices.map((choice, index) => {
+              return {
+                _id: index,
+                text: choice,
+              };
+            }
+          )
+        }});
+
+        facesObserveHandle[faceId] = Faces.find({
+          _id: faceId,
+          'speechBubbles._id': speechBubbleId,
+        }).observeChanges({
           changed(id, fields) {
             logger.debug(`(ask_multiple_choice) id: ${id}; fields: ${obj2str(fields)}`);
 
@@ -214,10 +193,10 @@ if (Meteor.isServer) {
             const clickedChoice = speechBubble.data.find((choice) => {
               return !!choice.clicked;
             })
-            stopFacesObserveHandle(userId);
+            stopFacesObserveHandle(faceId);
             Faces.update(  // TODO: allow selecting a face
               {
-                owner: userId,
+                _id: faceId,
                 'speechBubbles._id': speechBubbleId,
               },
               {$set: {
@@ -229,6 +208,7 @@ if (Meteor.isServer) {
           }
         })
       })();
-    }
+    },
+
   });
 }

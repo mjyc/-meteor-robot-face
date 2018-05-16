@@ -5,7 +5,7 @@ import { withTracker } from 'meteor/react-meteor-data';
 
 import { Faces } from '../api/faces.js';
 
- const logger = log.getLogger('SimpleFace');
+const logger = log.getLogger('SimpleFace');
 
 class Message extends Component {
   constructor(props) {
@@ -42,26 +42,18 @@ class SpeechBubble extends Component {
     super(props);
   }
 
-  setDisplayed() {
-    Meteor.call('faces.speechBubbles.setDisplayed', this.props.speechBubble._id);
-  }
-
-  setClicked(choiceId) {
-    Meteor.call('faces.speechBubbles.choices.setClicked', this.props.speechBubble._id, choiceId);
-  }
-
   render() {
     switch (this.props.speechBubble.type) {
       case 'message':
         return (
           <Message
             message={this.props.speechBubble.data}
-            onDisplay={this.setDisplayed.bind(this)}
+            onDisplay={this.props.onDisplay.bind(this, this.props.speechBubble._id)}
           />
         )
       case 'choices':
         return this.props.speechBubble.data.map((choice, index) => {
-          choice.onClick = this.setClicked.bind(this, choice._id)
+          choice.onClick = this.props.onClick.bind(this, this.props.speechBubble._id, choice._id)
           return (
             <Choice
               key={choice._id}
@@ -79,6 +71,14 @@ class SpeechBubble extends Component {
 class SimpleFace extends Component {
   constructor(props) {
     super(props);
+  }
+
+  setDisplayed(faceId, speechBubbleId) {
+    Meteor.call('faces.speechBubbles.setDisplayed', faceId, speechBubbleId);
+  }
+
+  setClicked(faceId, speechBubbleId, choiceId) {
+    Meteor.call('faces.speechBubbles.choices.setClicked', faceId, speechBubbleId, choiceId);
   }
 
   render() {
@@ -99,12 +99,14 @@ class SimpleFace extends Component {
           <strong>Robot: </strong><SpeechBubble
             key={robot._id}
             speechBubble={robot}
+            onDisplay={this.setDisplayed.bind(this, this.props.face._id)}
           />
         </div>
         <div>
           <strong>Human: </strong><SpeechBubble
             key={human._id}
             speechBubble={human}
+            onClick={this.setClicked.bind(this, this.props.face._id)}
           />
         </div>
       </div>
@@ -112,10 +114,10 @@ class SimpleFace extends Component {
   }
 }
 
-export default withTracker(({faceId}) => {
-  const facesHandle = Meteor.subscribe('faces', {_id: faceId});
+export default withTracker(({faceQuery}) => {
+  const facesHandle = Meteor.subscribe('faces', faceQuery);
   const loading = !facesHandle.ready();
-  const face = Faces.findOne();  // server publishes only one doc  // TODO: allow selecting a face
+  const face = Faces.findOne();
 
   return {
     loading,
