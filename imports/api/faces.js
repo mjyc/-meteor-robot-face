@@ -5,7 +5,6 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 const logger = log.getLogger('faces');
-logger.setLevel('debug');  // TODO: centralize 'setLevel's somewhere and configure them based on Meteor.settings
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
