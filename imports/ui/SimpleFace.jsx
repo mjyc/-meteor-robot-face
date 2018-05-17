@@ -3,82 +3,14 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { Faces } from '../api/faces.js';
+import { Speechbubbles } from '../api/speechbubbles.js';
 
 const logger = log.getLogger('SimpleFace');
-
-class Message extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    if (!this.props.message.text) {
-      return null;
-    }
-    this.props.onDisplay();
-    return (
-      <span>{this.props.message.text}</span>
-    );
-  }
-}
-
-class Choice extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <button onClick={this.props.choice.onClick}>
-        {this.props.choice.text}
-      </button>
-    );
-  }
-}
-
-class SpeechBubble extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    switch (this.props.speechBubble.type) {
-      case 'message':
-        return (
-          <Message
-            message={this.props.speechBubble.data}
-            onDisplay={this.props.onDisplay.bind(this, this.props.speechBubble._id)}
-          />
-        )
-      case 'choices':
-        return this.props.speechBubble.data.map((choice, index) => {
-          choice.onClick = this.props.onClick.bind(this, this.props.speechBubble._id, choice._id)
-          return (
-            <Choice
-              key={choice._id}
-              choice={choice}
-            />
-          );
-        });
-      default:
-        return null;
-    }
-  }
-}
 
 // SimpleFace component - represents the whole app
 class SimpleFace extends Component {
   constructor(props) {
     super(props);
-  }
-
-  setDisplayed(faceId, speechBubbleId) {
-    Meteor.call('faces.speechBubbles.setDisplayed', faceId, speechBubbleId);
-  }
-
-  setClicked(faceId, speechBubbleId, choiceId) {
-    Meteor.call('faces.speechBubbles.choices.setClicked', faceId, speechBubbleId, choiceId);
   }
 
   render() {
@@ -114,13 +46,13 @@ class SimpleFace extends Component {
   }
 }
 
-export default withTracker(({faceQuery}) => {
-  const facesHandle = Meteor.subscribe('faces', faceQuery);
-  const loading = !facesHandle.ready();
-  const face = Faces.findOne();
+export default withTracker(({speechbubbleQuery}) => {
+  const speechbubblesHandle = Meteor.subscribe('speechbubbles', speechbubbleQuery);
+  const loading = !speechbubblesHandle.ready();
+  const speechbubbles = Speechbubbles.find().fetch();
 
   return {
     loading,
-    face,
+    speechbubbles,
   };
-})(SimpleFace);
+})(Speechbubble);
