@@ -5,37 +5,13 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 const logger = log.getLogger('speechbubbles');
+logger.setLevel('debug');
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 export const Speechbubbles = new Mongo.Collection('speechbubbles');
 
 if (Meteor.isServer) {
-
-  Meteor.startup(() => {
-    const initialSpeechbubbles = [
-      {
-        role: 'robot',
-        type: '',
-        status: 'idle',  // 'idle' or 'running'
-        data: null,  // {} or []
-      },
-      {
-        role: 'human',
-        type: '',
-        status: 'idle',  // 'idle' or 'running'
-        data: null,  // {} or []
-      },
-    ];
-
-    // insert a demo face
-    if (!Speechbubbles.findOne('demo')) {
-      initialSpeechbubbles.map((initialSpeechbubble) => {
-        Speechbubbles.insert(Object.assign({_id: 'demo', owner: 'demo'}, initialSpeechbubble));
-      });
-    }
-  });
-
 
   Meteor.publish('speechbubbles', function speechbubblesPublication() {
     // TODO: restrict access based on user permission; right now all speechbubbles public!
@@ -44,6 +20,7 @@ if (Meteor.isServer) {
 
 
   const observeHandles = {};
+  const callbacks = {};
 
   Meteor.methods({
     'speechbubbles.create'() {
@@ -51,33 +28,68 @@ if (Meteor.isServer) {
         throw new Meteor.Error('not-authorized');
       }
 
-      const numSpeechbubbles = Speechbubbles.find({owner: this.userId}).count();
-      if (numSpeechbubbles > 0) {
-        logger.warn(`user (${this.userId}) already has ${numSpeechbubbles} speechbubbles.`);
+      if (Speechbubbles.find({owner: this.userId}).count() > 0) {
+        logger.warn(`Skipping speechbubbles.create; user (${this.userId}) already has speechbubbles`);
+        return;
       }
 
-      Speechbubbles.insert({
-        text,
+      const speechbubble = {
+        type: '',
+        data: null,  // {} or []
         owner: this.userId,
         username: Meteor.users.findOne(this.userId).username,
-      });
+      }
+      Speechbubbles.insert(Object.assign({role: 'robot'}, speechbubble));
+      Speechbubbles.insert(Object.assign({role: 'human'}, speechbubble));
     },
 
-    'speechbubbles.choices.setClicked'(speechBubbleId, choiceId) {
-      check(speechBubbleId, String);
-      check(choiceId, Number);
+    'speechbubbles.choices.setSelected'(speechbubbleId, choice) {
+      check(speechbubbleId, String);
+      // check(choiceId, Number);  // TODO: update this
 
       if (!this.userId) {
         throw new Meteor.Error('not-authorized');
       }
 
       Speechbubbles.update({
-        _id: speechBubbleId,
-        type: : 'choices',
-        'data.choices._id': choiceId,
+        _id: speechbubbleId,
+        type: 'choices',
+        'data.selected': null,
       }, {$set: {
-        'data.choices.$.clicked': true,
+        'data.selected': choice,
       }});
+    },
+
+    'speechbubbles.display_message'(speechbubbleId, message) {
+      this.unblock();
+      check(speechbubbleId, String);
+      check(choices, [String]);
+
+      if (!this.userId) {
+        throw new Meteor.Error('not-authorized');
+      }
+
+      return Meteor.wrapAsync((callback) => {
+        if (observeHandles[speechbubbleId]) {
+          observeHandles[speechbubbleId].stop();
+          observeHandles[speechbubbleId] = null;
+          callbacks[speechbubbleId](new Meteor.Error('canceled'));
+          callbacks[speechbubbleId] = null;
+        }
+        callbacks[speechbubbleId] = callback;
+
+        Speechbubbles.update(
+          {
+            _id: speechbubbleId,
+          }, {$set: {
+            type: 'message',
+            data: message
+          }}
+        )
+
+        callbacks[speechbubbleId](null, true);
+        callbacks[speechbubbleId] = null;
+      })();
     },
 
     'speechbubbles.ask_multiple_choice'(speechbubbleId, choices) {
@@ -90,50 +102,39 @@ if (Meteor.isServer) {
       }
 
       return Meteor.wrapAsync((callback) => {
+        if (observeHandles[speechbubbleId]) {
+          observeHandles[speechbubbleId].stop();
+          observeHandles[speechbubbleId] = null;
+          callbacks[speechbubbleId](new Meteor.Error('canceled'));
+          callbacks[speechbubbleId] = null;
+        }
+        callbacks[speechbubbleId] = callback;
 
         Speechbubbles.update(
           {
             _id: speechbubbleId,
           }, {$set: {
             type: 'choices',
-            data: choices.map((choice, index) => {
-              return {
-                _id: index,
-                text: choice,
-              };
-            }),
-            status: 'running',
-          )
-        }});
+            data: {
+              choices: choices,
+              selected: null,
+            }
+          }}
+        )
 
-        // add $exists field to search for an event specifically
-        observeHandles[speechbubbleId] = Faces.find({
+        observeHandles[speechbubbleId] = Speechbubbles.find({
           _id: speechbubbleId,
-          type: 'choice',
-          status: 'running',
+          type: 'choices',
+          'data.selected': {$exists: true},
         }).observeChanges({
           changed(id, fields) {
-            logger.debug(`(ask_multiple_choice) id: ${id}; fields: ${obj2str(fields)}`);
-
-            // TODO: Use different strategy
-            // const clickedChoice = fields.data.find((choice) => {
-            //   return !!choice.clicked;
-            // })
-            // stopFacesObserveHandle(faceId);
-
-            // Faces.update(  // TODO: allow selecting a face
-            //   {
-            //     _id: faceId,
-            //     'speechBubbles._id': speechBubbleId,
-            //   },
-            //   {$set: {
-            //     'speechBubbles.$.type': '',
-            //     'speechBubbles.$.data': null
-            //   }}
-            // );
-            // callback (null, clickedChoice.text);
+            logger.debug(`id: ${id}; fields: ${obj2str(fields)}`);
+            observeHandles[speechbubbleId].stop();
+            observeHandles[speechbubbleId] = null;
+            callbacks[speechbubbleId](null, fields.data.selected);
+            callbacks[speechbubbleId] = null;
           }
-        })
+        });
       })();
     },
   });

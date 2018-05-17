@@ -1,88 +1,40 @@
 import * as log from 'loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
-import { withTracker } from 'meteor/react-meteor-data';
 
 import { Speechbubbles } from '../api/speechbubbles.js';
 
 const logger = log.getLogger('Speechbubbles');
 
-class Message extends Component {
+export default class Speechbubble extends Component {
   constructor(props) {
     super(props);
   }
 
   render() {
-    if (!this.props.message.text) {
-      return null;
-    }
-    return (
-      <span>{this.props.message.text}</span>
-    );
-  }
-}
-
-class Choice extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <button onClick={this.props.choice.onClick}>
-        {this.props.choice.text}
-      </button>
-    );
-  }
-}
-
-class Speechbubbles extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    if (this.props.loading) {
-      return (
-        <div>Loading...</div>
-      )
-    }
-
-    this.props.speechbubbles.map((speechbubble) => {
-      switch (speechbubble.type) {
-        case 'message':
+    switch (this.props.speechbubble.type) {
+      case '':
+        return null;
+      case 'message':
+        return (
+          <span>{this.props.speechbubble.data}</span>
+        )
+      case 'choices':
+        return this.props.speechbubble.data.choices.map((choice, index) => {
           return (
-            <Message
-              message={speechbubble.data}
-            />
-          )
-        case 'choices':
-          return speechbubble.data.map((choice, index) => {
-            choice.onClick = () => {
-              Meteor.call('speechbubbles.choices.setClicked', speechbubble._id, choice._id);
-            };
-            return (
-              <Choice
-                key={choice._id}
-                choice={choice}
-              />
-            );
-          });
-        default:
-          logger.warn(`Unknown speechbubble.type: ${speechbubble.type}`);
-          return null;
-      }
-    });
+            <button
+              key={index}
+              onClick={() => {
+                Meteor.call('speechbubbles.choices.setSelected', this.props.speechbubble._id, choice);
+              }}
+            >
+              {choice}
+            </button>
+          );
+        });
+      default:
+        logger.warn(`Unknown speechbubble.type: ${this.props.speechbubble.type}`);
+        return null;
+    }
   }
 }
-
-export default withTracker(({speechbubbleQuery}) => {
-  const speechbubblesHandle = Meteor.subscribe('speechbubbles', speechbubbleQuery);
-  const loading = !speechbubblesHandle.ready();
-  const speechbubbles = Speechbubbles.find().fetch();
-
-  return {
-    loading,
-    speechbubbles,
-  };
-})(Speechbubble);

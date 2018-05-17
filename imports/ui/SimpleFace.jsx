@@ -4,6 +4,7 @@ import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
 import { Speechbubbles } from '../api/speechbubbles.js';
+import Speechbubble from '../ui/Speechbubble.jsx';
 
 const logger = log.getLogger('SimpleFace');
 
@@ -20,39 +21,40 @@ class SimpleFace extends Component {
       )
     }
 
-    const face = this.props.face;
-    // speechBubbles: [{_id: 'robot', ...}, {_id: 'human', ...}] is inserted on creation
-    const robot = face.speechBubbles.find((elem) => { return elem._id === 'robot'; });
-    const human = face.speechBubbles.find((elem) => { return elem._id === 'human'; });
-
     return (
       <div>
         <div>
-          <strong>Robot: </strong><SpeechBubble
-            key={robot._id}
-            speechBubble={robot}
-            onDisplay={this.setDisplayed.bind(this, this.props.face._id)}
-          />
+          <strong>Robot: </strong>
+          {this.props.speechbubbleRobot ?
+            <Speechbubble
+              key={this.props.speechbubbleRobot._id}
+              speechbubble={this.props.speechbubbleRobot}
+            /> : null
+          }
         </div>
         <div>
-          <strong>Human: </strong><SpeechBubble
-            key={human._id}
-            speechBubble={human}
-            onClick={this.setClicked.bind(this, this.props.face._id)}
-          />
+          <strong>Human: </strong>
+          {this.props.speechbubbleHuman ?
+            <Speechbubble
+              key={this.props.speechbubbleHuman._id}
+              speechbubble={this.props.speechbubbleHuman}
+            /> : null
+          }
         </div>
       </div>
     );
   }
 }
 
-export default withTracker(({speechbubbleQuery}) => {
-  const speechbubblesHandle = Meteor.subscribe('speechbubbles', speechbubbleQuery);
+export default withTracker(({faceQuery}) => {
+  const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const loading = !speechbubblesHandle.ready();
-  const speechbubbles = Speechbubbles.find().fetch();
+  const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
+  const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
 
   return {
     loading,
-    speechbubbles,
+    speechbubbleRobot,
+    speechbubbleHuman,
   };
-})(Speechbubble);
+})(SimpleFace);
