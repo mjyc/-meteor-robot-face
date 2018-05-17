@@ -1,2 +1,2 @@
-import '../imports/api/faces.js'
-export { Faces as Faces } from '../imports/api/faces.js'
+import '../imports/api/speechbubbles.js'
+export { Speechbubbles as Speechbubbles } from '../imports/api/speechbubbles.js'
