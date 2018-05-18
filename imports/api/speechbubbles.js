@@ -5,45 +5,70 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 const logger = log.getLogger('speechbubbles');
-logger.setLevel('debug');
+logger.setLevel('debug');  // TODO: do this in each application
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 export const Speechbubbles = new Mongo.Collection('speechbubbles');
 
+
 if (Meteor.isServer) {
 
-  // SpeechBubbleAction: should have a static variable
+  Meteor.publish('speechbubbles', function speechbubblesPublication() {
+    // TODO: restrict access based on user permission; right now all speechbubbles public!
+    return Speechbubbles.find();
+  });
 
-  // AskMultipleChoiceAction {
 
-  // }
+  export class AskMultipleChoiceAction extends EventEmitter {
 
-  class DisplayMessageAction {
-    constructor() {
-      this._collection = collection;
+    constructor({speechbubbleId = ''}) {
+      super();
+
+      if (!Speechbubbles.findOne(speechbubbleId)) {
+        throw new Meteor.Error('invalid-input');
+      }
+
+      // TODO: protect _id from overwriting
+      this._id = speechbubbleId;
+
+      // TODO: set logger with class name
     }
 
-    // ~sendGoal (send_goal allowed attaching "callbacks")
-    //
-    execute(callbacks) {  // return this? to provide wait for result?
-      // provide callback -> to get result : use "await" to get val / error
-      // emit result ...
-      // + result this.
-
-      // should I use cancel here? maybe
-      this.emit('result', {
-        status: 'cancel',
-        result: null,
-      });
-      // call older callback callbacks.on
+    _reset() {
       this.removeAllListeners();
 
-      // maybe emit status running
+      AskMultipleChoiceAction._handles[this._id].stop();
+      AskMultipleChoiceAction._handles[this._id] = null;
+
+      Speechbubbles.update({
+        _id: this._id,
+        type: 'choices',
+      }, {$set: {
+        type: '',
+        data: {},
+      }});
+    }
+
+    _isActive() {
+      return AskMultipleChoiceAction._handles[speechbubbleId]
+        && Speechbubbles.findOne({
+          _id: this._id,
+          type: 'choices'
+        });
+    }
+
+    // NOTE: options for the last argument:
+    //   (i) { onDone = () => {}, onFeedback = () => {} } = {}
+    //   (ii) callback = (err, res) => {} // throw err on cancel or abort?
+    execute({
+      choices = []
+    } = {}) {
+      this.cancel();
 
       this._collection.update(
         {
-          _id: speechbubbleId,
+          _id: this._id,
         }, {$set: {
           type: 'choices',
           data: {
@@ -51,113 +76,51 @@ if (Meteor.isServer) {
             selected: null,
           }
         }}
-      )
+      );
 
-      // should it return promise?
-
-      observeHandles[speechbubbleId] = Speechbubbles.find({
-        _id: speechbubbleId,
+      AskMultipleChoiceAction._handles = Speechbubbles.find({
+        _id: this._id,
         type: 'choices',
         'data.selected': {$exists: true},
       }).observeChanges({
-        changed(id, fields) {
+        changed: (id, fields) => {
           logger.debug(`id: ${id}; fields: ${obj2str(fields)}`);
-          observeHandles[speechbubbleId].stop();
-          observeHandles[speechbubbleId] = null;
-          callbacks[speechbubbleId](null, fields.data.selected);
-          callbacks[speechbubbleId] = null;
+          this.emit('done', {
+            status: 'succeeded',
+            result: fields.data.selected,
+          });
+          this._reset();
         }
       });
-    }
 
-    // run(callback); node style; convert to promise to use promise style is possible
+      return this;
+    })
 
+    // NOTE: consider passing a callback-like arg
     cancel() {
-      // provide callback -> to get result : use "await" to get val / error
-    }
-
-    // returns bool
-    waitForResult(timeout) {
-      // callback
-      // allow timeout
-      // blocks using promise?
-    }
-
-    // getStatus()
-    // getResult()  // only return result without status
-  }
-
-
-  Meteor.publish('speechbubbles', function speechbubblesPublication() {
-    // TODO: restrict access based on user permission; right now all speechbubbles public!
-    return Speechbubbles.find();
-  });
-
-  // do I need one or many?
-  // should be in SpeechBubble module
-  const dispalyMessage = {
-
-    // should this also be event emitter? publishing "goal, feedback, status"
-
-    // callback for returning result (err, res)
-    start(args, callback) {
-
-      if (observeHandles[speechbubbleId]) {
-          observeHandles[speechbubbleId].stop();
-          observeHandles[speechbubbleId] = null;
-          callbacks[speechbubbleId](new Meteor.Error('canceled'));
-          callbacks[speechbubbleId] = null;
-        }
-        callbacks[speechbubbleId] = callback;
-
-        this._collection.update(
-          {
-            _id: speechbubbleId,
-          }, {$set: {
-            type: 'choices',
-            data: {
-              choices: choices,
-              selected: null,
-            }
-          }}
-        )
-
-        // should it return promise?
-
-        observeHandles[speechbubbleId] = Speechbubbles.find({
-          _id: speechbubbleId,
-          type: 'choices',
-          'data.selected': {$exists: true},
-        }).observeChanges({
-          changed(id, fields) {
-            logger.debug(`id: ${id}; fields: ${obj2str(fields)}`);
-            observeHandles[speechbubbleId].stop();
-            observeHandles[speechbubbleId] = null;
-            callbacks[speechbubbleId](null, fields.data.selected);
-            callbacks[speechbubbleId] = null;
-          }
+      // double check with findOne
+      if (this._isActive()) {
+        this.emit('done', {
+          status: 'canceled',
+          result: null,
         });
 
-    }
-
-    // callback(err, res)
-    cancel(callback) {
-      if (this._handle) {
-        // cancel
-        this._handle.stop();
+        this._reset();
       }
+
+      return this;
     }
 
-    // return value "result"
-    waitForResult() {
-
-    }
-
-    //
-    getResult() {
-
+    // should be used with await?
+    // or returns a classical callback
+    getResult(callback) {
+      // block if callback is not given...
+      // return (err, result.result); err if canceled or aborted? or return everything in result?
+      return;
     }
   }
+
+  AskMultipleChoiceAction._handles = {};
 
   const observeHandles = {};
   const callbacks = {};
