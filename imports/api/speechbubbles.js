@@ -37,15 +37,15 @@ if (Meteor.isServer) {
         type: '',
         data: null,  // {} or []
         owner: this.userId,
-        username: Meteor.users.findOne(this.userId).username,
       }
       Speechbubbles.insert(Object.assign({role: 'robot'}, speechbubble));
       Speechbubbles.insert(Object.assign({role: 'human'}, speechbubble));
     },
 
     'speechbubbles.choices.setSelected'(speechbubbleId, choice) {
+      this.unblock();
       check(speechbubbleId, String);
-      // check(choiceId, Number);  // TODO: update this
+      check(choice, String);
 
       if (!this.userId) {
         throw new Meteor.Error('not-authorized');
@@ -60,14 +60,14 @@ if (Meteor.isServer) {
       }});
     },
 
-    'speechbubbles.display_message'(speechbubbleId, message) {
+    'speechbubbles.displayMessage'(speechbubbleId, message) {
       this.unblock();
       check(speechbubbleId, String);
-      check(choices, [String]);
+      check(message, String);
 
-      if (!this.userId) {
-        throw new Meteor.Error('not-authorized');
-      }
+      // if (!this.userId) {
+      //   throw new Meteor.Error('not-authorized');
+      // }
 
       return Meteor.wrapAsync((callback) => {
         if (observeHandles[speechbubbleId]) {
@@ -92,14 +92,14 @@ if (Meteor.isServer) {
       })();
     },
 
-    'speechbubbles.ask_multiple_choice'(speechbubbleId, choices) {
+    'speechbubbles.askMultipleChoice'(speechbubbleId, choices) {
       this.unblock();
       check(speechbubbleId, String);
       check(choices, [String]);
 
-      if (!this.userId) {
-        throw new Meteor.Error('not-authorized');
-      }
+      // if (!this.userId) {
+      //   throw new Meteor.Error('not-authorized');
+      // }
 
       return Meteor.wrapAsync((callback) => {
         if (observeHandles[speechbubbleId]) {
