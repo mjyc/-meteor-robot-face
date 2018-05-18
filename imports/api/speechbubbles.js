@@ -10,54 +10,109 @@ logger.setLevel('debug');  // TODO: do this in each application
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
+
 export const Speechbubbles = new Mongo.Collection('speechbubbles');
 
 
 if (Meteor.isServer) {
 
-  Meteor.publish('speechbubbles', function speechbubblesPublication() {
-    // TODO: restrict access based on user permission; right now all speechbubbles public!
-    return Speechbubbles.find();
-  });
+  export class SpeechbubbleAction extends EventEmitter {
 
+    static insertSpeechbubble(docs) {
+      Speechbubbles.insert(Object.assign({}, doc, {
+        type: '',
+        data: {},
+      }));
+    }
 
-  export class AskMultipleChoiceAction extends EventEmitter {
-
-    constructor({speechbubbleId = ''}) {
+    constructor({speechbubbleId = ''} = {}) {
       super();
 
       if (!Speechbubbles.findOne(speechbubbleId)) {
-        throw new Meteor.Error('invalid-input');
+        throw new Meteor.Error('invalid-input', `Invalid speechbubbleId: ${speechbubbleId}`);
       }
-
-      // TODO: protect _id from overwriting
+      // TODO: protect _id from overwriting it
       this._id = speechbubbleId;
-
-      // TODO: set logger with class name
     }
 
     _reset() {
       this.removeAllListeners();
 
-      if (AskMultipleChoiceAction._handles[this._id]) {
-        AskMultipleChoiceAction._handles[this._id].stop();
-        AskMultipleChoiceAction._handles[this._id] = null;
+      if (SpeechbubbleAction._handles[this._id]) {
+        SpeechbubbleAction._handles[this._id].stop();
+        SpeechbubbleAction._handles[this._id] = null;
       }
 
       Speechbubbles.update({
         _id: this._id,
-        type: 'choices',
       }, {$set: {
         type: '',
         data: {},
       }});
     }
 
+  }
+
+  SpeechbubbleAction._handles = {};
+
+
+  export class DisplayMessageAction extends SpeechbubbleAction {
+
+    constructor({speechbubbleId = ''} = {}) {
+      super({speechbubbleId});
+    }
+
+    execute({
+      message = ''
+    } = {}) {
+      Speechbubbles.update(
+        {
+          _id: this._id,
+        }, {$set: {
+          type: 'message',
+          data: {message}
+        }}
+      );
+
+      Meteor.setTimeout(() => {
+        this.emit('done', {
+          status: 'succeeded',
+          result: message,
+        })
+      }, 0);
+
+      return this;
+    }
+
+    cancel() {
+      // not emitting 'cancel' since it is not canceling any running action
+      return this;
+    }
+
+  }
+
+
+  export class AskMultipleChoiceAction extends SpeechbubbleAction {
+
+    static setSelected(speechbubbleId, choice) {
+      Speechbubbles.update({
+        _id: speechbubbleId,
+        type: 'choices',
+      }, {$set: {
+        'data.selected': choice,
+      }});
+    }
+
+    constructor({speechbubbleId = ''} = {}) {
+      super({speechbubbleId});
+    }
+
     _isActive() {
-      return AskMultipleChoiceAction._handles[this._id]
+      return SpeechbubbleAction._handles[this._id]
         && Speechbubbles.findOne({
           _id: this._id,
-          type: 'choices'
+          type: 'choices',
+          data: {$exists: true},
         });
     }
 
@@ -74,17 +129,13 @@ if (Meteor.isServer) {
           _id: this._id,
         }, {$set: {
           type: 'choices',
-          data: {
-            choices: choices,
-            selected: null,
-          }
+          data: {choices}
         }}
       );
 
-      AskMultipleChoiceAction._handles = Speechbubbles.find({
+      SpeechbubbleAction._handles = Speechbubbles.find({
         _id: this._id,
         type: 'choices',
-        'data.selected': {$exists: true},
       }).observeChanges({
         changed: (id, fields) => {
           logger.debug(`id: ${id}; fields: ${obj2str(fields)}`);
@@ -114,40 +165,32 @@ if (Meteor.isServer) {
       return this;
     }
 
-    // should be used with await?
-    // or returns a classical callback
-    getResult(callback) {
-      // block if callback is not given...
-      // return (err, result.result); err if canceled or aborted? or return everything in result?
-      return;
-    }
+    // NOTE: consider creating
+    // getResult(callback) { ... }
   }
 
-  AskMultipleChoiceAction._handles = {};
+
+  Meteor.publish('speechbubbles', function speechbubblesPublication() {
+    // TODO: restrict access based on user permission; right now all speechbubbles public!
+    return Speechbubbles.find();
+  });
 
 
   Meteor.methods({
-    // TODO: use a static method from AskMultipleChoice
-    'speechbubbles.create'() {
+    'speechbubbles.initialize'() {
       if (!this.userId) {
         throw new Meteor.Error('not-authorized');
       }
 
       if (Speechbubbles.find({owner: this.userId}).count() > 0) {
-        logger.warn(`Skipping speechbubbles.create; user (${this.userId}) already has speechbubbles`);
+        logger.warn(`Skipping speechbubbles.initialize; user (${this.userId}) already has speechbubbles`);
         return;
       }
 
-      const speechbubble = {
-        type: '',
-        data: null,  // {} or []
-        owner: this.userId,
-      }
-      Speechbubbles.insert(Object.assign({role: 'robot'}, speechbubble));
-      Speechbubbles.insert(Object.assign({role: 'human'}, speechbubble));
+      SpeechbubbleAction.insertSpeechbubble({owner: this.userId, role: 'robot'});
+      SpeechbubbleAction.insertSpeechbubble({owner: this.userId, role: 'human'});
     },
 
-    // TODO: use a static method from AskMultipleChoice
     'speechbubbles.choices.setSelected'(speechbubbleId, choice) {
       this.unblock();
       check(speechbubbleId, String);
@@ -157,13 +200,8 @@ if (Meteor.isServer) {
         throw new Meteor.Error('not-authorized');
       }
 
-      Speechbubbles.update({
-        _id: speechbubbleId,
-        type: 'choices',
-        'data.selected': null,
-      }, {$set: {
-        'data.selected': choice,
-      }});
+      AskMultipleChoiceAction.setSelected(speechbubbleId, choice);
     },
   });
+
 }
