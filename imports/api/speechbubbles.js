@@ -1,4 +1,5 @@
 import util from 'util';
+import { EventEmitter } from 'events';
 import * as log from 'loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
@@ -94,7 +95,7 @@ if (Meteor.isServer) {
       });
 
       return this;
-    })
+    }
 
     // NOTE: consider passing a callback-like arg
     cancel() {
@@ -122,10 +123,9 @@ if (Meteor.isServer) {
 
   AskMultipleChoiceAction._handles = {};
 
-  const observeHandles = {};
-  const callbacks = {};
 
   Meteor.methods({
+    // TODO: use a static method from AskMultipleChoice
     'speechbubbles.create'() {
       if (!this.userId) {
         throw new Meteor.Error('not-authorized');
@@ -145,6 +145,7 @@ if (Meteor.isServer) {
       Speechbubbles.insert(Object.assign({role: 'human'}, speechbubble));
     },
 
+    // TODO: use a static method from AskMultipleChoice
     'speechbubbles.choices.setSelected'(speechbubbleId, choice) {
       this.unblock();
       check(speechbubbleId, String);
@@ -161,84 +162,6 @@ if (Meteor.isServer) {
       }, {$set: {
         'data.selected': choice,
       }});
-    },
-
-    'speechbubbles.displayMessage'(speechbubbleId, message) {
-      this.unblock();
-      check(speechbubbleId, String);
-      check(message, String);
-
-      // if (!this.userId) {
-      //   throw new Meteor.Error('not-authorized');
-      // }
-
-      return Meteor.wrapAsync((callback) => {
-        if (observeHandles[speechbubbleId]) {
-          observeHandles[speechbubbleId].stop();
-          observeHandles[speechbubbleId] = null;
-          callbacks[speechbubbleId](new Meteor.Error('canceled'));
-          callbacks[speechbubbleId] = null;
-        }
-        callbacks[speechbubbleId] = callback;
-
-        Speechbubbles.update(
-          {
-            _id: speechbubbleId,
-          }, {$set: {
-            type: 'message',
-            data: message
-          }}
-        )
-
-        callbacks[speechbubbleId](null, true);
-        callbacks[speechbubbleId] = null;
-      })();
-    },
-
-    'speechbubbles.askMultipleChoice'(speechbubbleId, choices) {
-      this.unblock();
-      check(speechbubbleId, String);
-      check(choices, [String]);
-
-      // if (!this.userId) {
-      //   throw new Meteor.Error('not-authorized');
-      // }
-
-      return Meteor.wrapAsync((callback) => {
-        if (observeHandles[speechbubbleId]) {
-          observeHandles[speechbubbleId].stop();
-          observeHandles[speechbubbleId] = null;
-          callbacks[speechbubbleId](new Meteor.Error('canceled'));
-          callbacks[speechbubbleId] = null;
-        }
-        callbacks[speechbubbleId] = callback;
-
-        Speechbubbles.update(
-          {
-            _id: speechbubbleId,
-          }, {$set: {
-            type: 'choices',
-            data: {
-              choices: choices,
-              selected: null,
-            }
-          }}
-        )
-
-        observeHandles[speechbubbleId] = Speechbubbles.find({
-          _id: speechbubbleId,
-          type: 'choices',
-          'data.selected': {$exists: true},
-        }).observeChanges({
-          changed(id, fields) {
-            logger.debug(`id: ${id}; fields: ${obj2str(fields)}`);
-            observeHandles[speechbubbleId].stop();
-            observeHandles[speechbubbleId] = null;
-            callbacks[speechbubbleId](null, fields.data.selected);
-            callbacks[speechbubbleId] = null;
-          }
-        });
-      })();
     },
   });
 }
