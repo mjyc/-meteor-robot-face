@@ -39,8 +39,10 @@ if (Meteor.isServer) {
     _reset() {
       this.removeAllListeners();
 
-      AskMultipleChoiceAction._handles[this._id].stop();
-      AskMultipleChoiceAction._handles[this._id] = null;
+      if (AskMultipleChoiceAction._handles[this._id]) {
+        AskMultipleChoiceAction._handles[this._id].stop();
+        AskMultipleChoiceAction._handles[this._id] = null;
+      }
 
       Speechbubbles.update({
         _id: this._id,
@@ -52,7 +54,7 @@ if (Meteor.isServer) {
     }
 
     _isActive() {
-      return AskMultipleChoiceAction._handles[speechbubbleId]
+      return AskMultipleChoiceAction._handles[this._id]
         && Speechbubbles.findOne({
           _id: this._id,
           type: 'choices'
@@ -67,7 +69,7 @@ if (Meteor.isServer) {
     } = {}) {
       this.cancel();
 
-      this._collection.update(
+      Speechbubbles.update(
         {
           _id: this._id,
         }, {$set: {
