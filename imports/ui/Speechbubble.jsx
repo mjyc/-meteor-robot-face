@@ -17,7 +17,7 @@ export default class Speechbubble extends Component {
         return null;
       case 'message':
         return (
-          <span>{this.props.speechbubble.data}</span>
+          <span>{this.props.speechbubble.data.message}</span>
         )
       case 'choices':
         return this.props.speechbubble.data.choices.map((choice, index) => {
