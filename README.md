@@ -1,10 +1,10 @@
-# (WIP) simple-face
+# (WIP) Meteor Simple Face
 
-Meteor package providing a simple face React component.
+Meteor package providing a "face" React component.
 
 ## Getting started
 
-* Add this repository to your Meteor app as a Meteor package. For example, do:
+* Download this repository and add it as a Meteor package:
     ```
     cd your_meteor_app/packages
     git clone git@gitlab.cs.washington.edu:mjyc/simple-face.git
