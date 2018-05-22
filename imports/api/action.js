@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import * as log from 'loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
+import { Random } from 'meteor/random';
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
@@ -17,14 +18,20 @@ export const defaultAction = {
 
 
 export class MeteorAction extends EventEmitter {
-  constructor({collection, id} = {}) {
+  constructor(collection, id) {
     super();
 
     this._collection = collection;
     this._id = id;
 
-    this._collection.findOne(this._id).observeChanges({
+    // TODO: refactor this to "reset" or something
+    this._collection.update({_id: this._id}, {$set: defaultAction});
+
+    // TODO: do not allow creating more than one actions with same inputs
+    this._collection.find(this._id).observeChanges({
       changed: (id, fields) => {
+        console.log('id, fields', id, fields);
+
         if (
           fields.goalId
           && fields.status === 'pending'
@@ -61,7 +68,7 @@ export class MeteorAction extends EventEmitter {
   // TODO: consider adding a callback argument
   once(eventName) {
     return new Promise((resolve, reject) => {
-      this.once(eventName, resolve);
+      super.once(eventName, resolve);
     });
   }
 
@@ -73,7 +80,7 @@ export class MeteorAction extends EventEmitter {
   }
 
   set(doc = {}) {
-    this._collection.upsert({_id: this._id}, {$set: doc});
+    this._collection.update({_id: this._id}, {$set: doc});
   }
 
   // Action server methods
@@ -94,7 +101,9 @@ export class MeteorAction extends EventEmitter {
 
   sendGoal(goal) {
     this.cancel();
+    console.log('start waiting!');
     Promise.await( this.once('result') );  // TODO: check whether the action was canceled
+    console.log('done waiting!');
 
     this.set({
       goalId: Random.id(),
