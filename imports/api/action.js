@@ -6,7 +6,7 @@ import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';
 
 const logger = log.getLogger('action');
-logger.setLevel('debug');  // TODO: do this in each application
+logger.setLevel('debug');  // TODO: do this in the main application
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 

@@ -6,7 +6,7 @@ import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
 const logger = log.getLogger('speechbubbles');
-logger.setLevel('debug');  // TODO: do this in each application
+logger.setLevel('debug');  // TODO: do this in the main application
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 

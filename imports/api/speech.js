@@ -4,7 +4,7 @@ import { Mongo } from 'meteor/mongo';
 import { defaultAction, getActionClient } from './action.js';  // TODO: implement a speech action client wrapper
 
 const logger = log.getLogger('action');
-logger.setLevel('debug');  // TODO: do this in each application
+logger.setLevel('debug');  // TODO: do this in the main application
 
 export const Speech = new Mongo.Collection('speech');
 
