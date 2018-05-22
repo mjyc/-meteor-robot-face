@@ -21,7 +21,7 @@ if (Meteor.isServer) {
         logger.warn('Skipping; user ${this.userId} already has a speech synthesis action document');
         return;
       }
-      Speech.insert(Object.assign({owner: this.userId, type: 'synthesis'}, defaultAction));
+      Speech.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
     }
   });
 

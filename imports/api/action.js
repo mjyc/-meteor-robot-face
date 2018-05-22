@@ -6,6 +6,7 @@ import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';
 
 const logger = log.getLogger('action');
+logger.setLevel('debug');
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
@@ -69,6 +70,7 @@ class MeteorAction extends EventEmitter {
   }
 
   _set(doc = {}) {
+    console.log('_set', doc);
     this._collection.update({_id: this._id}, {$set: doc});
   }
 
@@ -94,6 +96,7 @@ class MeteorActionClient extends MeteorAction {
     this.cancel();
     Promise.await( this.once('result') );
     // TODO: check whether the action was successfully canceled
+    console.log('[MeteorActionClient.sendGoal] done waiting');
 
     this._set({
       goalId: Random.id(),

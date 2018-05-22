@@ -6,6 +6,7 @@ import { withTracker } from 'meteor/react-meteor-data';
 import { defaultAction, MeteorAction } from '../api/action.js';
 import { Speechbubbles } from '../api/speechbubbles.js';
 import Speechbubble from '../ui/Speechbubble.jsx';
+import SpeechUI from '../ui/Speech.jsx';
 import { Speech } from '../api/speech.js';
 
 const logger = log.getLogger('SimpleFace');
@@ -25,6 +26,12 @@ class SimpleFace extends Component {
 
     return (
       <div>
+        <div>
+          <SpeechUI
+            key={this.props.speech._id}
+            speech={this.props.speech}
+          /> : null
+        </div>
         <div>
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
@@ -54,10 +61,12 @@ export default withTracker(({faceQuery}) => {
   const loading = !speechbubblesHandle.ready() || !speechHandle.ready();
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
+  const speech = Speech.findOne();
 
   return {
     loading,
     speechbubbleRobot,
     speechbubbleHuman,
+    speech,
   };
 })(SimpleFace);
