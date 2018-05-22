@@ -23,36 +23,6 @@ class SimpleFace extends Component {
       )
     }
 
-    const speechAction = new MeteorAction(Speechbubble, Speechbubble.findOne({owner: Meteor.userId})._id);
-    speechAction.on('goal', (goal) => {
-      console.log(goal);
-    });
-    speechAction.on('cancel', (goalId) => {
-      console.log(goalId);
-    });
-
-      // // findOne for {_id: xx, goalStatus: {exists: true}}
-  // Speech.findOne().observeHandles({
-  //   changed: (id, field) => {
-  //     console.log(id, field);
-  //     if (field.goalStatus.status === 'pending') {
-  //       // set status to 'active' and start the action
-  //       var utterThis = new SpeechSynthesisUtterance('Hello there? How are you doing today?');
-  //       utterThis.onend = (event) => {
-  //         console.log('SpeechSynthesisUtterance.onend');
-  //         // stop the observe handle and change the status to
-  //       }
-  //       utterThis.onerror = (event) => {
-  //         // stop the observe handle (handle.stop())
-  //         console.error('SpeechSynthesisUtterance.onerror');
-  //       }
-  //       synth.speak(utterThis);
-  //     }
-
-  //   }
-  // });
-
-
     return (
       <div>
         <div>

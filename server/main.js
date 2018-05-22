@@ -1,7 +1,4 @@
-export {
-  defaultAction as defaultAction,
-  MeteorAction as MeteorAction,
-} from '../imports/api/action.js'
+export * as action from '../imports/api/action.js'
 
 export {
   Speechbubbles as Speechbubbles,
