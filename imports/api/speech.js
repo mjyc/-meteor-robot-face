@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { defaultAction, getActionClient } from './action.js';  // TODO: implement a speech action client wrapper
@@ -18,7 +18,7 @@ if (Meteor.isServer) {
   Meteor.methods({
     'speech.addUser'(userId = this.userId) {
       if (Speech.findOne({owner: userId, type: 'synthesis'})) {
-        logger.warn('Skipping; user ${this.userId} already has a speech synthesis action document');
+        logger.warn(`Skipping; user ${this.userId} already has a speech synthesis action document`);
         return;
       }
       Speech.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));

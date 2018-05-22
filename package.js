@@ -7,7 +7,6 @@ Package.describe({
 });
 
 Npm.depends({
-  'loglevel': '1.6.0',
   'react': '16.1.1'
 });
 
@@ -15,6 +14,7 @@ Package.onUse(function(api) {
   api.versionsFrom('1.6');
   api.use('ecmascript');
   api.use('mongo');
+  api.use('mjyc:loglevel');
   api.use('react-meteor-data', 'client');
   api.mainModule('client/main.js', 'client');
   api.mainModule('server/main.js', 'server');

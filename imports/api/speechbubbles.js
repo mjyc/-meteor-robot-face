@@ -1,6 +1,6 @@
 import util from 'util';
 import { EventEmitter } from 'events';
-import * as log from 'loglevel';
+import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
@@ -182,6 +182,7 @@ if (Meteor.isServer) {
       }
 
       if (Speechbubbles.find({owner: userId}).count() > 0) {
+        console.log(logger.getLevel());
         logger.warn(`Skipping speechbubbles.initialize; user (${userId}) already has speechbubbles`);
         return;
       }

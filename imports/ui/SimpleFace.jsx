@@ -1,4 +1,4 @@
-import * as log from 'loglevel';
+import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';

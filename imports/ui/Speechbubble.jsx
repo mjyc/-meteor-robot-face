@@ -1,10 +1,10 @@
-import * as log from 'loglevel';
+import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 
 import { Speechbubbles } from '../api/speechbubbles.js';
 
-const logger = log.getLogger('Speechbubbles');
+const logger = log.getLogger('Speechbubble');
 
 export default class Speechbubble extends Component {
   constructor(props) {
@@ -12,6 +12,7 @@ export default class Speechbubble extends Component {
   }
 
   render() {
+
     switch (this.props.speechbubble.type) {
       case '':
         return null;

@@ -1,12 +1,11 @@
 import util from 'util';
 import { EventEmitter } from 'events';
-import * as log from 'loglevel';
+import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';
 
 const logger = log.getLogger('action');
-logger.setLevel('debug');
 
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
