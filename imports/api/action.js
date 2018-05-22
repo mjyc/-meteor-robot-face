@@ -11,7 +11,7 @@ logger.setLevel('debug');  // TODO: do this in each application
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 
-const defaultAction = {
+export const defaultAction = {
   goalId: '',
   status: '',  // 'pending', 'active', 'canceled', 'succeeded', 'aborted'
   goal: {},

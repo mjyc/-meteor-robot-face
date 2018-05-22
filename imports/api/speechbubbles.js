@@ -18,7 +18,7 @@ if (Meteor.isServer) {
 
   export class SpeechbubbleAction extends EventEmitter {
 
-    static insertSpeechbubble(docs) {
+    static insertSpeechbubble(doc) {
       Speechbubbles.insert(Object.assign({}, doc, {
         type: '',
         data: {},
@@ -138,7 +138,7 @@ if (Meteor.isServer) {
         type: 'choices',
       }).observeChanges({
         changed: (id, fields) => {
-          logger.debug(`id: ${id}; fields: ${obj2str(fields)}`);
+          logger.debug(`id: ${id}, fields: ${obj2str(fields)}`);
           this.emit('done', {
             status: 'succeeded',
             result: fields.data.selected,
@@ -177,18 +177,18 @@ if (Meteor.isServer) {
 
 
   Meteor.methods({
-    'speechbubbles.initialize'() {
-      if (!this.userId) {
+    'speechbubbles.initialize'(userId = this.userId) {
+      if (!userId) {
         throw new Meteor.Error('not-authorized');
       }
 
-      if (Speechbubbles.find({owner: this.userId}).count() > 0) {
-        logger.warn(`Skipping speechbubbles.initialize; user (${this.userId}) already has speechbubbles`);
+      if (Speechbubbles.find({owner: userId}).count() > 0) {
+        logger.warn(`Skipping speechbubbles.initialize; user (${userId}) already has speechbubbles`);
         return;
       }
 
-      SpeechbubbleAction.insertSpeechbubble({owner: this.userId, role: 'robot'});
-      SpeechbubbleAction.insertSpeechbubble({owner: this.userId, role: 'human'});
+      SpeechbubbleAction.insertSpeechbubble({owner: userId, role: 'robot'});
+      SpeechbubbleAction.insertSpeechbubble({owner: userId, role: 'human'});
     },
 
     'speechbubbles.choices.setSelected'(speechbubbleId, choice) {
