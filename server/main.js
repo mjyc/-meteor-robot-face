@@ -7,5 +7,8 @@ export {
   Speechbubbles as Speechbubbles,
   DisplayMessageAction as DisplayMessageAction,
   AskMultipleChoiceAction as AskMultipleChoiceAction,
-  Speech as Speech,
 } from '../imports/api/speechbubbles.js'
+
+export {
+  Speech as Speech,
+} from '../imports/api/speech.js'
