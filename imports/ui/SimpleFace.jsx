@@ -15,18 +15,34 @@ class SimpleFace extends Component {
     super(props);
   }
 
+  componentDidMount() {
+    setTimeout(() => {
+      serveSpeechSynthesisAction('pcLA5j39fX7RbAbC8', window.speechSynthesis);
+    }, 0);
+  }
+
   render() {
     if (this.props.loading) {
       return (
         <div>Loading...</div>
       )
-    }
-
-    serveSpeechSynthesisAction(this.props.speech._id, window.speechSynthesis);
+    };
 
     return (
       <div>
         <div>
+          <button
+            key={this.props.speech._id}
+            onClick={() => {
+              if (Speech.findOne(this.props.speech._id).test) {
+                Speech.update(this.props.speech._id, {$set: {test: false}});
+              } else {
+                Speech.update(this.props.speech._id, {$set: {test: true}});
+              }
+            }}
+          >
+            update
+          </button>
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
             <Speechbubble

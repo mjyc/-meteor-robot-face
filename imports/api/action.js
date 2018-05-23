@@ -10,16 +10,24 @@ const logger = log.getLogger('action');
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 
+export const goalStatus = {
+  'pending': 'pending',
+  'active': 'active',
+  'canceled': 'canceled',
+  'succeeded': 'succeeded',
+  'failed': 'failed',
+};
+
 export const defaultAction = {
   goalId: '',
-  status: '',  // 'pending', 'active', 'canceled', 'succeeded', 'aborted'
+  status: '',
   goal: {},
   result: {},
   isPreemptRequested: false,
 };
 
 
-class MeteorAction extends EventEmitter {
+class MeteorActionComm extends EventEmitter {
 
   constructor(collection, id) {
     super();
@@ -31,29 +39,41 @@ class MeteorAction extends EventEmitter {
 
     this._collection.find(this._id).observeChanges({
       changed: (id, fields) => {
-        logger.debug(`[MeteorAction.constructor] id: ${id}, fields: ${obj2str(fields)}`);
+        logger.debug(`[MeteorActionComm] id: ${id}, fields: ${obj2str(fields)}`);
 
         // start action requested
         if (
           fields.goalId
-          && fields.status === 'pending'
+          && fields.status === goalStatus.pending
         ) {
+          const goal = this._collection.findOne(id).goal;
+          logger.debug(`[MeteorActionComm] Received a new goal; goalId: ${fields.goalId}, status: ${fields.status}, goal: ${obj2str(goal)}`);
+
           this.emit('goal', {
             goalId: fields.goalId,
             status: fields.status,
-            goal: this._collection.findOne(id).goal,
+            goal,
           })
         }
 
         // cancel action requested
         if (fields.isPreemptRequested) {
+          const goalId = this._collection.findOne(id).goalId;
+          logger.debug(`[MeteorActionComm] Cancel requested; goalId: ${goalId}`);
+
           this.emit('cancel', {
-            goalId: this._collection.findOne(id).goalId
+            goalId,
           });
         }
 
         // action is finished
-        if (fields.status === 'canceled' || fields.status === 'succeeded') {
+        if (
+          fields.status === goalStatus.canceled
+          || fields.status === goalStatus.succeeded
+        ) {
+          const goalId = this._collection.findOne(id).goalId;
+          logger.debug(`[MeteorActionComm] Finished the action; goalId: ${goalId}, status: ${fields.status}, result: ${fields.result}`);
+
           this.emit('result', {
             goalId: this._collection.findOne(id).goalId,
             status: fields.status,
@@ -69,8 +89,7 @@ class MeteorAction extends EventEmitter {
   }
 
   _set(doc = {}) {
-    console.log('_set', doc);
-    this._collection.update({_id: this._id}, {$set: doc});
+    this._collection.update(this._id, {$set: doc});
   }
 
   // NOTE: inspired from firebase's once
@@ -84,7 +103,7 @@ class MeteorAction extends EventEmitter {
 }
 
 
-class MeteorActionClient extends MeteorAction {
+class MeteorActionClient extends MeteorActionComm {
 
   constructor(collection, id) {
     super(collection, id);
@@ -97,9 +116,11 @@ class MeteorActionClient extends MeteorAction {
     // TODO: check whether the action was successfully canceled
     console.log('[MeteorActionClient.sendGoal] done waiting');
 
+    // if (Meteor)
+
     this._set({
       goalId: Random.id(),
-      status: 'pending',
+      status: goalStatus.pending,
       goal,
     });
   }
@@ -113,7 +134,8 @@ class MeteorActionClient extends MeteorAction {
 }
 
 
-class MeteorActionServer extends MeteorAction {
+class MeteorActionServer extends MeteorActionComm {
+
   constructor(collection, id) {
     super(collection, id);
 
@@ -121,16 +143,22 @@ class MeteorActionServer extends MeteorAction {
     this._set(defaultAction);
   }
 
-  _acceptNewGoal(goal) {
-    throw new Meteor.Error('not implemented');
-  }
+  registerGoalCallback(callback = () => {}) {
+    if (this.goalCallback) {
+      this.removeListener('goal', this.goalCallback)
+    }
 
-  registerGoalCallback(callback) {
-    throw new Meteor.Error('not implemented');
+    this.goalCallback = callback;
+    this.on('goal', this.goalCallback);
   }
 
   registerPreemptCallback(callback) {
-    throw new Meteor.Error('not implemented');
+    if (this.preemptCallback) {
+      this.removeListener('cancel', this.preemptCallback)
+    }
+
+    this.preemptCallback = callback;
+    this.on('cancel', this.preemptCallback);
   }
 
 }
