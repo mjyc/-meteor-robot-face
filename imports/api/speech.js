@@ -13,54 +13,31 @@ if (Meteor.isClient) {
   const speechSynthesisActions = {};
 
   export const serveSpeechSynthesisAction = (id, synth) => {
-    console.log('serveSpeechSynthesisAction called');
 
     if (speechSynthesisActions[id]) {
       logger.debug(`[serveSpeechSynthesisAction] Skipping; already serving an action with id: ${id}`);
       return;
     }
 
-    console.log('serveSpeechSynthesisAction starting');
-
     const actionServer = getActionServer(Speech, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-      console.log('goal', actionGoal);
       const utterThis = new SpeechSynthesisUtterance(actionGoal.goal.text);
       utterThis.onend = (event) => {
-        console.log('SpeechSynthesisUtterance.onend');
-        actionServer.setSucceeded();
+        actionServer.setSucceeded(event);
+      }
+      utterThis.onerror = (event) => {
+        actionServer.setAborted(event);
       }
       synth.speak(utterThis);
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
-      console.log('cancel', cancelGoal, this);
+      synth.cancel();
       actionServer.setPreempted();
     });
 
     speechSynthesisActions[id] = actionServer;
-
-    // speechSynthesisActions[id].on('goal', (actionGoal) => {
-    //   console.log('goal', actionGoal);
-    //   const utterThis = new SpeechSynthesisUtterance(actionGoal.goal.text);
-    //   utterThis.onend = (event) => {
-    //     console.log('SpeechSynthesisUtterance.onend');
-    //     speechSynthesisActions[id]._set({
-    //       status: 'succeeded',
-    //       results: {},
-    //     });
-    //   }
-    //   synth.speak(utterThis);
-    // });
-
-    // return speechSynthesisActions[id].on('cancel', (result) => {
-    //   console.log('cancel', result);
-    //   speechSynthesisActions[id]._set({
-    //     status: 'canceled',
-    //     result: null,
-    //   })
-    // });
   }
 
 }

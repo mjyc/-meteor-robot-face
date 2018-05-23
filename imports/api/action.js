@@ -37,7 +37,7 @@ class MeteorActionComm extends EventEmitter {
 
     this._collection.find(this._id).observeChanges({
       changed: (id, fields) => {
-        logger.debug(`[MeteorActionComm] id: ${id}, fields: ${obj2str(fields)}`);
+        logger.debug(`[MeteorActionComm] id: ${id}, fields: ${obj2str(fields)}`, util.inspect(fields));
 
         // start action requested
         if (
@@ -164,6 +164,13 @@ class MeteorActionServer extends MeteorActionComm {
 
     this.preemptCallback = callback;
     this.on('cancel', this.preemptCallback);
+  }
+
+  setAborted(result = null) {
+    this._set({
+      status: goalStatus.aborted,
+      result,
+    })
   }
 
   setPreempted(result = null) {
