@@ -11,6 +11,7 @@ export const Speech = new Mongo.Collection('speech');
 if (Meteor.isClient) {
 
   const speechSynthesisActions = {};
+  const speechRecognitionActions = {};
 
   export const serveSpeechSynthesisAction = (id, synth) => {
 
@@ -38,6 +39,48 @@ if (Meteor.isClient) {
     });
 
     speechSynthesisActions[id] = actionServer;
+  }
+
+  export const serveSpeechRecognitionAction = (id) => {
+    if (speechRecognitionActions[id]) {
+      logger.debug(`[serveSpeechSynthesisAction] Skipping; already serving an action with id: ${id}`);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    const actionServer = getActionServer(Speech, id);
+
+    recognition.addEventListener('speechstart', () => {
+      console.log('Speech has been detected.');
+    });
+
+    recognition.addEventListener('result', (e) => {
+      console.log('Result has been detected.', e);
+
+      let last = e.results.length - 1;
+      let text = e.results[last][0].transcript;
+
+      // outputYou.textContent = text;
+      console.log('Confidence: ' + e.results[0][0].confidence);
+
+      actionServer.setSucceeded();
+    });
+
+
+    actionServer.registerGoalCallback((actionGoal) => {
+      recognition.start();
+    });
+
+    actionServer.registerPreemptCallback((cancelGoal) => {
+      actionServer.setPreempted();
+    });
+
+    speechRecognitionActions[id] = actionServer;
   }
 
 }
