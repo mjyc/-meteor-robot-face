@@ -153,5 +153,6 @@ export const getActionServer = (collection, id) => {
   if (!actionServers[`${collection._name}_${id}`]) {
     actionServers[`${collection._name}_${id}`] = new MeteorActionServer(collection, id);
   }
+
   return actionServers[`${collection._name}_${id}`];
 };

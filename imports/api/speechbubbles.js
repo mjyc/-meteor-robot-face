@@ -182,7 +182,6 @@ if (Meteor.isServer) {
       }
 
       if (Speechbubbles.find({owner: userId}).count() > 0) {
-        console.log(logger.getLevel());
         logger.warn(`Skipping speechbubbles.initialize; user (${userId}) already has speechbubbles`);
         return;
       }

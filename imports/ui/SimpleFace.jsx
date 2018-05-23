@@ -3,11 +3,9 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { defaultAction, MeteorAction } from '../api/action.js';
 import { Speechbubbles } from '../api/speechbubbles.js';
 import Speechbubble from '../ui/Speechbubble.jsx';
-import SpeechUI from '../ui/Speech.jsx';
-import { Speech } from '../api/speech.js';
+import { Speech, serveSpeechSynthesisAction } from '../api/speech.js';
 
 const logger = log.getLogger('SimpleFace');
 
@@ -24,14 +22,10 @@ class SimpleFace extends Component {
       )
     }
 
+    serveSpeechSynthesisAction(this.props.speech._id, window.speechSynthesis);
+
     return (
       <div>
-        <div>
-          <SpeechUI
-            key={this.props.speech._id}
-            speech={this.props.speech}
-          /> : null
-        </div>
         <div>
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
