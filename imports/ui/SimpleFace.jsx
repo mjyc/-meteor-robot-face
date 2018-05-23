@@ -20,10 +20,10 @@ class SimpleFace extends Component {
   }
 
   componentDidUpdate() {
-    // TODO: make sure props have speech variable
+    // TODO: try to call here once
     setTimeout(() => {
-      serveSpeechSynthesisAction(this.props.speech._id);
-      // serveSpeechRecognitionAction(this.props.speech._id);
+      serveSpeechSynthesisAction(this.props.speechSynthesis._id);
+      serveSpeechRecognitionAction(this.props.speechRecognition._id);
     }, 0);
   }
 
@@ -37,18 +37,6 @@ class SimpleFace extends Component {
     return (
       <div>
         <div>
-          <button
-            key={this.props.speech._id}
-            onClick={() => {
-              if (Speech.findOne(this.props.speech._id).test) {
-                Speech.update(this.props.speech._id, {$set: {test: false}});
-              } else {
-                Speech.update(this.props.speech._id, {$set: {test: true}});
-              }
-            }}
-          >
-            update
-          </button>
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
             <Speechbubble
@@ -77,12 +65,14 @@ export default withTracker(({faceQuery}) => {
   const loading = !speechbubblesHandle.ready() || !speechHandle.ready();
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
-  const speech = Speech.findOne();
+  const speechSynthesis = Speech.findOne({type: 'synthesis'});
+  const speechRecognition = Speech.findOne({type: 'recognition'});
 
   return {
     loading,
     speechbubbleRobot,
     speechbubbleHuman,
-    speech,
+    speechSynthesis,
+    speechRecognition,
   };
 })(SimpleFace);

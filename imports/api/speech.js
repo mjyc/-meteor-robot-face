@@ -55,10 +55,13 @@ if (Meteor.isClient) {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
+    console.log(recognition);
+    ['grammars', 'lang', 'continuous', 'interimResults', 'maxAlternatives', 'serviceURI'].map((param) => {
+      if (param in actionGoal.goal) recognition[param] = actionGoal.goal[param];
+    });
+    // recognition.lang = 'en-US';
+    // recognition.interimResults = false;
+    // recognition.maxAlternatives = 1;
     const actionServer = getActionServer(Speech, id);
 
     recognition.addEventListener('speechstart', () => {
@@ -87,6 +90,7 @@ if (Meteor.isClient) {
     });
 
     speechRecognitionActions[id] = actionServer;
+    return actionServer;
   }
 
 }
@@ -123,6 +127,7 @@ if (Meteor.isServer) {
         return;
       }
       Speech.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
+      Speech.insert(Object.assign({owner: userId, type: 'recognition'}, defaultAction));
     }
   });
 
