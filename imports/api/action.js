@@ -13,9 +13,9 @@ const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 export const goalStatus = {
   'pending': 'pending',
   'active': 'active',
-  'canceled': 'canceled',
+  'preempted': 'preempted',
   'succeeded': 'succeeded',
-  'failed': 'failed',
+  'aborted': 'aborted',
 };
 
 export const defaultAction = {
@@ -29,10 +29,8 @@ export const defaultAction = {
 
 class MeteorActionComm extends EventEmitter {
 
-  constructor(collection, id) {
+  constructor(collection, id) {  // TODO: check inputs
     super();
-
-    // TODO: check inputs
 
     this._collection = collection;
     this._id = id;
@@ -68,7 +66,7 @@ class MeteorActionComm extends EventEmitter {
 
         // action is finished
         if (
-          fields.status === goalStatus.canceled
+          fields.status === goalStatus.preempted
           || fields.status === goalStatus.succeeded
         ) {
           const goalId = this._collection.findOne(id).goalId;
@@ -77,7 +75,7 @@ class MeteorActionComm extends EventEmitter {
           this.emit('result', {
             goalId: this._collection.findOne(id).goalId,
             status: fields.status,
-            result: fields.result,
+            result: this._collection.findOne(id).result,
           })
         }
       }
@@ -103,6 +101,7 @@ class MeteorActionComm extends EventEmitter {
 }
 
 
+// TODO: consider composing MeteorActionCommon instead of inheriting it
 class MeteorActionClient extends MeteorActionComm {
 
   constructor(collection, id) {
@@ -110,30 +109,36 @@ class MeteorActionClient extends MeteorActionComm {
   }
 
   sendGoal(goal) {
-    logger.debug(`[MeteorActionClient.sendGoal] goal: ${obj2str(goal)}`);
-    this.cancel();
-    Promise.await( this.once('result') );
-    // TODO: check whether the action was successfully canceled
-    console.log('[MeteorActionClient.sendGoal] done waiting');
+    logger.debug(`[MeteorActionClient.sendGoal] cancel goalId: ${this._get().goalId}`);
+    const goalId = this._get().goalId;
+    const result = Promise.await( this.cancel() );
+    if (goalId !== result.goalId) {
+      logger.warn('[MeteorActionClient.sendGoal] Not sending goal; cancel failed');
+      return;
+    }
 
-    // if (Meteor)
-
+    logger.debug(`[MeteorActionClient.sendGoal] Sending goal: ${obj2str(goal)}`);
     this._set({
       goalId: Random.id(),
       status: goalStatus.pending,
       goal,
     });
+
+    return this.once('result');
   }
 
   cancel() {
     this._set({
       isPreemptRequested: true,
     });
+
+    return this.once('result');
   }
 
 }
 
 
+// TODO: consider composing MeteorActionCommon instead of inheriting it
 class MeteorActionServer extends MeteorActionComm {
 
   constructor(collection, id) {
@@ -161,6 +166,20 @@ class MeteorActionServer extends MeteorActionComm {
     this.on('cancel', this.preemptCallback);
   }
 
+  setPreempted(result = null) {
+    this._set({
+      status: goalStatus.preempted,
+      result,
+      isPreemptRequested: false,
+    })
+  }
+
+  setSucceeded(result = {}) {
+    this._set({
+      status: goalStatus.succeeded,
+      result,
+    })
+  }
 }
 
 

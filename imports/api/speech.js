@@ -29,20 +29,14 @@ if (Meteor.isClient) {
       const utterThis = new SpeechSynthesisUtterance(actionGoal.goal.text);
       utterThis.onend = (event) => {
         console.log('SpeechSynthesisUtterance.onend');
-        speechSynthesisActions[id]._set({
-          status: 'succeeded',
-          results: {},
-        });
+        actionServer.setSucceeded();
       }
       synth.speak(utterThis);
     });
 
-    actionServer.registerPreemptCallback(function(cancelGoal) {
+    actionServer.registerPreemptCallback((cancelGoal) => {
       console.log('cancel', cancelGoal, this);
-      speechSynthesisActions[id]._set({
-        status: 'canceled',
-        result: null,
-      })
+      actionServer.setPreempted();
     });
 
     speechSynthesisActions[id] = actionServer;
