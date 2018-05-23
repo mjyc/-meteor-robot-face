@@ -15,9 +15,10 @@ class SimpleFace extends Component {
     super(props);
   }
 
-  componentDidMount() {
+  componentDidUpdate() {
+    // TODO: make sure props have speech variable
     setTimeout(() => {
-      serveSpeechSynthesisAction('pcLA5j39fX7RbAbC8', window.speechSynthesis);
+      serveSpeechSynthesisAction(this.props.speech._id, window.speechSynthesis);
     }, 0);
   }
 

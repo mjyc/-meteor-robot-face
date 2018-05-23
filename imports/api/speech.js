@@ -74,16 +74,17 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  // TODO: update this
   Speech.allow({
-    insert: function (userId, doc) {
-      return true;
+    insert: (userId, doc) => {
+      return false;
     },
-    update: function (userId, doc, fields, modifier) {
-      return true;
+    update: (userId, doc, fields, modifier) => {
+      return userId &&
+        (doc.owner === userId);
     },
-    remove: function (userId, doc) {
-       return true;
+    remove: (userId, doc) => {
+       return userId &&
+        (doc.owner === userId);
     },
     fetch: ['owner']
   });
