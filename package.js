@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'simple-face',
+  name: 'mjyc:simple-face',
   version: '0.0.1',
   summary: 'Meteor package providing a simple face React component.',
   git: 'https://gitlab.cs.washington.edu/mjyc/simple-face',

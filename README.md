@@ -1,4 +1,4 @@
-# (WIP) Meteor Simple Face
+# Meteor Simple Face
 
 Meteor package providing a "face" React component.
 
