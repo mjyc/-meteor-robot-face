@@ -13,17 +13,22 @@ if (Meteor.isClient) {
   const speechSynthesisActions = {};
   const speechRecognitionActions = {};
 
-  export const serveSpeechSynthesisAction = (id, synth) => {
+  export const serveSpeechSynthesisAction = (id) => {
 
     if (speechSynthesisActions[id]) {
       logger.debug(`[serveSpeechSynthesisAction] Skipping; already serving an action with id: ${id}`);
       return;
     }
 
+    const synth = window.speechSynthesis;
     const actionServer = getActionServer(Speech, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-      const utterThis = new SpeechSynthesisUtterance(actionGoal.goal.text);
+      const utterThis = new SpeechSynthesisUtterance();
+      ['lang', 'pitch', 'rate', 'text', 'volume'].map((param) => {
+        if (param in actionGoal.goal) utterThis[param] = actionGoal.goal[param];
+      });
+      logger.debug(`[serveSpeechSynthesisAction] utterThis: ${utterThis}`);
       utterThis.onend = (event) => {
         actionServer.setSucceeded(event);
       }
@@ -39,6 +44,7 @@ if (Meteor.isClient) {
     });
 
     speechSynthesisActions[id] = actionServer;
+    return actionServer;
   }
 
   export const serveSpeechRecognitionAction = (id) => {

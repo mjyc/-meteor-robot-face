@@ -37,7 +37,7 @@ class MeteorActionComm extends EventEmitter {
 
     this._collection.find(this._id).observeChanges({
       changed: (id, fields) => {
-        logger.debug(`[MeteorActionComm] id: ${id}, fields: ${obj2str(fields)}`, util.inspect(fields));
+        logger.debug(`[MeteorActionComm] id: ${id}, fields: ${obj2str(fields)}`);
 
         // start action requested
         if (

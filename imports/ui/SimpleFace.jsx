@@ -5,7 +5,11 @@ import { withTracker } from 'meteor/react-meteor-data';
 
 import { Speechbubbles } from '../api/speechbubbles.js';
 import Speechbubble from '../ui/Speechbubble.jsx';
-import { Speech, serveSpeechSynthesisAction, serveSpeechRecognitionAction } from '../api/speech.js';
+import {
+  Speech,
+  serveSpeechSynthesisAction,
+  serveSpeechRecognitionAction,
+} from '../api/speech.js';
 
 const logger = log.getLogger('SimpleFace');
 
@@ -18,8 +22,8 @@ class SimpleFace extends Component {
   componentDidUpdate() {
     // TODO: make sure props have speech variable
     setTimeout(() => {
-      // serveSpeechSynthesisAction(this.props.speech._id, window.speechSynthesis);
-      serveSpeechRecognitionAction(this.props.speech._id);
+      serveSpeechSynthesisAction(this.props.speech._id);
+      // serveSpeechRecognitionAction(this.props.speech._id);
     }, 0);
   }
 
