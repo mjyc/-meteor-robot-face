@@ -4,12 +4,14 @@ import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
 import { Speechbubbles } from '../api/speechbubbles.js';
-import Speechbubble from '../ui/Speechbubble.jsx';
 import {
   Speech,
   serveSpeechSynthesisAction,
   serveSpeechRecognitionAction,
 } from '../api/speech.js';
+
+import Speechbubble from '../ui/Speechbubble.jsx';
+// import MediaUI from '../ui/MediaUI.jsx';
 
 const logger = log.getLogger('SimpleFace');
 
@@ -18,6 +20,8 @@ class SimpleFace extends Component {
   constructor(props) {
     super(props);
   }
+
+  // componentDidMount()
 
   componentDidUpdate(prevProps) {
     if (prevProps.loading && !this.props.loading) {
@@ -40,6 +44,26 @@ class SimpleFace extends Component {
     return (
       <div>
         <div>
+          <input
+            type="file"
+            onChange={(event) => {
+              console.log('files', event.target.files);
+
+              const reader  = new FileReader();
+              reader.addEventListener("load", function () {
+                // preview.src = reader.result;
+                console.log('done', reader.result);
+                // mySound = new Audio(reader.result);
+                // mySound.play();
+              }, false);
+
+              const file = event.target.files[0]
+              if (file) {
+                reader.readAsDataURL(file);
+              }
+            }}
+          />
+
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
             <Speechbubble

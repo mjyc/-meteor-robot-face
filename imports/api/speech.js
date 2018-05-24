@@ -24,8 +24,6 @@ if (Meteor.isClient) {
     const actionServer = getActionServer(Speech, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-      actionServer._set({status: 'active'});
-
       const utterThis = new SpeechSynthesisUtterance();
       ['lang', 'pitch', 'rate', 'text', 'volume'].map((param) => {
         if (param in actionGoal.goal) utterThis[param] = actionGoal.goal[param];
@@ -138,7 +136,7 @@ if (Meteor.isServer) {
 
 
   Meteor.publish('speech', function speechPublication() {
-    // TODO: restrict access based on user permission; right now all speechbubbles public!
+    // TODO: restrict access based on user permission; right now all speech docs are public!
     return Speech.find();
   });
 
@@ -146,7 +144,7 @@ if (Meteor.isServer) {
   Meteor.methods({
     'speech.addUser'(userId = this.userId) {
       if (Speech.findOne({owner: userId, type: 'synthesis'})) {
-        logger.warn(`Skipping; user ${this.userId} already has a speech synthesis action document`);
+        logger.warn(`Skipping; user ${this.userId} already has speech synthesis actions document`);
         return;
       }
       Speech.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
