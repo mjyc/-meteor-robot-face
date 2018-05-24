@@ -20,7 +20,7 @@ export const goalStatus = {
 
 export const defaultAction = {
   goalId: '',
-  status: '',
+  status: goalStatus.succeeded,
   goal: {},
   result: {},
   isPreemptRequested: false,
@@ -51,7 +51,7 @@ class MeteorActionComm extends EventEmitter {
             goalId: fields.goalId,
             status: fields.status,
             goal,
-          })
+          });
         }
 
         // cancel action requested
@@ -68,6 +68,7 @@ class MeteorActionComm extends EventEmitter {
         if (
           fields.status === goalStatus.preempted
           || fields.status === goalStatus.succeeded
+          || fields.status === goalStatus.aborted
         ) {
           const goalId = this._collection.findOne(id).goalId;
           logger.debug(`[MeteorActionComm] Finished the goal; goalId: ${goalId}, status: ${fields.status}, result: ${fields.result}`);
@@ -76,7 +77,7 @@ class MeteorActionComm extends EventEmitter {
             goalId: this._collection.findOne(id).goalId,
             status: fields.status,
             result: this._collection.findOne(id).result,
-          })
+          });
         }
       }
     });
@@ -135,8 +136,9 @@ class MeteorActionClient extends MeteorActionComm {
     if (
       status === goalStatus.preempted
       || status === goalStatus.succeeded
+      || status === goalStatus.aborted
     ) {
-      logger.debug(`Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
+      logger.debug(`[MeteorActionClient] Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
       return Promise.resolve({  // return current goalId, status, result
         goalId,
         status,
@@ -168,7 +170,10 @@ class MeteorActionServer extends MeteorActionComm {
       this.removeListener('goal', this.goalCallback)
     }
 
-    this.goalCallback = callback;
+    this.goalCallback = (goal) => {
+      this._set({status: goalStatus.active});  // acceptNewGoal
+      callback(goal);
+    }
     this.on('goal', this.goalCallback);
   }
 
@@ -182,6 +187,11 @@ class MeteorActionServer extends MeteorActionComm {
   }
 
   setAborted(result = null) {
+    if (this._get().status !== goalStatus.active) {
+      logger.debug(`[MeteorActionServer] Cannot abort a goal in status: ${this._get().status}`);
+      return;
+    }
+
     this._set({
       status: goalStatus.aborted,
       result,
@@ -189,6 +199,11 @@ class MeteorActionServer extends MeteorActionComm {
   }
 
   setPreempted(result = null) {
+    if (this._get().status !== goalStatus.pending && this._get().status !== goalStatus.active) {
+      logger.debug(`[MeteorActionServer] Cannot preempt a goal in status: ${this._get().status}`);
+      return;
+    }
+
     this._set({
       status: goalStatus.preempted,
       result,
@@ -197,6 +212,11 @@ class MeteorActionServer extends MeteorActionComm {
   }
 
   setSucceeded(result = {}) {
+    if (this._get().status !== goalStatus.active) {
+      logger.debug(`[MeteorActionServer] Cannot succeed a goal in status: ${this._get().status}`);
+      return;
+    }
+
     this._set({
       status: goalStatus.succeeded,
       result,

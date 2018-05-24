@@ -1,9 +1,9 @@
 import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
-import { defaultAction, getActionServer } from './action.js';  // TODO: implement a speech action client wrapper
+import { defaultAction, getActionServer } from './action.js';
 
-const logger = log.getLogger('action');
+const logger = log.getLogger('speech');
 
 export const Speech = new Mongo.Collection('speech');
 
@@ -24,6 +24,8 @@ if (Meteor.isClient) {
     const actionServer = getActionServer(Speech, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
+      actionServer._set({status: 'active'});
+
       const utterThis = new SpeechSynthesisUtterance();
       ['lang', 'pitch', 'rate', 'text', 'volume'].map((param) => {
         if (param in actionGoal.goal) utterThis[param] = actionGoal.goal[param];
@@ -53,18 +55,27 @@ if (Meteor.isClient) {
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+    const SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
     const recognition = new SpeechRecognition();
     const actionServer = getActionServer(Speech, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
       recognition.abort();
-      ['grammars', 'lang', 'continuous', 'interimResults', 'maxAlternatives', 'serviceURI'].map((param) => {
+      ['lang', 'continuous', 'interimResults', 'maxAlternatives', 'serviceURI'].map((param) => {
         if (param in actionGoal.goal) recognition[param] = actionGoal.goal[param];
       });
+      if ('grammars' in actionGoal.goal) {
+        const speechRecognitionList = new SpeechGrammarList();
+        actionGoal.goal.grammars.map(({string, weight = 1} = {}) => {
+          speechRecognitionList.addFromString(string, weight);
+        });
+        recognition.grammars = speechRecognitionList;
+      }
 
       recognition.onend = (event) => {
         logger.debug('[serveSpeechSynthesisAction] onend event:', event);
+        // TODO: think about what should I do here
       };
       recognition.onerror = (event) => {
         logger.debug('[serveSpeechSynthesisAction] onerror event:', event);
@@ -89,7 +100,6 @@ if (Meteor.isClient) {
             };
           }
         }
-        console.log('result', result);
         actionServer.setSucceeded(result);
       };
 
@@ -97,6 +107,7 @@ if (Meteor.isClient) {
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
+      console.log('hell?');
       recognition.abort();
       actionServer.setPreempted();
     });
