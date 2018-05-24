@@ -1,3 +1,6 @@
+import '../imports/api/media.js'
+
+// TODO: consider not exporting some variables
 export * as action from '../imports/api/action.js'
 
 export {
@@ -7,5 +10,5 @@ export {
 } from '../imports/api/speechbubbles.js'
 
 export {
-  Speech as Speech,
+  Speech
 } from '../imports/api/speech.js'

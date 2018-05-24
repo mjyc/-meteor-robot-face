@@ -11,7 +11,7 @@ import {
 } from '../api/speech.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
-// import MediaUI from '../ui/MediaUI.jsx';
+import MediaFileManager from '../ui/MediaFileManager.jsx';
 
 const logger = log.getLogger('SimpleFace');
 
@@ -43,27 +43,8 @@ class SimpleFace extends Component {
 
     return (
       <div>
+
         <div>
-          <input
-            type="file"
-            onChange={(event) => {
-              console.log('files', event.target.files);
-
-              const reader  = new FileReader();
-              reader.addEventListener("load", function () {
-                // preview.src = reader.result;
-                console.log('done', reader.result);
-                // mySound = new Audio(reader.result);
-                // mySound.play();
-              }, false);
-
-              const file = event.target.files[0]
-              if (file) {
-                reader.readAsDataURL(file);
-              }
-            }}
-          />
-
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
             <Speechbubble
