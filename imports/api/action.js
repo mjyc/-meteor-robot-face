@@ -70,7 +70,7 @@ class MeteorActionComm extends EventEmitter {
           || fields.status === goalStatus.succeeded
         ) {
           const goalId = this._collection.findOne(id).goalId;
-          logger.debug(`[MeteorActionComm] Finished the action; goalId: ${goalId}, status: ${fields.status}, result: ${fields.result}`);
+          logger.debug(`[MeteorActionComm] Finished the goal; goalId: ${goalId}, status: ${fields.status}, result: ${fields.result}`);
 
           this.emit('result', {
             goalId: this._collection.findOne(id).goalId,
@@ -128,11 +128,26 @@ class MeteorActionClient extends MeteorActionComm {
   }
 
   cancel() {
-    this._set({
-      isPreemptRequested: true,
-    });
+    const goalId = this._get().goalId;
+    const status = this._get().status;
+    const result = this._get().result;
 
-    return this.once('result');
+    if (
+      status === goalStatus.preempted
+      || status === goalStatus.succeeded
+    ) {
+      logger.debug(`Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
+      return Promise.resolve({  // return current goalId, status, result
+        goalId,
+        status,
+        result,
+      });
+    } else {
+      this._set({
+        isPreemptRequested: true,
+      });
+      return this.once('result');
+    }
   }
 
 }
@@ -144,7 +159,7 @@ class MeteorActionServer extends MeteorActionComm {
   constructor(collection, id) {
     super(collection, id);
 
-    // reset the action
+    // reset
     this._set(defaultAction);
   }
 

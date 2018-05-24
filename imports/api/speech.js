@@ -33,7 +33,7 @@ if (Meteor.isClient) {
         actionServer.setSucceeded(event);
       }
       utterThis.onerror = (event) => {
-        actionServer.setAborted(event);
+        actionServer.setAborted(event.error);
       }
       synth.speak(utterThis);
     });
@@ -55,37 +55,49 @@ if (Meteor.isClient) {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    console.log(recognition);
-    ['grammars', 'lang', 'continuous', 'interimResults', 'maxAlternatives', 'serviceURI'].map((param) => {
-      if (param in actionGoal.goal) recognition[param] = actionGoal.goal[param];
-    });
-    // recognition.lang = 'en-US';
-    // recognition.interimResults = false;
-    // recognition.maxAlternatives = 1;
     const actionServer = getActionServer(Speech, id);
 
-    recognition.addEventListener('speechstart', () => {
-      console.log('Speech has been detected.');
-    });
-
-    recognition.addEventListener('result', (e) => {
-      console.log('Result has been detected.', e);
-
-      let last = e.results.length - 1;
-      let text = e.results[last][0].transcript;
-
-      // outputYou.textContent = text;
-      console.log('Confidence: ' + e.results[0][0].confidence);
-
-      actionServer.setSucceeded();
-    });
-
-
     actionServer.registerGoalCallback((actionGoal) => {
+      recognition.abort();
+      ['grammars', 'lang', 'continuous', 'interimResults', 'maxAlternatives', 'serviceURI'].map((param) => {
+        if (param in actionGoal.goal) recognition[param] = actionGoal.goal[param];
+      });
+
+      recognition.onend = (event) => {
+        logger.debug('[serveSpeechSynthesisAction] onend event:', event);
+      };
+      recognition.onerror = (event) => {
+        logger.debug('[serveSpeechSynthesisAction] onerror event:', event);
+        actionServer.setAborted(event.error);
+      };
+      recognition.onresult = (event) => {
+        logger.debug('[serveSpeechSynthesisAction] onresult event:', event);
+        // NOTE: SpeechRecognition returns SpeechRecognitionResultList as a
+        //   result; see https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognitionResultList
+        const result = {
+          length: event.results.length,
+        };
+        for (let i = event.results.length - 1; i >= 0; i--) {
+          result[i] = {
+            isFinal: event.results[i].isFinal,
+            length: event.results[i].length,
+          };
+          for (let j = event.results[i].length - 1; j >= 0; j--) {
+            result[i][j] = {
+              transcript: event.results[i][j].transcript,
+              confidence: event.results[i][j].confidence,
+            };
+          }
+        }
+        console.log('result', result);
+        actionServer.setSucceeded(result);
+      };
+
       recognition.start();
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
+      recognition.abort();
       actionServer.setPreempted();
     });
 

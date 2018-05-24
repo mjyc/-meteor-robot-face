@@ -19,12 +19,15 @@ class SimpleFace extends Component {
     super(props);
   }
 
-  componentDidUpdate() {
-    // TODO: try to call here once
-    setTimeout(() => {
-      serveSpeechSynthesisAction(this.props.speechSynthesis._id);
-      serveSpeechRecognitionAction(this.props.speechRecognition._id);
-    }, 0);
+  componentDidUpdate(prevProps) {
+    if (prevProps.loading && !this.props.loading) {
+      // NOTE: the functions inside of setTimeout callback use .observeChanges,
+      //  which won't work properly within in withTracker
+      setTimeout(() => {
+        serveSpeechSynthesisAction(this.props.speechSynthesis._id);
+        serveSpeechRecognitionAction(this.props.speechRecognition._id);
+      }, 0);
+    }
   }
 
   render() {
