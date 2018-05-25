@@ -12,49 +12,34 @@ export const MediaFiles = new Mongo.Collection('media_files');
 
 if (Meteor.isClient) {
 
-  const soundPlayActions = {};
+  const playSoundActions = {};
 
-  export const serveSoundPlayAction = (id) => {
+  export const servePlaySoundAction = (id) => {
 
-    if (soundPlayActions[id]) {
-      logger.debug(`[serveSoundPlayAction] Skipping; already serving an action with id: ${id}`);
+    if (playSoundActions[id]) {
+      logger.debug(`[servePlaySoundAction] Skipping; already serving an action with id: ${id}`);
       return;
     }
 
-    // let soundPlayer = new Audio();
-    // soundPlayer.onload = () => {
-    //     console.log('onload');
-    //   };
-    //   soundPlayer.onloadeddata = () => {
-    //     console.log('onloadeddata');
-    //   };
     let soundPlayer = null;
     const actionServer = getActionServer(MediaActions, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-      // soundPlayer.load(MediaFiles.findOne({filename: actionGoal.goal.name}).data);
-      // soundPlayer.onended = () => {
-      //   console.log('onended');
-      // }
       soundPlayer = new Audio(MediaFiles.findOne({filename: actionGoal.goal.name}).data);
-      soundPlayer.onclose = () => {
-        console.log('onclose');
-      }
-      soundPlayer.oncancel = () => {
-        console.log('oncancel');
+      soundPlayer.onended = (event) => {
+        actionServer.setSucceeded();
       }
       soundPlayer.play();
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
       if (soundPlayer) {
-
+        soundPlayer.pause();
       }
-      // soundPlayer.pause();
       actionServer.setPreempted();
     });
 
-    soundPlayActions[id] = actionServer;
+    playSoundActions[id] = actionServer;
     return actionServer;
   }
 }
@@ -90,9 +75,9 @@ if (Meteor.isServer) {
         logger.warn(`Skipping; user ${this.userId} already has media action document`);
         return;
       }
-      MediaActions.insert(Object.assign({owner: userId}, defaultAction));
-      // MediaActions.insert(Object.assign({owner: userId}, defaultAction));
-      // MediaActions.insert(Object.assign({owner: userId}, defaultAction));
+      MediaActions.insert(Object.assign({owner: userId, type: 'sound'}, defaultAction));
+      MediaActions.insert(Object.assign({owner: userId, type: 'image'}, defaultAction));
+      MediaActions.insert(Object.assign({owner: userId, type: 'video'}, defaultAction));
     }
   });
 

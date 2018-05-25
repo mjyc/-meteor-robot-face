@@ -12,21 +12,21 @@ import {
 import {
   MediaActions,
   MediaFiles,
-  serveSoundPlayAction,
+  servePlaySoundAction,
 } from '../api/media.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
 import MediaFileManager from '../ui/MediaFileManager.jsx';
 
+
 const logger = log.getLogger('SimpleFace');
+
 
 // SimpleFace component - represents the whole app
 class SimpleFace extends Component {
   constructor(props) {
     super(props);
   }
-
-  // componentDidMount()
 
   componentDidUpdate(prevProps) {
     if (prevProps.loading && !this.props.loading) {
@@ -35,7 +35,7 @@ class SimpleFace extends Component {
       setTimeout(() => {
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
-        serveSoundPlayAction('aBMvSNghdA3NG4GdJ');
+        servePlaySoundAction(this.props.playSound._id);
       }, 0);
     }
   }
@@ -51,10 +51,6 @@ class SimpleFace extends Component {
       <div>
 
         <MediaFileManager />
-
-        <video src={
-          this.props.mediaFile && this.props.mediaFile.data
-        } />
 
         <div>
           <strong>Robot: </strong>
@@ -83,16 +79,13 @@ export default withTracker(({faceQuery}) => {
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const speechHandle = Meteor.subscribe('speech');
   const mediaActionsHandle = Meteor.subscribe('media_actions');
-  const mediaFilesHandle = Meteor.subscribe('media_files');
-  const loading = !speechbubblesHandle.ready() || !speechHandle.ready() || !mediaActionsHandle.ready() || !mediaFilesHandle.ready();
+  const loading = !speechbubblesHandle.ready() || !speechHandle.ready() || !mediaActionsHandle.ready();
+
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
   const speechSynthesis = Speech.findOne({type: 'synthesis'});
   const speechRecognition = Speech.findOne({type: 'recognition'});
-
-
-  const mediaActions = MediaActions.find().fetch();
-  const mediaFile = MediaFiles.findOne({name: 'data'});
+  const playSound = MediaActions.findOne({type: 'sound'});  // TODO: refactor with type?
 
   return {
     loading,
@@ -100,7 +93,6 @@ export default withTracker(({faceQuery}) => {
     speechbubbleHuman,
     speechSynthesis,
     speechRecognition,
-    mediaActions,
-    mediaFile,
+    playSound,
   };
 })(SimpleFace);

@@ -1,7 +1,3 @@
-// TODOs:
-// 1. show available files
-// 2. support preview
-
 import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
@@ -23,6 +19,10 @@ class MediaFileManager extends Component {
       )
     };
 
+    // TODOs:
+    //   1. show available files
+    //   2. support preview
+    //   3. check filesize && name on upload
     return (
       <div>
 
@@ -53,7 +53,7 @@ class MediaFileManager extends Component {
   }
 }
 
-export default withTracker(({faceQuery}) => {
+export default withTracker(() => {
   const mediaFilesHandle = Meteor.subscribe('media_files');
   const loading = !mediaFilesHandle.ready();
   const mediaFiles = MediaFiles.find().fetch();

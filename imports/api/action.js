@@ -207,7 +207,7 @@ class MeteorActionServer extends MeteorActionComm {
     this._set({
       status: goalStatus.preempted,
       result,
-      isPreemptRequested: false,
+      isPreemptRequested: false,  // TODO: consider doing this in registerPreemptCallback
     })
   }
 
