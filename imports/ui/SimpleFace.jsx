@@ -51,8 +51,6 @@ class SimpleFace extends Component {
     return (
       <div>
 
-        <MediaUI />
-
         <MediaFileManager />
 
         <div>
