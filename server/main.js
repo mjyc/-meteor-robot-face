@@ -1,5 +1,3 @@
-import '../imports/api/media.js'
-
 // TODO: consider not exporting some variables
 export * as action from '../imports/api/action.js'
 
@@ -12,3 +10,8 @@ export {
 export {
   Speech
 } from '../imports/api/speech.js'
+
+export {
+  MediaActions,
+  MediaFiles,
+} from '../imports/api/media.js'

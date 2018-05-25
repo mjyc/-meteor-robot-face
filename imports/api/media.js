@@ -3,7 +3,7 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { defaultAction, getActionServer } from './action.js';
 
-const logger = log.getLogger('sound');
+const logger = log.getLogger('media');
 
 export const MediaActions = new Mongo.Collection('media_actions');
 
@@ -12,33 +12,51 @@ export const MediaFiles = new Mongo.Collection('media_files');
 
 if (Meteor.isClient) {
 
-  // const soundPlayActions = {};
+  const soundPlayActions = {};
 
-  // export const serveSoundPlayAction = (id) => {
+  export const serveSoundPlayAction = (id) => {
 
-  //   if (soundPlayActions[id]) {
-  //     logger.debug(`[serveSoundPlayAction] Skipping; already serving an action with id: ${id}`);
-  //     return;
-  //   }
+    if (soundPlayActions[id]) {
+      logger.debug(`[serveSoundPlayAction] Skipping; already serving an action with id: ${id}`);
+      return;
+    }
 
-  //   const soundPlayer = new Audio();
-  //   const actionServer = getActionServer(Sounds, id);
+    // let soundPlayer = new Audio();
+    // soundPlayer.onload = () => {
+    //     console.log('onload');
+    //   };
+    //   soundPlayer.onloadeddata = () => {
+    //     console.log('onloadeddata');
+    //   };
+    let soundPlayer = null;
+    const actionServer = getActionServer(MediaActions, id);
 
-  //   actionServer.registerGoalCallback((actionGoal) => {
+    actionServer.registerGoalCallback((actionGoal) => {
+      // soundPlayer.load(MediaFiles.findOne({filename: actionGoal.goal.name}).data);
+      // soundPlayer.onended = () => {
+      //   console.log('onended');
+      // }
+      soundPlayer = new Audio(MediaFiles.findOne({filename: actionGoal.goal.name}).data);
+      soundPlayer.onclose = () => {
+        console.log('onclose');
+      }
+      soundPlayer.oncancel = () => {
+        console.log('oncancel');
+      }
+      soundPlayer.play();
+    });
 
-  //     soundPlayer.load(Speech.findOne(id).data);
+    actionServer.registerPreemptCallback((cancelGoal) => {
+      if (soundPlayer) {
 
-  //     soundPlayer.play();
-  //   });
+      }
+      // soundPlayer.pause();
+      actionServer.setPreempted();
+    });
 
-  //   actionServer.registerPreemptCallback((cancelGoal) => {
-  //     synth.cancel();
-  //     actionServer.setPreempted();
-  //   });
-
-  //   speechSynthesisActions[id] = actionServer;
-  //   return actionServer;
-  // }
+    soundPlayActions[id] = actionServer;
+    return actionServer;
+  }
 }
 
 
@@ -60,7 +78,7 @@ if (Meteor.isServer) {
   });
 
 
-  Meteor.publish('medial_actions', function mediaActionsPublication() {
+  Meteor.publish('media_actions', function mediaActionsPublication() {
     // TODO: restrict access based on user permission; right now all media actions are public!
     return MediaActions.find();
   });
@@ -73,14 +91,14 @@ if (Meteor.isServer) {
         return;
       }
       MediaActions.insert(Object.assign({owner: userId}, defaultAction));
-      MediaActions.insert(Object.assign({owner: userId}, defaultAction));
-      MediaActions.insert(Object.assign({owner: userId}, defaultAction));
+      // MediaActions.insert(Object.assign({owner: userId}, defaultAction));
+      // MediaActions.insert(Object.assign({owner: userId}, defaultAction));
     }
   });
 
 
   // TODO: remove or update after prototyping
-  MediaActions.allow({
+  MediaFiles.allow({
     insert: (userId, doc) => {
       return true;
     },
@@ -95,7 +113,7 @@ if (Meteor.isServer) {
 
   Meteor.publish('media_files', function mediaFilesPublication() {
     // TODO: restrict access based on user permission; right now all media files are public!
-    return MediaActions.find();
+    return MediaFiles.find();
   });
 
   // Meteor.methods({

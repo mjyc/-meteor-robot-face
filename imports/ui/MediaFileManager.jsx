@@ -1,3 +1,7 @@
+// TODOs:
+// 1. show available files
+// 2. support preview
+
 import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
@@ -28,18 +32,19 @@ class MediaFileManager extends Component {
           onChange={(event) => {
             logger.debug('input changed', event.target.files);
 
-            const reader  = new FileReader();
-            reader.addEventListener("load", () => {
-              logger.debug('file loaded');
-              // Meteor.insert({
-              //   filename
-              // });
-
-            }, false);
-            const file = event.target.files[0]
-            if (file) {
+            for (let i = event.target.files.length - 1; i >= 0; i--) {
+              const file = event.target.files[i];
+              const reader  = new FileReader();
+              reader.addEventListener('load', () => {
+                logger.debug('file loaded');
+                MediaFiles.insert({
+                  filename: 'test',
+                  data: reader.result,
+                });
+              });
               reader.readAsDataURL(file);
             }
+
           }}
         />
 
@@ -55,6 +60,6 @@ export default withTracker(({faceQuery}) => {
 
   return {
     loading,
-    mediaFiles,
+    // mediaFiles,
   };
 })(MediaFileManager);

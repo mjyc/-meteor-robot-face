@@ -9,6 +9,11 @@ import {
   serveSpeechSynthesisAction,
   serveSpeechRecognitionAction,
 } from '../api/speech.js';
+import {
+  MediaActions,
+  MediaFiles,
+  serveSoundPlayAction,
+} from '../api/media.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
 import MediaFileManager from '../ui/MediaFileManager.jsx';
@@ -30,6 +35,7 @@ class SimpleFace extends Component {
       setTimeout(() => {
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
+        serveSoundPlayAction('aBMvSNghdA3NG4GdJ');
       }, 0);
     }
   }
@@ -43,6 +49,12 @@ class SimpleFace extends Component {
 
     return (
       <div>
+
+        <MediaFileManager />
+
+        <video src={
+          this.props.mediaFile && this.props.mediaFile.data
+        } />
 
         <div>
           <strong>Robot: </strong>
@@ -70,11 +82,17 @@ class SimpleFace extends Component {
 export default withTracker(({faceQuery}) => {
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const speechHandle = Meteor.subscribe('speech');
-  const loading = !speechbubblesHandle.ready() || !speechHandle.ready();
+  const mediaActionsHandle = Meteor.subscribe('media_actions');
+  const mediaFilesHandle = Meteor.subscribe('media_files');
+  const loading = !speechbubblesHandle.ready() || !speechHandle.ready() || !mediaActionsHandle.ready() || !mediaFilesHandle.ready();
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
   const speechSynthesis = Speech.findOne({type: 'synthesis'});
   const speechRecognition = Speech.findOne({type: 'recognition'});
+
+
+  const mediaActions = MediaActions.find().fetch();
+  const mediaFile = MediaFiles.findOne({name: 'data'});
 
   return {
     loading,
@@ -82,5 +100,7 @@ export default withTracker(({faceQuery}) => {
     speechbubbleHuman,
     speechSynthesis,
     speechRecognition,
+    mediaActions,
+    mediaFile,
   };
 })(SimpleFace);
