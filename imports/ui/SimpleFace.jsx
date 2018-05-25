@@ -17,6 +17,7 @@ import {
 
 import Speechbubble from '../ui/Speechbubble.jsx';
 import MediaFileManager from '../ui/MediaFileManager.jsx';
+import MediaUI from '../ui/Media.jsx';
 
 
 const logger = log.getLogger('SimpleFace');
@@ -49,6 +50,8 @@ class SimpleFace extends Component {
 
     return (
       <div>
+
+        <MediaUI />
 
         <MediaFileManager />
 

@@ -37,10 +37,10 @@ class MediaFileManager extends Component {
               const reader  = new FileReader();
               reader.addEventListener('load', () => {
                 logger.debug('file loaded');
-                MediaFiles.insert({
+                MediaFiles.update('test', {$set: {
                   filename: 'test',
                   data: reader.result,
-                });
+                }});
               });
               reader.readAsDataURL(file);
             }
