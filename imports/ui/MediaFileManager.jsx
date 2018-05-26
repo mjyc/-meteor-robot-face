@@ -23,7 +23,6 @@ class MediaFileManager extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      files: [],
       skippedFiles: null,
     };
   }
@@ -72,51 +71,45 @@ class MediaFileManager extends Component {
       <div>
 
         <div>
-          <input
-            type="file"
-            multiple
-            onChange={(event) => {
-              this.setState({files: event.target.files});
-            }}
-          />
           <RaisedButton
+            containerElement='label'
             label="Upload"
-            disabled={this.state.files.length === 0}
-            onClick={() => {
-
-              const skippedFiles = [];
-              for (let i = this.state.files.length - 1; i >= 0; i--) {
-                const file = this.state.files[i];
-                // default maxFileSize to 5mb
-                if (file.size > (this.props.maxFileSize ? this.props.maxFileSize : 5000000)) {
-                  skippedFiles.push(file);
-                  continue;
-                }
-                const reader  = new FileReader();
-                reader.addEventListener('load', () => {
-                  logger.debug('[MediaFileManager] Inserting file:', file);
-                  MediaFiles.insert({
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    data: reader.result,
+          >
+            <input
+              style={{display: 'none'}}
+              type="file"
+              multiple
+              onChange={(event) => {
+                const skippedFiles = [];
+                for (let i = event.target.files.length - 1; i >= 0; i--) {
+                  const file = event.target.files[i];
+                  // default maxFileSize to 5mb
+                  if (file.size > (this.props.maxFileSize ? this.props.maxFileSize : 5000000)) {
+                    skippedFiles.push(file);
+                    continue;
+                  }
+                  const reader  = new FileReader();
+                  reader.addEventListener('load', () => {
+                    logger.debug('[MediaFileManager] Inserting file:', file);
+                    MediaFiles.insert({
+                      name: file.name,
+                      size: file.size,
+                      type: file.type,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      data: reader.result,
+                    });
                   });
+                  reader.readAsDataURL(file);
+                }
+
+                this.setState({
+                  skippedFiles: skippedFiles.length > 0 ? skippedFiles : null,
                 });
-                reader.readAsDataURL(file);
-              }
+              }}
+            />
+          </RaisedButton>
 
-              this.setState({
-                skippedFiles: skippedFiles.length > 0 ? skippedFiles : null
-              });
-
-            }}
-          />
-        </div>
-
-
-        <div>
           <Dialog
             actions={[
               <FlatButton
