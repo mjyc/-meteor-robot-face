@@ -144,7 +144,7 @@ if (Meteor.isServer) {
   Meteor.methods({
     'speech.addUser'(userId = this.userId) {
       if (Speech.findOne({owner: userId, type: 'synthesis'})) {
-        logger.warn(`Skipping; user ${this.userId} already has speech synthesis actions document`);
+        logger.warn(`Skipping; user ${this.userId} already has speech synthesis & recognition actions documents`);
         return;
       }
       Speech.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));

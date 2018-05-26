@@ -14,6 +14,10 @@ import {
   MediaFiles,
   servePlaySoundAction,
 } from '../api/media.js';
+import {
+  VisionActions,
+  serveTrackFaceAction,
+} from '../api/vision.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
 import MediaUI from '../ui/Media.jsx';
@@ -36,6 +40,7 @@ class SimpleFace extends Component {
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
         servePlaySoundAction(this.props.playSound._id);
+        serveTrackFaceAction();
       }, 0);
     }
   }
@@ -49,6 +54,13 @@ class SimpleFace extends Component {
 
     return (
       <div>
+
+        <div className="demo-frame">
+          <div className="demo-container">
+            <video id="video" width="320" height="240" preload="true" autoPlay loop muted></video>
+            <canvas id="canvas" width="320" height="240"></canvas>
+          </div>
+        </div>
 
         <div>
           <strong>Robot: </strong>
@@ -77,7 +89,11 @@ export default withTracker(({faceQuery}) => {
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const speechHandle = Meteor.subscribe('speech');
   const mediaActionsHandle = Meteor.subscribe('media_actions');
-  const loading = !speechbubblesHandle.ready() || !speechHandle.ready() || !mediaActionsHandle.ready();
+  const visionActionsHandle = Meteor.subscribe('vision_actions');
+  const loading = !speechbubblesHandle.ready()
+    || !speechHandle.ready()
+    || !mediaActionsHandle.ready()
+    || !visionActionsHandle.ready();
 
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));

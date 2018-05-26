@@ -7,8 +7,9 @@ Package.describe({
 });
 
 Npm.depends({
-  'react': '^16.1.1',
-  "material-ui": "^0.20.0",
+  'react': '16.1.1',
+  'material-ui': '0.20.0',
+  'tracking': '1.1.3'
 });
 
 Package.onUse(function(api) {

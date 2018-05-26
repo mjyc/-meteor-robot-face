@@ -15,3 +15,7 @@ export {
   MediaActions,
   MediaFiles,
 } from '../imports/api/media.js'
+
+export {
+  VisionActions,
+} from '../imports/api/vision.js'
