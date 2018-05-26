@@ -16,7 +16,6 @@ import {
 } from '../api/media.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
-import MediaFileManager from '../ui/MediaFileManager.jsx';
 import MediaUI from '../ui/Media.jsx';
 
 
@@ -50,8 +49,6 @@ class SimpleFace extends Component {
 
     return (
       <div>
-
-        <MediaFileManager />
 
         <div>
           <strong>Robot: </strong>

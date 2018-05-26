@@ -19,6 +19,7 @@ import RaisedButton from 'material-ui/RaisedButton';
 
 const logger = log.getLogger('MediaFileManager');
 
+
 class MediaFileManager extends Component {
   constructor(props) {
     super(props);
