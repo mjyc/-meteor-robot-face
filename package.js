@@ -7,7 +7,8 @@ Package.describe({
 });
 
 Npm.depends({
-  'react': '16.1.1'
+  'react': '^16.1.1',
+  "material-ui": "^0.20.0",
 });
 
 Package.onUse(function(api) {
