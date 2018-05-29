@@ -26,14 +26,22 @@ import MediaUI from '../ui/Media.jsx';
 const logger = log.getLogger('SimpleFace');
 
 
-class FaceDetector extends Component {
+class FaceTracker extends Component {
   constructor(props) {
     super(props);
+
+    this.elements = {};
+    this.setElements = (elements) => {
+      Object.assign(this.elements, elements);
+    }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidMount() {
+    const self = this;
+    const video = this.elements.video;
+    const canvas = this.elements.canvas;
     setTimeout(() => {
-      serveTrackFaceAction();
+      serveTrackFaceAction(self.elements.video, self.elements.canvas, '');
     }, 0);
   }
 
@@ -42,11 +50,24 @@ class FaceDetector extends Component {
       position: 'absolute',
       bottom: 0,
       left: 0,
+      display: 'block',
+      // display: this.props.showVideo ? 'block' : 'none',
     };
+
     return (
       <div>
-        <video style={style} id="video" width="160" height="120" autoPlay></video>
-        <canvas style={style} id="canvas" width="160" height="120"></canvas>
+        <p>Hello world!</p>
+        <video style={style}
+          width="160"
+          height="120"
+          autoPlay
+          ref={(element) => { this.elements['video'] = element; }}
+        ></video>
+        <canvas style={style}
+          width="160"
+          height="120"
+          ref={(element) => { this.elements['canvas'] = element; }}
+        ></canvas>
       </div>
     );
   }
@@ -80,7 +101,10 @@ class SimpleFace extends Component {
     return (
       <div>
 
-        <FaceDetector />
+        <FaceTracker
+          tracker={this.props.visionAction}
+          showVideo={this.props.visionAction.goal.showVideo}
+        />
 
         <div>
           <strong>Robot: </strong>
@@ -100,8 +124,6 @@ class SimpleFace extends Component {
             /> : null
           }
         </div>
-
-        <FaceDetector />
       </div>
     );
   }
