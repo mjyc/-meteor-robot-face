@@ -13,14 +13,15 @@ if (Meteor.isClient) {
   import 'tracking';
   import 'tracking/build/data/face-min.js';
 
-  // const trackFaceActions = {};
+  const trackFaceActions = {};
 
-  export const serveTrackFaceAction = (video, canvas, id) => {
-    // if (trackFaceActions[id]) {
-    //   logger.debug(`[serveSpeechSynthesisAction] Skipping; already serving an action with id: ${id}`);
-    //   return;
-    // }
+  export const serveTrackFaceAction = (id, video, canvas) => {
+    if (trackFaceActions[id]) {
+      logger.debug(`[serveTrackFaceAction] Skipping; already serving an action with id: ${id}`);
+      return;
+    }
 
+    // setup tracker
     const context = canvas.getContext('2d');
 
     const tracker = new tracking.ObjectTracker('face');
@@ -29,24 +30,32 @@ if (Meteor.isClient) {
     tracker.setEdgesDensity(0.1);
     tracking.track(video, tracker, {camera: true});
 
-    tracker.on('track', function(event) {
+    tracker.on('track', (event) => {
       context.clearRect(0, 0, canvas.width, canvas.height);
 
-      event.data.forEach(function(rect) {
-        console.log('rect', rect);
+      event.data.forEach((rect) => {
         context.strokeStyle = '#a64ceb';
         context.strokeRect(rect.x, rect.y, rect.width, rect.height);
         context.font = '11px Helvetica';
-        context.fillStyle = "#fff";
+        context.fillStyle = '#fff';
         context.fillText('x: ' + rect.x + 'px', rect.x + rect.width + 5, rect.y + 11);
         context.fillText('y: ' + rect.y + 'px', rect.x + rect.width + 5, rect.y + 22);
       });
     });
 
-    // const actionServer = getActionServer(VisionActions, id);
+    // setup action server
+    const actionServer = getActionServer(VisionActions, id);
 
-    // trackFaceActions[id] = actionServer;
-    // return actionServer;
+    actionServer.registerGoalCallback((actionGoal) => {
+      // change the tracker settings
+    });
+
+    actionServer.registerPreemptCallback((cancelGoal) => {
+      // change the tracker setting
+    });
+
+    trackFaceActions[id] = actionServer;
+    return actionServer;
   }
 
 

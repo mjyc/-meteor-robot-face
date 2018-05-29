@@ -31,9 +31,6 @@ class FaceTracker extends Component {
     super(props);
 
     this.elements = {};
-    this.setElements = (elements) => {
-      Object.assign(this.elements, elements);
-    }
   }
 
   componentDidMount() {
@@ -41,11 +38,13 @@ class FaceTracker extends Component {
     const video = this.elements.video;
     const canvas = this.elements.canvas;
     setTimeout(() => {
-      serveTrackFaceAction(self.elements.video, self.elements.canvas, '');
+      serveTrackFaceAction('', self.elements.video, self.elements.canvas);
     }, 0);
   }
 
   render() {
+    const faceTracker = this.props.faceTracker ? faceTracker : {}
+
     const style = {
       position: 'absolute',
       bottom: 0,
@@ -102,8 +101,7 @@ class SimpleFace extends Component {
       <div>
 
         <FaceTracker
-          tracker={this.props.visionAction}
-          showVideo={this.props.visionAction.goal.showVideo}
+          faceTracker={this.props.visionAction.faceTracker}
         />
 
         <div>
