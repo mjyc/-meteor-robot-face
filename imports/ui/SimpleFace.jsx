@@ -26,6 +26,32 @@ import MediaUI from '../ui/Media.jsx';
 const logger = log.getLogger('SimpleFace');
 
 
+class FaceDetector extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidUpdate(prevProps) {
+    setTimeout(() => {
+      serveTrackFaceAction();
+    }, 0);
+  }
+
+  render() {
+    const style = {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+    };
+    return (
+      <div>
+        <video style={style} id="video" width="160" height="120" autoPlay></video>
+        <canvas style={style} id="canvas" width="160" height="120"></canvas>
+      </div>
+    );
+  }
+}
+
 // SimpleFace component - represents the whole app
 class SimpleFace extends Component {
   constructor(props) {
@@ -40,7 +66,6 @@ class SimpleFace extends Component {
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
         servePlaySoundAction(this.props.playSound._id);
-        serveTrackFaceAction();
       }, 0);
     }
   }
@@ -55,12 +80,7 @@ class SimpleFace extends Component {
     return (
       <div>
 
-        <div className="demo-frame">
-          <div className="demo-container">
-            <video id="video" width="320" height="240" preload="true" autoPlay loop muted></video>
-            <canvas id="canvas" width="320" height="240"></canvas>
-          </div>
-        </div>
+        <FaceDetector />
 
         <div>
           <strong>Robot: </strong>
@@ -80,6 +100,8 @@ class SimpleFace extends Component {
             /> : null
           }
         </div>
+
+        <FaceDetector />
       </div>
     );
   }
@@ -100,6 +122,7 @@ export default withTracker(({faceQuery}) => {
   const speechSynthesis = Speech.findOne({type: 'synthesis'});
   const speechRecognition = Speech.findOne({type: 'recognition'});
   const playSound = MediaActions.findOne({type: 'sound'});  // TODO: refactor with type?
+  const visionAction = VisionActions.findOne();
 
   return {
     loading,
@@ -108,5 +131,6 @@ export default withTracker(({faceQuery}) => {
     speechSynthesis,
     speechRecognition,
     playSound,
+    visionAction,
   };
 })(SimpleFace);
