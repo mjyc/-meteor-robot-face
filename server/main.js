@@ -8,7 +8,7 @@ export {
 } from '../imports/api/speechbubbles.js'
 
 export {
-  Speech
+  SpeechActions
 } from '../imports/api/speech.js'
 
 export {

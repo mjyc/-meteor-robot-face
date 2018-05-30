@@ -26,6 +26,8 @@ class MediaFileManager extends Component {
     this.state = {
       skippedFiles: null,
     };
+
+    this.elements = {};
   }
 
   renderMediaFile(mediaFile) {
@@ -73,6 +75,7 @@ class MediaFileManager extends Component {
 
         <div>
           <RaisedButton
+            ref={(element) => { this.elements['video'] = element; }}
             containerElement='label'
             label="Upload"
           >
@@ -140,7 +143,6 @@ class MediaFileManager extends Component {
           </Dialog>
         </div>
 
-
         <div>
           <Table
             fixedHeader={true}
@@ -186,7 +188,6 @@ class MediaFileManager extends Component {
             </TableBody>
           </Table>
         </div>
-
 
       </div>
     );

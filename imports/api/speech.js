@@ -5,7 +5,7 @@ import { defaultAction, getActionServer } from './action.js';
 
 const logger = log.getLogger('speech');
 
-export const Speech = new Mongo.Collection('speech');
+export const SpeechActions = new Mongo.Collection('speech_actions');
 
 
 if (Meteor.isClient) {
@@ -21,7 +21,7 @@ if (Meteor.isClient) {
     }
 
     const synth = window.speechSynthesis;
-    const actionServer = getActionServer(Speech, id);
+    const actionServer = getActionServer(SpeechActions, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
       const utterThis = new SpeechSynthesisUtterance();
@@ -56,7 +56,7 @@ if (Meteor.isClient) {
     const SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
     const SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
     const recognition = new SpeechRecognition();
-    const actionServer = getActionServer(Speech, id);
+    const actionServer = getActionServer(SpeechActions, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
       recognition.abort();
@@ -119,7 +119,7 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  Speech.allow({
+  SpeechActions.allow({
     insert: (userId, doc) => {
       return false;
     },
@@ -135,20 +135,20 @@ if (Meteor.isServer) {
   });
 
 
-  Meteor.publish('speech', function speechPublication() {
+  Meteor.publish('speech_actions', function speechPublication() {
     // TODO: restrict access based on user permission; right now all speech docs are public!
-    return Speech.find();
+    return SpeechActions.find();
   });
 
 
   Meteor.methods({
     'speech.addUser'(userId = this.userId) {
-      if (Speech.findOne({owner: userId, type: 'synthesis'})) {
+      if (SpeechActions.findOne({owner: userId, type: 'synthesis'})) {
         logger.warn(`Skipping; user ${this.userId} already has speech synthesis & recognition actions documents`);
         return;
       }
-      Speech.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
-      Speech.insert(Object.assign({owner: userId, type: 'recognition'}, defaultAction));
+      SpeechActions.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
+      SpeechActions.insert(Object.assign({owner: userId, type: 'recognition'}, defaultAction));
     }
   });
 

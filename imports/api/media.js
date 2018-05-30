@@ -14,10 +14,10 @@ if (Meteor.isClient) {
 
   const playSoundActions = {};
 
-  export const servePlaySoundAction = (id) => {
+  export const serveSoundPlayAction = (id) => {
 
     if (playSoundActions[id]) {
-      logger.debug(`[servePlaySoundAction] Skipping; already serving an action with id: ${id}`);
+      logger.debug(`[serveSoundPlayAction] Skipping; already serving an action with id: ${id}`);
       return;
     }
 

@@ -5,13 +5,13 @@ import { withTracker } from 'meteor/react-meteor-data';
 
 import { Speechbubbles } from '../api/speechbubbles.js';
 import {
-  Speech,
+  SpeechActions,
   serveSpeechSynthesisAction,
   serveSpeechRecognitionAction,
 } from '../api/speech.js';
 import {
   MediaActions,
-  servePlaySoundAction,
+  serveSoundPlayAction,
 } from '../api/media.js';
 import { VisionActions } from '../api/vision.js';
 
@@ -34,7 +34,7 @@ class SimpleFace extends Component {
       setTimeout(() => {
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
-        servePlaySoundAction(this.props.playSound._id);
+        serveSoundPlayAction(this.props.soundPlay._id);
       }, 0);
     }
   }
@@ -78,7 +78,7 @@ class SimpleFace extends Component {
 
 export default withTracker(({faceQuery}) => {
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
-  const speechHandle = Meteor.subscribe('speech');
+  const speechHandle = Meteor.subscribe('speech_actions');
   const mediaActionsHandle = Meteor.subscribe('media_actions');
   const visionActionsHandle = Meteor.subscribe('vision_actions');
   const loading = !speechbubblesHandle.ready()
@@ -88,9 +88,9 @@ export default withTracker(({faceQuery}) => {
 
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
-  const speechSynthesis = Speech.findOne({type: 'synthesis'});
-  const speechRecognition = Speech.findOne({type: 'recognition'});
-  const playSound = MediaActions.findOne({type: 'sound'});  // TODO: refactor with type?
+  const speechSynthesis = SpeechActions.findOne({type: 'synthesis'});
+  const speechRecognition = SpeechActions.findOne({type: 'recognition'});
+  const soundPlay = MediaActions.findOne({type: 'sound'});
   const faceTracking = VisionActions.findOne({type: 'face_tracking'});
 
   return {
@@ -99,7 +99,7 @@ export default withTracker(({faceQuery}) => {
     speechbubbleHuman,
     speechSynthesis,
     speechRecognition,
-    playSound,
+    soundPlay,
     faceTracking,
   };
 })(SimpleFace);
