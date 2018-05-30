@@ -15,9 +15,9 @@ if (Meteor.isClient) {
 
   const trackFaceActions = {};
 
-  export const serveTrackFaceAction = (id, video, canvas) => {
+  export const serveFaceTrackingAction = (id, video, canvas) => {
     if (trackFaceActions[id]) {
-      logger.debug(`[serveTrackFaceAction] Skipping; already serving an action with id: ${id}`);
+      logger.debug(`[serveFaceTrackingAction] Skipping; already serving an action with id: ${id}`);
       return;
     }
 
@@ -47,17 +47,18 @@ if (Meteor.isClient) {
     const actionServer = getActionServer(VisionActions, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-      // change the tracker settings
+      logger.debug('[serveFaceTrackingAction] actionGoal', actionGoal);
+      // TODO: change
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
+      logger.debug('[serveFaceTrackingAction] cancelGoal', cancelGoal);
       // change the tracker setting
     });
 
     trackFaceActions[id] = actionServer;
     return actionServer;
   }
-
 
 }
 
@@ -92,7 +93,10 @@ if (Meteor.isServer) {
         logger.warn(`Skipping; user ${this.userId} already has vidion action document`);
         return;
       }
-      VisionActions.insert(Object.assign({owner: userId}, defaultAction));
+      VisionActions.insert(Object.assign({
+        owner: userId,
+        type: 'face_tracking',
+      }, defaultAction));
     }
   });
 }

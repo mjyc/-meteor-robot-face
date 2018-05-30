@@ -11,66 +11,15 @@ import {
 } from '../api/speech.js';
 import {
   MediaActions,
-  MediaFiles,
   servePlaySoundAction,
 } from '../api/media.js';
-import {
-  VisionActions,
-  serveTrackFaceAction,
-} from '../api/vision.js';
+import { VisionActions } from '../api/vision.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
-import MediaUI from '../ui/Media.jsx';
-
+import FaceTracking from '../ui/FaceTracking.jsx';
 
 const logger = log.getLogger('SimpleFace');
 
-
-class FaceTracker extends Component {
-  constructor(props) {
-    super(props);
-
-    this.elements = {};
-  }
-
-  componentDidMount() {
-    const self = this;
-    const video = this.elements.video;
-    const canvas = this.elements.canvas;
-    setTimeout(() => {
-      serveTrackFaceAction('', self.elements.video, self.elements.canvas);
-    }, 0);
-  }
-
-  render() {
-    const faceTracker = this.props.faceTracker ? faceTracker : {}
-
-    const style = {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      display: 'block',
-      // display: this.props.showVideo ? 'block' : 'none',
-    };
-
-    return (
-      <div>
-        <p>Hello world!</p>
-        <video style={style}
-          width="160"
-          height="120"
-          autoPlay
-          ref={(element) => { this.elements['video'] = element; }}
-        ></video>
-        <canvas style={style}
-          width="160"
-          height="120"
-          ref={(element) => { this.elements['canvas'] = element; }}
-        ></canvas>
-      </div>
-    );
-  }
-}
 
 // SimpleFace component - represents the whole app
 class SimpleFace extends Component {
@@ -100,8 +49,8 @@ class SimpleFace extends Component {
     return (
       <div>
 
-        <FaceTracker
-          faceTracker={this.props.visionAction.faceTracker}
+        <FaceTracking
+          faceTracking={this.props.faceTracking}
         />
 
         <div>
@@ -142,7 +91,7 @@ export default withTracker(({faceQuery}) => {
   const speechSynthesis = Speech.findOne({type: 'synthesis'});
   const speechRecognition = Speech.findOne({type: 'recognition'});
   const playSound = MediaActions.findOne({type: 'sound'});  // TODO: refactor with type?
-  const visionAction = VisionActions.findOne();
+  const faceTracking = VisionActions.findOne({type: 'face_tracking'});
 
   return {
     loading,
@@ -151,6 +100,6 @@ export default withTracker(({faceQuery}) => {
     speechSynthesis,
     speechRecognition,
     playSound,
-    visionAction,
+    faceTracking,
   };
 })(SimpleFace);
