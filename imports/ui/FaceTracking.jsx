@@ -23,8 +23,6 @@ export default class FaceTracking extends Component {
 
   render() {
     const style = {
-      height: 240,
-      width: 320,
       position: 'absolute',
       bottom: 0,
       left: 0,
@@ -36,11 +34,15 @@ export default class FaceTracking extends Component {
         <video
           style={style}
           ref={(element) => { this.elements['video'] = element; }}
+          width="320"
+          height="240"
           autoPlay
         ></video>
         <canvas
           style={style}
           ref={(element) => { this.elements['canvas'] = element; }}
+          width="320"
+          height="240"
         ></canvas>
       </div>
     );

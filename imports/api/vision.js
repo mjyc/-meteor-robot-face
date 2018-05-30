@@ -31,7 +31,7 @@ if (Meteor.isClient) {
     tracking.track(video, tracker, {camera: true});
 
     tracker.on('track', (event) => {
-      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
       event.data.forEach((rect) => {
         context.strokeStyle = '#a64ceb';
