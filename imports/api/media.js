@@ -25,7 +25,7 @@ if (Meteor.isClient) {
     const actionServer = getActionServer(MediaActions, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-      soundPlayer = new Audio(MediaFiles.findOne({filename: actionGoal.goal.name}).data);
+      soundPlayer = new Audio(MediaFiles.findOne({name: actionGoal.goal.name}).data);
       soundPlayer.onended = (event) => {
         actionServer.setSucceeded();
       }
@@ -82,7 +82,7 @@ if (Meteor.isServer) {
   });
 
 
-  // TODO: remove or update after prototyping
+  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   MediaFiles.allow({
     insert: (userId, doc) => {
       return true;
@@ -100,10 +100,4 @@ if (Meteor.isServer) {
     // TODO: restrict access based on user permission; right now all media files are public!
     return MediaFiles.find();
   });
-
-  // Meteor.methods({
-  //   'media_files.addUser'(userId = this.userId) {
-  //     //
-  //   }
-  // });
 }

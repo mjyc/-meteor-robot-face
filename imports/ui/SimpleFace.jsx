@@ -11,6 +11,7 @@ import {
 } from '../api/speech.js';
 import {
   MediaActions,
+  MediaFiles,
   serveSoundPlayAction,
 } from '../api/media.js';
 import { VisionActions } from '../api/vision.js';
@@ -49,10 +50,6 @@ class SimpleFace extends Component {
     return (
       <div>
 
-        <FaceTracking
-          faceTracking={this.props.faceTracking}
-        />
-
         <div>
           <strong>Robot: </strong>
           {this.props.speechbubbleRobot ?
@@ -81,10 +78,12 @@ export default withTracker(({faceQuery}) => {
   const speechHandle = Meteor.subscribe('speech_actions');
   const mediaActionsHandle = Meteor.subscribe('media_actions');
   const visionActionsHandle = Meteor.subscribe('vision_actions');
+  const mediaFilesHandle = Meteor.subscribe('media_files');
   const loading = !speechbubblesHandle.ready()
     || !speechHandle.ready()
     || !mediaActionsHandle.ready()
-    || !visionActionsHandle.ready();
+    || !visionActionsHandle.ready()
+    || !mediaFilesHandle.ready();
 
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
