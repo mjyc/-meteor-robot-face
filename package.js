@@ -8,7 +8,7 @@ Package.describe({
 
 Npm.depends({
   'react': '16.1.1',
-  'material-ui': '0.20.0',
+  // 'material-ui': '0.20.0', // causes this problem https://reactjs.org/warnings/refs-must-have-owner.html because it pulls some react libraries
   'tracking': '1.1.3'
 });
 
