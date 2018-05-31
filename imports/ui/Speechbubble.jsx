@@ -6,8 +6,12 @@ import {
   Speechbubbles,
   serveSpeechbubbleAction,
 } from '../api/speechbubbles.js';
+import { MediaFiles } from '../api/media.js';
 
 const logger = log.getLogger('Speechbubble');
+
+
+// TODO: write a note that this requires subscriptions
 
 export default class Speechbubble extends Component {
   constructor(props) {
@@ -26,20 +30,21 @@ export default class Speechbubble extends Component {
   }
 
   render() {
-    switch (this.props.speechbubble.type) {
+    const speechbubble = this.props.speechbubble;
+    switch (speechbubble.type) {
       case '':
         return null;
       case 'message':
         return (
-          <span>{this.props.speechbubble.message}</span>
+          <span>{speechbubble.data.message}</span>
         )
       case 'choices':
-        return this.props.speechbubble.choices.map((choice, index) => {
+        return speechbubble.data.choices.map((choice, index) => {
           return (
             <button
               key={index}
               onClick={() => {
-                Speechbubbles.update(this.props.speechbubble._id, {
+                Speechbubbles.update(speechbubble._id, {
                   $set: {
                     type: '',
                   },
@@ -47,7 +52,9 @@ export default class Speechbubble extends Component {
                     choices: '',
                   }
                 }, {}, (err, result) => {
-                  this.actionServers[this.props.speechbubble._id].setSucceeded({text: choice});
+                  this.actionServers[speechbubble._id].setSucceeded({
+                    text: choice,
+                  });
                 });
               }}
             >
@@ -55,8 +62,16 @@ export default class Speechbubble extends Component {
             </button>
           );
         });
+      case 'image':
+        const mediaFile = MediaFiles.findOne(speechbubble.data.query);
+        return (
+          <img
+            height="100"
+            src={mediaFile.data}
+          />
+        );
       default:
-        logger.warn(`Unknown speechbubble.type: ${this.props.speechbubble.type}`);
+        logger.warn(`Unknown speechbubble.type: ${speechbubble.type}`);
         return null;
     }
   }

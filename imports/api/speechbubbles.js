@@ -27,12 +27,20 @@ if (Meteor.isClient) {
     const actionServer = getActionServer(Speechbubbles, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
+      // TODO: check actionGoal.goal
+
+      // if input is img, and has query field, do something
+
       Speechbubbles.update(id, {
         $set: {
-          type: 'choices',
-          choices: actionGoal.goal.choices,
+          type: actionGoal.goal.type,
+          data: actionGoal.goal.data,
         }
       });
+
+      if (actionGoal.goal.type === 'message') {
+        actionServers.setSucceeded();
+      }
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {

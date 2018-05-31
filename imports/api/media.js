@@ -25,6 +25,7 @@ if (Meteor.isClient) {
     const actionServer = getActionServer(MediaActions, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
+      // TODO: change actionGoal param to "query"
       soundPlayer = new Audio(MediaFiles.findOne({name: actionGoal.goal.name}).data);
       soundPlayer.onended = (event) => {
         actionServer.setSucceeded();
