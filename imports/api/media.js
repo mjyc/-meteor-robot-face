@@ -76,7 +76,7 @@ if (Meteor.isServer) {
       }
 
       if (MediaActions.findOne({owner: userId})) {
-        logger.warn(`Skipping; user ${this.userId} already has media action document`);
+        logger.warn(`Skipping; user ${this.userId} already has media action documents`);
         return;
       }
       MediaActions.insert(Object.assign({owner: userId, type: 'sound'}, defaultAction));

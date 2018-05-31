@@ -4,6 +4,7 @@ import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
+import { defaultAction, getActionServer } from './action.js';
 
 const logger = log.getLogger('speechbubbles');
 
@@ -18,27 +19,20 @@ if (Meteor.isClient) {
   const speechbubbleActions = {};
 
   export const serveSpeechbubbleAction = (id) => {
-
     if (speechbubbleActions[id]) {
       logger.debug(`[serveSpeechbubbleAction] Skipping; already serving an action with id: ${id}`);
       return;
     }
 
-    const synth = window.speechSynthesis;
     const actionServer = getActionServer(Speechbubbles, id);
 
     actionServer.registerGoalCallback((actionGoal) => {
-
       Speechbubbles.update(id, {
         $set: {
           type: 'choices',
-          choices: 'chocies',
-        },
-        $unset: {
-          selected: '',
+          choices: actionGoal.goal.choices,
         }
       });
-
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
@@ -55,6 +49,22 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
+  Speechbubbles.allow({
+    insert: (userId, doc) => {
+      return false;
+    },
+    update: (userId, doc, fields, modifier) => {
+      return userId &&
+        (doc.owner === userId);
+    },
+    remove: (userId, doc) => {
+       return userId &&
+        (doc.owner === userId);
+    },
+    fetch: ['owner']
+  });
+
+
   Meteor.publish('speechbubbles', function speechbubblesPublication() {
     // TODO: restrict access based on user permission; right now all speechbubbles public!
     return Speechbubbles.find();
@@ -67,13 +77,21 @@ if (Meteor.isServer) {
         throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (Speechbubbles.findOne({owner: userId, type: 'synthesis'})) {
-        logger.warn(`Skipping; user ${this.userId} already has speech synthesis & recognition actions documents`);
+      if (Speechbubbles.findOne({owner: userId})) {
+        logger.warn(`Skipping; user ${this.userId} already has speechbubble documents`);
         return;
       }
 
-      Speechbubbles.insert(Object.assign({owner: userId, role: 'robot'}, defaultAction));
-      Speechbubbles.insert(Object.assign({owner: userId, role: 'human'}, defaultAction));
+      Speechbubbles.insert(Object.assign({
+        owner: userId,
+        role: 'robot',
+        type: '',
+      }, defaultAction));
+      Speechbubbles.insert(Object.assign({
+        owner: userId,
+        role: 'human',
+        type: '',
+      }, defaultAction));
     },
   });
 

@@ -109,7 +109,7 @@ class MeteorActionClient extends MeteorActionComm {
     super(collection, id);
   }
 
-  sendGoal(goal) {
+  sendGoal(goal = {}) {
     logger.debug(`[MeteorActionClient.sendGoal] cancel goalId: ${this._get().goalId}`);
     const goalId = this._get().goalId;
     const result = Promise.await( this.cancel() );
@@ -177,7 +177,7 @@ class MeteorActionServer extends MeteorActionComm {
     this.on('goal', this.goalCallback);
   }
 
-  registerPreemptCallback(callback) {
+  registerPreemptCallback(callback = () => {}) {
     if (this.preemptCallback) {
       this.removeListener('cancel', this.preemptCallback)
     }

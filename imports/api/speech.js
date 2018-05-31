@@ -146,8 +146,8 @@ if (Meteor.isServer) {
         throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (SpeechActions.findOne({owner: userId, type: 'synthesis'})) {
-        logger.warn(`Skipping; user ${this.userId} already has speech synthesis & recognition actions documents`);
+      if (SpeechActions.findOne({owner: userId})) {
+        logger.warn(`Skipping; user ${this.userId} already has speech action documents`);
         return;
       }
       SpeechActions.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
