@@ -13,161 +13,47 @@ const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 export const Speechbubbles = new Mongo.Collection('speechbubbles');
 
 
-if (Meteor.isServer) {
+if (Meteor.isClient) {
 
-  export class SpeechbubbleAction extends EventEmitter {
+  const speechbubbleActions = {};
 
-    static insertSpeechbubble(doc) {
-      Speechbubbles.insert(Object.assign({}, doc, {
-        type: '',
-        data: {},
-      }));
+  export const serveSpeechbubbleAction = (id) => {
+
+    if (speechbubbleActions[id]) {
+      logger.debug(`[serveSpeechbubbleAction] Skipping; already serving an action with id: ${id}`);
+      return;
     }
 
-    constructor({speechbubbleId = ''} = {}) {
-      super();
+    const synth = window.speechSynthesis;
+    const actionServer = getActionServer(Speechbubbles, id);
 
-      if (!Speechbubbles.findOne(speechbubbleId)) {
-        throw new Meteor.Error('invalid-input', `Invalid speechbubbleId: ${speechbubbleId}`);
-      }
-      // TODO: protect _id from overwriting it
-      this._id = speechbubbleId;
-    }
+    actionServer.registerGoalCallback((actionGoal) => {
 
-    _reset() {
-      this.removeAllListeners();
-
-      if (SpeechbubbleAction._handles[this._id]) {
-        SpeechbubbleAction._handles[this._id].stop();
-        SpeechbubbleAction._handles[this._id] = null;
-      }
-
-      Speechbubbles.update({
-        _id: this._id,
-      }, {$set: {
-        type: '',
-        data: {},
-      }});
-    }
-
-  }
-
-  SpeechbubbleAction._handles = {};
-
-
-  export class DisplayMessageAction extends SpeechbubbleAction {
-
-    constructor({speechbubbleId = ''} = {}) {
-      super({speechbubbleId});
-    }
-
-    execute({
-      message = ''
-    } = {}) {
-      Speechbubbles.update(
-        {
-          _id: this._id,
-        }, {$set: {
-          type: 'message',
-          data: {message}
-        }}
-      );
-
-      Meteor.setTimeout(() => {
-        this.emit('done', {
-          status: 'succeeded',
-          result: message,
-        })
-      }, 0);
-
-      return this;
-    }
-
-    cancel() {
-      // not emitting 'cancel' since it is not canceling any running action
-      return this;
-    }
-
-  }
-
-
-  export class AskMultipleChoiceAction extends SpeechbubbleAction {
-
-    static setSelected(speechbubbleId, choice) {
-      Speechbubbles.update({
-        _id: speechbubbleId,
-        type: 'choices',
-      }, {$set: {
-        'data.selected': choice,
-      }});
-    }
-
-    constructor({speechbubbleId = ''} = {}) {
-      super({speechbubbleId});
-    }
-
-    _isActive() {
-      return SpeechbubbleAction._handles[this._id]
-        && Speechbubbles.findOne({
-          _id: this._id,
+      Speechbubbles.update(id, {
+        $set: {
           type: 'choices',
-          data: {$exists: true},
-        });
-    }
-
-    // NOTE: options for the last argument:
-    //   (i) { onDone = () => {}, onFeedback = () => {} } = {}
-    //   (ii) callback = (err, res) => {} // throw err on cancel or abort?
-    execute({
-      choices = []
-    } = {}) {
-      this.cancel();
-
-      Speechbubbles.update(
-        {
-          _id: this._id,
-        }, {$set: {
-          type: 'choices',
-          data: {choices}
-        }}
-      );
-
-      SpeechbubbleAction._handles = Speechbubbles.find({
-        _id: this._id,
-        type: 'choices',
-      }).observeChanges({
-        changed: (id, fields) => {
-          logger.debug(`id: ${id}, fields: ${obj2str(fields)}`);
-          this.emit('done', {
-            status: 'succeeded',
-            result: fields.data.selected,
-          });
-          this._reset();
+          choices: 'chocies',
+        },
+        $unset: {
+          selected: '',
         }
       });
 
-      return this;
-    }
+    });
 
-    // NOTE: consider passing a callback-like arg
-    cancel() {
-      // double check with findOne
-      if (this._isActive()) {
-        this.emit('done', {
-          status: 'canceled',
-          result: null,
-        });
+    actionServer.registerPreemptCallback((cancelGoal) => {
+      synth.cancel();
+      actionServer.setPreempted();
+    });
 
-        this._reset();
-      }
-
-      return this;
-    }
-
-    // NOTE: consider creating
-    // getResult(callback) { ... }
+    speechbubbleActions[id] = actionServer;
+    return actionServer;
   }
 
+}
+
+
+if (Meteor.isServer) {
 
   Meteor.publish('speechbubbles', function speechbubblesPublication() {
     // TODO: restrict access based on user permission; right now all speechbubbles public!
@@ -176,30 +62,18 @@ if (Meteor.isServer) {
 
 
   Meteor.methods({
-    'speechbubbles.initialize'(userId = this.userId) {
-      if (!userId) {
-        throw new Meteor.Error('not-authorized');
+    'speechbubbles.addUser'(userId = this.userId) {
+      if (!Meteor.users.findOne(userId)) {
+        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (Speechbubbles.find({owner: userId}).count() > 0) {
-        logger.warn(`Skipping speechbubbles.initialize; user (${userId}) already has speechbubbles`);
+      if (Speechbubbles.findOne({owner: userId, type: 'synthesis'})) {
+        logger.warn(`Skipping; user ${this.userId} already has speech synthesis & recognition actions documents`);
         return;
       }
 
-      SpeechbubbleAction.insertSpeechbubble({owner: userId, role: 'robot'});
-      SpeechbubbleAction.insertSpeechbubble({owner: userId, role: 'human'});
-    },
-
-    'speechbubbles.choices.setSelected'(speechbubbleId, choice) {
-      this.unblock();
-      check(speechbubbleId, String);
-      check(choice, String);
-
-      if (!this.userId) {
-        throw new Meteor.Error('not-authorized');
-      }
-
-      AskMultipleChoiceAction.setSelected(speechbubbleId, choice);
+      Speechbubbles.insert(Object.assign({owner: userId, role: 'robot'}, defaultAction));
+      Speechbubbles.insert(Object.assign({owner: userId, role: 'human'}, defaultAction));
     },
   });
 

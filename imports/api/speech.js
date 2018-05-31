@@ -28,7 +28,7 @@ if (Meteor.isClient) {
       ['lang', 'pitch', 'rate', 'text', 'volume'].map((param) => {
         if (param in actionGoal.goal) utterThis[param] = actionGoal.goal[param];
       });
-      logger.debug(`[serveSpeechSynthesisAction] utterThis: ${utterThis}`);
+      logger.debug('[serveSpeechSynthesisAction] utterThis:', utterThis);
       utterThis.onend = (event) => {
         actionServer.setSucceeded(event);
       }
@@ -105,7 +105,6 @@ if (Meteor.isClient) {
     });
 
     actionServer.registerPreemptCallback((cancelGoal) => {
-      console.log('hell?');
       recognition.abort();
       actionServer.setPreempted();
     });
@@ -142,7 +141,11 @@ if (Meteor.isServer) {
 
 
   Meteor.methods({
-    'speech.addUser'(userId = this.userId) {
+    'speech_actions.addUser'(userId = this.userId) {
+      if (!Meteor.users.findOne(userId)) {
+        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
+      }
+
       if (SpeechActions.findOne({owner: userId, type: 'synthesis'})) {
         logger.warn(`Skipping; user ${this.userId} already has speech synthesis & recognition actions documents`);
         return;

@@ -71,6 +71,10 @@ if (Meteor.isServer) {
 
   Meteor.methods({
     'media_actions.addUser'(userId = this.userId) {
+      if (!Meteor.users.findOne(userId)) {
+        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
+      }
+
       if (MediaActions.findOne({owner: userId})) {
         logger.warn(`Skipping; user ${this.userId} already has media action document`);
         return;
