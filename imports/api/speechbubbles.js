@@ -4,6 +4,7 @@ import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
+import { Promise } from 'meteor/promise';
 import { defaultAction, getActionServer } from './action.js';
 
 const logger = log.getLogger('speechbubbles');
@@ -16,40 +17,38 @@ export const Speechbubbles = new Mongo.Collection('speechbubbles');
 
 if (Meteor.isClient) {
 
-  const speechbubbleActions = {};
+  export class SpeechbubbleAction {
+    constructor(collection, id, mediaFilesCollection) {
+      this._collection = collection;
+      this._id = id;
+      this._mediaFilesCollection = mediaFilesCollection;
 
-  export const serveSpeechbubbleAction = (id) => {
-    if (speechbubbleActions[id]) {
-      logger.debug(`[serveSpeechbubbleAction] Skipping; already serving an action with id: ${id}`);
-      return;
+      this._as = getActionServer(collection, id);
+      this._as.registerGoalCallback(this.goalCB.bind(this));
+      this._as.registerPreemptCallback(this.preemptCB.bind(this));
     }
 
-    const actionServer = getActionServer(Speechbubbles, id);
-
-    actionServer.registerGoalCallback((actionGoal) => {
-      // TODO: check actionGoal.goal
-
-      // if input is img, and has query field, do something
-
-      Speechbubbles.update(id, {
+    resetSpeechbubble(callback = () => {}) {
+      this._collection.update(this._id, {
         $set: {
-          type: actionGoal.goal.type,
-          data: actionGoal.goal.data,
+          type: '',
+          data: {},
+        },
+      }, callback);
+    }
+
+    goalCB(action) {
+      this._collection.update(this._id, {
+        $set: {
+          type: action.goal.type,
+          data: action.goal.data,
         }
       });
+    }
 
-      if (actionGoal.goal.type === 'message') {
-        actionServers.setSucceeded();
-      }
-    });
-
-    actionServer.registerPreemptCallback((cancelGoal) => {
-      synth.cancel();
-      actionServer.setPreempted();
-    });
-
-    speechbubbleActions[id] = actionServer;
-    return actionServer;
+    preemptCB() {
+      this._as.setPreempted();
+    }
   }
 
 }
@@ -94,11 +93,13 @@ if (Meteor.isServer) {
         owner: userId,
         role: 'robot',
         type: '',
+        data: {},
       }, defaultAction));
       Speechbubbles.insert(Object.assign({
         owner: userId,
         role: 'human',
         type: '',
+        data: {},
       }, defaultAction));
     },
   });

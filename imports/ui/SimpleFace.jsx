@@ -3,7 +3,11 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { Speechbubbles } from '../api/speechbubbles.js';
+import { getActionServer } from '../api/action.js';
+import {
+  Speechbubbles,
+  SpeechbubbleAction,
+} from '../api/speechbubbles.js';
 import {
   SpeechActions,
   serveSpeechSynthesisAction,
@@ -26,6 +30,11 @@ const logger = log.getLogger('SimpleFace');
 class SimpleFace extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      ready: false,
+    };
+
+    this.actions = {};
   }
 
   componentDidUpdate(prevProps) {
@@ -33,38 +42,50 @@ class SimpleFace extends Component {
       // NOTE: the functions inside of setTimeout callback use .observeChanges,
       //  which won't work properly within in withTracker
       setTimeout(() => {
-        serveSpeechSynthesisAction(this.props.speechSynthesis._id);
-        serveSpeechRecognitionAction(this.props.speechRecognition._id);
-        serveSoundPlayAction(this.props.soundPlay._id);
+        // serveSpeechSynthesisAction(this.props.speechSynthesis._id);
+        // serveSpeechRecognitionAction(this.props.speechRecognition._id);
+        // serveSoundPlayAction(this.props.soundPlay._id);
+        this.actions[this.props.speechbubbleRobot._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
+        this.actions[this.props.speechbubbleHuman._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
+        this.setState({ready: true});
       }, 0);
     }
   }
 
   render() {
-    if (this.props.loading) {
+    if (this.props.loading || !this.state.ready) {
       return (
         <div>Loading...</div>
       )
     };
 
+    const speechbubbleRobot = this.props.speechbubbleRobot;
+    const speechbubbleHuman = this.props.speechbubbleHuman;
+    const speechbubbleActionRobot = this.actions[speechbubbleRobot._id];
+    const speechbubbleActionHuman = this.actions[speechbubbleHuman._id];
     return (
       <div>
-
         <div>
           <strong>Robot: </strong>
-          {this.props.speechbubbleRobot ?
+          {speechbubbleRobot ?
             <Speechbubble
-              key={this.props.speechbubbleRobot._id}
-              speechbubble={this.props.speechbubbleRobot}
+              key={speechbubbleRobot._id}
+              speechbubble={speechbubbleRobot}
+              reset={speechbubbleActionRobot.resetSpeechbubble.bind(speechbubbleActionRobot)}
+              setSucceeded={speechbubbleActionRobot._as.setSucceeded.bind(speechbubbleActionRobot._as)}
+              setAborted={speechbubbleActionRobot._as.setAborted.bind(speechbubbleActionRobot._as)}
             /> : null
           }
         </div>
         <div>
           <strong>Human: </strong>
-          {this.props.speechbubbleHuman ?
+          {speechbubbleHuman ?
             <Speechbubble
-              key={this.props.speechbubbleHuman._id}
-              speechbubble={this.props.speechbubbleHuman}
+              key={speechbubbleHuman._id}
+              speechbubble={speechbubbleHuman}
+              reset={speechbubbleActionHuman.resetSpeechbubble.bind(speechbubbleActionHuman)}
+              setSucceeded={speechbubbleActionHuman._as.setSucceeded.bind(speechbubbleActionHuman._as)}
+              setAborted={speechbubbleActionHuman._as.setAborted.bind(speechbubbleActionHuman._as)}
             /> : null
           }
         </div>
@@ -87,10 +108,10 @@ export default withTracker(({faceQuery}) => {
 
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
-  const speechSynthesis = SpeechActions.findOne({type: 'synthesis'});
-  const speechRecognition = SpeechActions.findOne({type: 'recognition'});
-  const soundPlay = MediaActions.findOne({type: 'sound'});
-  const faceTracking = VisionActions.findOne({type: 'face_tracking'});
+  const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, faceQuery));
+  const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, faceQuery));
+  const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, faceQuery));
+  const faceTracking = VisionActions.findOne(Object.assign({type: 'face_tracking'}, faceQuery));
 
   return {
     loading,

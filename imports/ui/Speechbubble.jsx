@@ -1,32 +1,21 @@
+import util from 'util';
 import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 
-import {
-  Speechbubbles,
-  serveSpeechbubbleAction,
-} from '../api/speechbubbles.js';
 import { MediaFiles } from '../api/media.js';
 
 const logger = log.getLogger('Speechbubble');
 
+const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
-// TODO: write a note that this requires subscriptions
 
+// Speechbubble component - represents a speech bubble; it can display text,
+//   image, or video
+// IMPORTANT! MAKE SURE MediaFiles COLLECTION IS SUBSCRIBED!
 export default class Speechbubble extends Component {
   constructor(props) {
     super(props);
-
-    this.actionServers = {};
-  }
-
-  componentDidMount() {
-    const self = this;
-    // NOTE: the functions inside of setTimeout callback use .observeChanges,
-    //  which won't work properly within in withTracker
-    setTimeout(() => {
-      self.actionServers[this.props.speechbubble._id] = serveSpeechbubbleAction(this.props.speechbubble._id);
-    }, 0);
   }
 
   render() {
@@ -35,6 +24,7 @@ export default class Speechbubble extends Component {
       case '':
         return null;
       case 'message':
+        this.props.setSucceeded();
         return (
           <span>{speechbubble.data.message}</span>
         )
@@ -44,17 +34,8 @@ export default class Speechbubble extends Component {
             <button
               key={index}
               onClick={() => {
-                Speechbubbles.update(speechbubble._id, {
-                  $set: {
-                    type: '',
-                  },
-                  $unset: {
-                    choices: '',
-                  }
-                }, {}, (err, result) => {
-                  this.actionServers[speechbubble._id].setSucceeded({
-                    text: choice,
-                  });
+                this.props.reset((err, result) => {
+                  this.props.setSucceeded({choice, index});
                 });
               }}
             >
@@ -63,11 +44,47 @@ export default class Speechbubble extends Component {
           );
         });
       case 'image':
-        const mediaFile = MediaFiles.findOne(speechbubble.data.query);
+        const image = MediaFiles.findOne(speechbubble.data.query);
+        if (!image) {
+          this.props.reset((err, res) => {
+            this.props.setAborted({
+              message: `Invalid input query: ${obj2str(speechbubble.data.query)}`
+            });
+          });
+          return null;
+        }
+        this.props.setSucceeded();
         return (
           <img
             height="100"
-            src={mediaFile.data}
+            src={image.data}
+          />
+        );
+      case 'video':
+        const video = MediaFiles.findOne(speechbubble.data.query);
+        if (!video) {
+          this.props.reset((err, res) => {
+            this.props.setAborted({
+              message: `Invalid input query: ${obj2str(speechbubble.data.query)}`
+            });
+          });
+          return null;
+        }
+        return (
+          <video
+            height="100"
+            src={video.data}
+            onEnded={() => {
+              this.props.reset((err, res) => {
+                this.props.setSucceeded();
+              });
+            }}
+            onError={() => {
+              this.props.reset((err, res) => {
+                this.props.setAborted();
+              });
+            }}
+            autoPlay
           />
         );
       default:
