@@ -20,6 +20,7 @@ import {
 } from '../api/media.js';
 import { VisionActions } from '../api/vision.js';
 
+import '../../client/main.css';
 import Speechbubble from '../ui/Speechbubble.jsx';
 import FaceTracking from '../ui/FaceTracking.jsx';
 
@@ -89,6 +90,18 @@ class SimpleFace extends Component {
             /> : null
           }
         </div>
+
+        <div className="face">
+          <div className="eye left">
+            <div className="eyelid upper"></div>
+            <div className="eyelid lower"></div>
+          </div>
+          <div className="eye right">
+            <div className="eyelid upper"></div>
+            <div className="eyelid lower"></div>
+          </div>
+        </div>
+
       </div>
     );
   }
