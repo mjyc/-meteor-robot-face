@@ -17,3 +17,7 @@ export {
 export {
   VisionActions,
 } from '../imports/api/vision.js'
+
+export {
+  FacialExpressionActions,
+} from '../imports/api/facial_expression.js'

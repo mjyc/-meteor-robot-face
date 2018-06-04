@@ -73,7 +73,7 @@ if (Meteor.isServer) {
 
 
   Meteor.publish('speechbubbles', function speechbubblesPublication() {
-    // TODO: restrict access based on user permission; right now all speechbubbles public!
+    // TODO: restrict access based on user permission; right now all docs are public!
     return Speechbubbles.find();
   });
 

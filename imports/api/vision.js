@@ -82,7 +82,7 @@ if (Meteor.isServer) {
 
 
   Meteor.publish('vision_actions', function visionActionsPublication() {
-    // TODO: restrict access based on user permission; right now all media actions are public!
+    // TODO: restrict access based on user permission; right now all docs are public!
     return VisionActions.find();
   });
 

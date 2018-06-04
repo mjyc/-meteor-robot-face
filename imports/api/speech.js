@@ -135,7 +135,7 @@ if (Meteor.isServer) {
 
 
   Meteor.publish('speech_actions', function speechPublication() {
-    // TODO: restrict access based on user permission; right now all speech docs are public!
+    // TODO: restrict access based on user permission; right now all docs are public!
     return SpeechActions.find();
   });
 

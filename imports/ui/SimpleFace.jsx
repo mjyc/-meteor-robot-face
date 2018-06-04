@@ -19,6 +19,10 @@ import {
   serveSoundPlayAction,
 } from '../api/media.js';
 import { VisionActions } from '../api/vision.js';
+import {
+  FacialExpressionActions,
+  ExpressiveEyes,
+} from '../api/facial_expression.js';
 
 // import '../../client/main.css';
 import Speechbubble from '../ui/Speechbubble.jsx';
@@ -35,6 +39,7 @@ class SimpleFace extends Component {
       ready: false,
     };
 
+    this.elements = {};
     this.actions = {};
   }
 
@@ -49,6 +54,16 @@ class SimpleFace extends Component {
         this.actions[this.props.speechbubbleRobot._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
         this.actions[this.props.speechbubbleHuman._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
         this.setState({ready: true});
+
+        const eyes = new ExpressiveEyes({
+          leftEye: this.elements.leftEye,
+          rightEye: this.elements.rightEye,
+          upperLeftEyelid: this.elements.upperLeftEyelid,
+          upperRightEyelid: this.elements.upperRightEyelid,
+          lowerLeftEyelid: this.elements.lowerLeftEyelid,
+          lowerRightEyelid: this.elements.lowerRightEyelid,
+        });
+        eyes.startBlinking();
       }, 0);
     }
   }
@@ -141,13 +156,31 @@ class SimpleFace extends Component {
           }
         </div>
 
-        <div style={Object.assign({}, styles.eye, styles.left)}>
-          <div style={Object.assign({}, styles.eyelid, styles.upper)}></div>
-          <div style={Object.assign({}, styles.eyelid, styles.lower)}></div>
+        <div
+          style={Object.assign({}, styles.eye, styles.left)}
+          ref={element => { this.elements['leftEye'] = element; }}
+        >
+          <div
+            style={Object.assign({}, styles.eyelid, styles.upper)}
+            ref={element => { this.elements['upperLeftEyelid'] = element; }}
+          />
+          <div
+            style={Object.assign({}, styles.eyelid, styles.lower)}
+            ref={element => { this.elements['lowerLeftEyelid'] = element; }}
+          />
         </div>
-        <div style={Object.assign({}, styles.eye, styles.right)}>
-          <div style={Object.assign({}, styles.eyelid, styles.upper)}></div>
-          <div style={Object.assign({}, styles.eyelid, styles.lower)}></div>
+        <div
+          style={Object.assign({}, styles.eye, styles.right)}
+          ref={element => { this.elements['rightEye'] = element; }}
+        >
+          <div
+            style={Object.assign({}, styles.eyelid, styles.upper)}
+            ref={element => { this.elements['upperRightEyelid'] = element; }}
+          />
+          <div
+            style={Object.assign({}, styles.eyelid, styles.lower)}
+            ref={element => { this.elements['lowerRightEyelid'] = element; }}
+          />
         </div>
 
       </div>
