@@ -20,7 +20,7 @@ import {
 } from '../api/media.js';
 import { VisionActions } from '../api/vision.js';
 
-import '../../client/main.css';
+// import '../../client/main.css';
 import Speechbubble from '../ui/Speechbubble.jsx';
 import FaceTracking from '../ui/FaceTracking.jsx';
 
@@ -60,12 +60,62 @@ class SimpleFace extends Component {
       )
     };
 
+    // TODO: expose the variables below as props
+    const faceColor = 'whitesmoke';
+    const faceHeight = '426.67px';
+    const faceWidth = '600px';
+    const eyeColor = 'black';
+    const eyeSize = '120px';  // 20% of faceWidth
+    const eyelidColor = 'gray';
+
+    const styles = {
+      face: {
+        backgroundColor: faceColor,
+        margin: 'auto',
+        height: faceHeight,
+        width: faceWidth,
+        position: 'relative',
+      },
+      eye: {
+        backgroundColor: eyeColor,
+        borderRadius: '100%',
+        height: eyeSize,
+        width: eyeSize,
+        bottom: `calc(${eyeSize} / 3)`,
+        zIndex: 1,
+        position: 'absolute',
+      },
+      left: {
+        left: `calc(${eyeSize} / 3)`,
+      },
+      right: {
+        right: `calc(${eyeSize} / 3)`,
+      },
+      eyelid: {
+        backgroundColor: eyelidColor,
+        height: eyeSize,
+        width: `calc(${eyeSize} * 1.75)`,
+        zIndex: 2,
+        position: 'absolute',
+      },
+      upper: {
+        bottom: `calc(${eyeSize} * 1)`,
+        left: `calc(${eyeSize} * -0.375)`,
+      },
+      lower: {
+        borderRadius: '100%',
+        bottom: `calc(${eyeSize} * -1)`,
+        left: `calc(${eyeSize} * -0.375)`,
+      },
+    }
+
     const speechbubbleRobot = this.props.speechbubbleRobot;
     const speechbubbleHuman = this.props.speechbubbleHuman;
     const speechbubbleActionRobot = this.actions[speechbubbleRobot._id];
     const speechbubbleActionHuman = this.actions[speechbubbleHuman._id];
     return (
-      <div>
+      <div style={styles.face}>
+
         <div>
           <strong>Robot: </strong>
           {speechbubbleRobot ?
@@ -91,15 +141,13 @@ class SimpleFace extends Component {
           }
         </div>
 
-        <div className="face">
-          <div className="eye left">
-            <div className="eyelid upper"></div>
-            <div className="eyelid lower"></div>
-          </div>
-          <div className="eye right">
-            <div className="eyelid upper"></div>
-            <div className="eyelid lower"></div>
-          </div>
+        <div style={Object.assign({}, styles.eye, styles.left)}>
+          <div style={Object.assign({}, styles.eyelid, styles.upper)}></div>
+          <div style={Object.assign({}, styles.eyelid, styles.lower)}></div>
+        </div>
+        <div style={Object.assign({}, styles.eye, styles.right)}>
+          <div style={Object.assign({}, styles.eyelid, styles.upper)}></div>
+          <div style={Object.assign({}, styles.eyelid, styles.lower)}></div>
         </div>
 
       </div>
