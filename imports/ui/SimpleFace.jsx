@@ -20,6 +20,7 @@ import {
 } from '../api/media.js';
 import { VisionActions } from '../api/vision.js';
 import {
+  FacialExpressionAction,
   FacialExpressionActions,
   ExpressiveEyes,
 } from '../api/facial_expression.js';
@@ -63,7 +64,12 @@ class SimpleFace extends Component {
           lowerLeftEyelid: this.elements.lowerLeftEyelid,
           lowerRightEyelid: this.elements.lowerRightEyelid,
         });
-        eyes.startBlinking();
+        eyes.startBlinking();  // TODO: consolidate startBlinking into an action
+        this.actions[this.props.facialExpression._id] = new FacialExpressionAction(
+          FacialExpressionActions,
+          this.props.facialExpression._id,
+          eyes,
+        );
       }, 0);
     }
   }
@@ -193,12 +199,14 @@ export default withTracker(({faceQuery}) => {
   const speechHandle = Meteor.subscribe('speech_actions');
   const mediaActionsHandle = Meteor.subscribe('media_actions');
   const visionActionsHandle = Meteor.subscribe('vision_actions');
+  const facialExpressionActionsHandle = Meteor.subscribe('facial_expression_actions');
   const mediaFilesHandle = Meteor.subscribe('media_files');
   const loading = !speechbubblesHandle.ready()
     || !speechHandle.ready()
     || !mediaActionsHandle.ready()
     || !visionActionsHandle.ready()
-    || !mediaFilesHandle.ready();
+    || !mediaFilesHandle.ready()
+    || !facialExpressionActionsHandle.ready();
 
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
@@ -206,6 +214,7 @@ export default withTracker(({faceQuery}) => {
   const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, faceQuery));
   const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, faceQuery));
   const faceTracking = VisionActions.findOne(Object.assign({type: 'face_tracking'}, faceQuery));
+  const facialExpression = FacialExpressionActions.findOne(faceQuery);
 
   return {
     loading,
@@ -215,5 +224,6 @@ export default withTracker(({faceQuery}) => {
     speechRecognition,
     soundPlay,
     faceTracking,
+    facialExpression,
   };
 })(SimpleFace);
