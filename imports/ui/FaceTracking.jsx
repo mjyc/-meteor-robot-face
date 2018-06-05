@@ -20,11 +20,11 @@ export default class FaceTracking extends Component {
   }
 
   componentDidMount() {
-    bindPage(this.elements.video);
+    bindPage();
 
-    setTimeout(() => {
-      serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
-    }, 1000);
+    // setTimeout(() => {
+    //   serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
+    // }, 1000);
   }
 
   render() {
@@ -41,16 +41,16 @@ export default class FaceTracking extends Component {
           id="video"
           style={style}
           ref={(element) => { this.elements['video'] = element; }}
-          width="320"
-          height="240"
+          width="600px"
+          height="500px"
           autoPlay
         ></video>
         <canvas
           id="output"
+          width="600px"
+          height="500px"
           style={style}
           ref={(element) => { this.elements['canvas'] = element; }}
-          width="320"
-          height="240"
         ></canvas>
       </div>
     );

@@ -68,8 +68,8 @@ import Stats from 'stats.js';
 // import * as posenet from '@tensorflow-models/posenet';
 
 // import { drawKeypoints, drawSkeleton } from './demo_util';
-// const videoWidth = 600;
-// const videoHeight = 500;
+const videoWidth = 600;
+const videoHeight = 500;
 const stats = new Stats();
 
 function isAndroid() {
@@ -88,12 +88,12 @@ function isMobile() {
  * Loads a the camera to be used in the demo
  *
  */
-async function setupCamera(video, videoWidth = 600, videoHeight = 500) {
+async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw 'Browser API navigator.mediaDevices.getUserMedia not available';
   }
 
-  // const video = document.getElementById('video');
+  const video = document.getElementById('video');
   video.width = videoWidth;
   video.height = videoHeight;
 
@@ -114,8 +114,8 @@ async function setupCamera(video, videoWidth = 600, videoHeight = 500) {
   });
 }
 
-async function loadVideo(videoElem) {
-  const video = await setupCamera(videoElem);
+async function loadVideo() {
+  const video = await setupCamera();
   video.play();
 
   return video;
@@ -242,8 +242,6 @@ function detectPoseInRealTime(video, net) {
   const ctx = canvas.getContext('2d');
   const flipHorizontal = true; // since images are being fed from a webcam
 
-  const videoWidth = 600;
-  const videoHeight = 500;
   canvas.width = videoWidth;
   canvas.height = videoHeight;
 
@@ -327,15 +325,17 @@ function detectPoseInRealTime(video, net) {
  * Kicks off the demo by loading the posenet model, finding and loading available
  * camera devices, and setting off the detectPoseInRealTime function.
  */
-export async function bindPage(video) {
+export async function bindPage() {
   // Load the PoseNet model weights for version 1.01
   const net = await posenet.load();
 
   // document.getElementById('loading').style.display = 'none';
   // document.getElementById('main').style.display = 'block';
 
+  let video;
+
   try {
-    await loadVideo(video);
+    video = await loadVideo();
   } catch(e) {
     // let info = document.getElementById('info');
     // info.textContent = "this browser does not support video capture, or this device does not have a camera";
