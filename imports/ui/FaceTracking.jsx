@@ -23,8 +23,8 @@ export default class FaceTracking extends Component {
   componentDidMount() {
 
     setTimeout(() => {
-    //   serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
       start();
+      serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
     }, 100);
   }
 
@@ -33,29 +33,29 @@ export default class FaceTracking extends Component {
       position: 'absolute',
       bottom: 0,
       left: 0,
-      display: !!this.props.faceTracking.showVideo ? 'block' : 'none',
+      // display: !!this.props.faceTracking.showVideo ? 'block' : 'none',
     };
 
     return (
       <div>
 
-        <div id="info" style={{display:'none'}}>
-        </div>
-        <div id="loading">
-            Loading the model...
-        </div>
-
-        <div id='main' style={{display: 'none'}}>
-            <video id="video" style={{
-              '-moz-transform': 'scaleX(-1)',
-              '-o-transform': 'scaleX(-1)',
-              '-webkit-transform': 'scaleX(-1)',
-              'transform': 'scaleX(-1)',
-              'display': 'none',
-            }}>
-            </video>
-            <canvas id="output" />
-        </div>
+        <video
+          id="video"
+          style={style}
+          ref={(element) => { this.elements['video'] = element; }}
+          width="600px"
+          height="500px"
+          autoPlay
+        ></video>
+        <canvas
+          id="output"
+        />
+        <canvas
+          width="600px"
+          height="500px"
+          style={style}
+          ref={(element) => { this.elements['canvas'] = element; }}
+        ></canvas>
 
       </div>
     );

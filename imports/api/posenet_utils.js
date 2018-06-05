@@ -329,17 +329,17 @@ export async function bindPage() {
   // Load the PoseNet model weights for version 1.01
   const net = await posenet.load();
 
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
+  // document.getElementById('loading').style.display = 'none';
+  // document.getElementById('main').style.display = 'block';
 
   let video;
 
   try {
     video = await loadVideo();
   } catch(e) {
-    let info = document.getElementById('info');
-    info.textContent = "this browser does not support video capture, or this device does not have a camera";
-    info.style.display = 'block';
+    // let info = document.getElementById('info');
+    // info.textContent = "this browser does not support video capture, or this device does not have a camera";
+    // info.style.display = 'block';
     throw e;
   }
 
