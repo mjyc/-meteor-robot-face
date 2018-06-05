@@ -6,6 +6,7 @@ import {
 } from '../api/vision.js';
 import {
   bindPage,
+  start,
 } from '../api/posenet_utils.js';
 
 const logger = log.getLogger('FaceTracking');
@@ -20,11 +21,11 @@ export default class FaceTracking extends Component {
   }
 
   componentDidMount() {
-    bindPage();
 
-    // setTimeout(() => {
+    setTimeout(() => {
     //   serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
-    // }, 1000);
+      start();
+    }, 100);
   }
 
   render() {
@@ -37,21 +38,25 @@ export default class FaceTracking extends Component {
 
     return (
       <div>
-        <video
-          id="video"
-          style={style}
-          ref={(element) => { this.elements['video'] = element; }}
-          width="600px"
-          height="500px"
-          autoPlay
-        ></video>
-        <canvas
-          id="output"
-          width="600px"
-          height="500px"
-          style={style}
-          ref={(element) => { this.elements['canvas'] = element; }}
-        ></canvas>
+
+        <div id="info" style={{display:'none'}}>
+        </div>
+        <div id="loading">
+            Loading the model...
+        </div>
+
+        <div id='main' style={{display: 'none'}}>
+            <video id="video" style={{
+              '-moz-transform': 'scaleX(-1)',
+              '-o-transform': 'scaleX(-1)',
+              '-webkit-transform': 'scaleX(-1)',
+              'transform': 'scaleX(-1)',
+              'display': 'none',
+            }}>
+            </video>
+            <canvas id="output" />
+        </div>
+
       </div>
     );
   }
