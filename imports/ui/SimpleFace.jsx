@@ -136,6 +136,9 @@ class SimpleFace extends Component {
     const speechbubbleActionHuman = this.actions[speechbubbleHuman._id];
     return (
       <div style={styles.face}>
+        <FaceTracking
+          faceTracking={this.props.faceTracking}
+        />
 
         <div>
           <strong>Robot: </strong>
@@ -188,7 +191,6 @@ class SimpleFace extends Component {
             ref={element => { this.elements['lowerRightEyelid'] = element; }}
           />
         </div>
-
       </div>
     );
   }

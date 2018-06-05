@@ -1,7 +1,10 @@
 import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 
-import { serveFaceTrackingAction } from '../api/vision.js';
+import {
+  loadVideo,
+  serveFaceTrackingAction,
+} from '../api/vision.js';
 
 const logger = log.getLogger('FaceTracking');
 
@@ -15,6 +18,10 @@ export default class FaceTracking extends Component {
   }
 
   componentDidMount() {
+    // let video = await
+    loadVideo();
+    // console.log(video);
+
     const self = this;
     setTimeout(() => {
       serveFaceTrackingAction(self._id, self.elements.video, self.elements.canvas);
@@ -32,6 +39,7 @@ export default class FaceTracking extends Component {
     return (
       <div>
         <video
+          id="video"
           style={style}
           ref={(element) => { this.elements['video'] = element; }}
           width="320"

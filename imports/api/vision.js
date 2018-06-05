@@ -13,6 +13,54 @@ if (Meteor.isClient) {
   import 'tracking';
   import 'tracking/build/data/face-min.js';
 
+  // Video util functions
+
+  function isAndroid() {
+    return /Android/i.test(navigator.userAgent);
+  }
+
+  function isiOS() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
+  function isMobile() {
+    return isAndroid() || isiOS();
+  }
+
+  async function setupCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw 'Browser API navigator.mediaDevices.getUserMedia not available';
+    }
+
+    const video = document.getElementById('video');
+    video.width = 600;//videoWidth;
+    video.height = 500;//videoHeight;
+
+    const mobile = isMobile();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      'audio': false,
+      'video': {
+        facingMode: 'user',
+        width: mobile ? undefined : 600,//videoWidth,
+        height: mobile ? undefined: 500}//videoHeight}
+    });
+    video.srcObject = stream;
+
+    return new Promise(resolve => {
+      video.onloadedmetadata = () => {
+        resolve(video);
+      };
+    });
+  }
+
+  export async function loadVideo() {
+    const video = await setupCamera();
+    video.play();
+
+    return video;
+  }
+
+
   const trackFaceActions = {};
 
   export const serveFaceTrackingAction = (id, video, canvas) => {
