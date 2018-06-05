@@ -2,9 +2,11 @@ import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 
 import {
-  loadVideo,
   serveFaceTrackingAction,
 } from '../api/vision.js';
+import {
+  bindPage,
+} from '../api/posenet_utils.js';
 
 const logger = log.getLogger('FaceTracking');
 
@@ -18,14 +20,11 @@ export default class FaceTracking extends Component {
   }
 
   componentDidMount() {
-    // let video = await
-    loadVideo();
-    // console.log(video);
+    bindPage(this.elements.video);
 
-    const self = this;
     setTimeout(() => {
-      serveFaceTrackingAction(self._id, self.elements.video, self.elements.canvas);
-    }, 0);
+      serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
+    }, 1000);
   }
 
   render() {
@@ -47,6 +46,7 @@ export default class FaceTracking extends Component {
           autoPlay
         ></video>
         <canvas
+          id="output"
           style={style}
           ref={(element) => { this.elements['canvas'] = element; }}
           width="320"
