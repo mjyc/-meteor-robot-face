@@ -10,7 +10,7 @@ Npm.depends({
   'react': '16.1.1',
   // 'material-ui': '0.20.0', // causes this problem https://reactjs.org/warnings/refs-must-have-owner.html because it pulls some react libraries
   'tracking': '1.1.3',
-  '@tensorflow/tfjs': '0.11.2',
+  '@tensorflow/tfjs': '0.11.4',
   '@tensorflow-models/posenet': '0.1.1',
   'stats.js': '0.17.0',
   'dat.gui': '0.7.1'
