@@ -2,6 +2,7 @@ import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 
 import {
+  VisionActions,
   setupCamera,
   PoseNetAction,
   serveFaceTrackingAction,
@@ -27,7 +28,7 @@ export default class FaceTracking extends Component {
     setTimeout(() => {
       setupCamera(this.elements.video).then((video => {
         video.play();
-        const posenet = new PoseNetAction(this.elements.video, this.elements.canvas);
+        const posenet = new PoseNetAction(VisionActions, this.props.faceTracking._id, this.elements.video);
         posenet.setupFPS();
         posenet.setupGui();
         posenet.detectPoseInRealTime();

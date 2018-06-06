@@ -21,9 +21,6 @@ if (Meteor.isClient) {
   import 'tracking';
   import 'tracking/build/data/face-min.js';
 
-  const color = 'aqua';
-  const lineWidth = 2;
-
   const isAndroid = () => {
     return /Android/i.test(navigator.userAgent);
   }
@@ -58,62 +55,20 @@ if (Meteor.isClient) {
     });
   }
 
-  function toTuple({ y, x }) {
-    return [y, x];
-  }
-
-  /**
-   * Draws a line on a canvas, i.e. a joint
-   */
-  function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
-    ctx.beginPath();
-    ctx.moveTo(ax * scale, ay * scale);
-    ctx.lineTo(bx * scale, by * scale);
-    ctx.lineWidth = lineWidth;
-    ctx.strokeStyle = color;
-    ctx.stroke();
-  }
-
-  /**
-   * Draws a pose skeleton by looking up all adjacent keypoints/joints
-   */
-  function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
-    const adjacentKeyPoints = posenet.getAdjacentKeyPoints(
-      keypoints, minConfidence);
-
-    adjacentKeyPoints.forEach((keypoints) => {
-      drawSegment(toTuple(keypoints[0].position),
-        toTuple(keypoints[1].position), color, scale, ctx);
-    });
-  }
-
-  /**
-   * Draw pose keypoints onto a canvas
-   */
-  function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
-    for (let i = 0; i < keypoints.length; i++) {
-      const keypoint = keypoints[i];
-
-      if (keypoint.score < minConfidence) {
-        continue;
-      }
-
-      const { y, x } = keypoint.position;
-      ctx.beginPath();
-      ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
-      ctx.fillStyle = color;
-      ctx.fill();
-    }
-  }
-
   // TODO: Move viz code out from this class
   export class PoseNetAction {
 
-    constructor(video, canvas) {
+    constructor(collection, id, video) {
+      this._collection = collection;
+      this._id = id;
       this._video = video;
-      this._canvas = canvas;
 
-      this._stats = new Stats();
+      this._as = getActionServer(collection, id);
+      // TODO: change it to publish "feedback"
+      //   allow changing parameters, etc
+      // this._as.registerGoalCallback(this.goalCB.bind(this));
+      // this._as.registerPreemptCallback(this.preemptCB.bind(this));
+
       this._guiState = {
         algorithm: 'single-pose',
         input: {
@@ -138,6 +93,7 @@ if (Meteor.isClient) {
         },
         net: null,
       };
+      this._stats = new Stats();
     }
 
     setupFPS() {
@@ -211,15 +167,10 @@ if (Meteor.isClient) {
       });
     }
 
-    // TODO: move drawing code out
     async detectPoseInRealTime() {
       this._guiState.net = await posenet.load();
 
-      const ctx = this._canvas.getContext('2d');
       const flipHorizontal = true; // since images are being fed from a webcam
-
-      this._canvas.width = this._video.width;
-      this._canvas.height = this._video.height;
 
       const poseDetectionFrame = async () => {
         if (this._guiState.changeToArchitecture) {
@@ -264,37 +215,14 @@ if (Meteor.isClient) {
             break;
         }
 
-        ctx.clearRect(0, 0, this._video.width, this._video.height);
-
-        if (this._guiState.output.showVideo) {
-          ctx.save();
-          ctx.scale(-1, 1);
-          ctx.translate(-this._video.width, 0);
-          ctx.drawImage(this._video, 0, 0, this._video.width, this._video.height);
-          ctx.restore();
-        }
-
-        // For each pose (i.e. person) detected in an image, loop through the poses
-        // and draw the resulting skeleton and keypoints if over certain confidence
-        // scores
-        poses.forEach(({ score, keypoints }) => {
-          if (score >= minPoseConfidence) {
-            if (this._guiState.output.showPoints) {
-              drawKeypoints(keypoints, minPartConfidence, ctx);
-            }
-            if (this._guiState.output.showSkeleton) {
-              drawSkeleton(keypoints, minPartConfidence, ctx);
-            }
-          }
-        });
+        this._collection.update(this._id, {$set: {poses}});
 
         // End monitoring code for frames per second
         this._stats.end();
 
-        requestAnimationFrame(poseDetectionFrame);
       }
 
-      poseDetectionFrame();
+      setInterval(poseDetectionFrame, 100);
     }
   }
 
