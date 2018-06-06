@@ -55,53 +55,12 @@ if (Meteor.isClient) {
     });
   }
 
-  // TODO: Move viz code out from this class
-  export class PoseNetAction {
-
-    constructor(collection, id, video) {
-      this._collection = collection;
-      this._id = id;
-      this._video = video;
-
-      this._as = getActionServer(collection, id);
-      // TODO: change it to publish "feedback"
-      //   allow changing parameters, etc
-      // this._as.registerGoalCallback(this.goalCB.bind(this));
-      // this._as.registerPreemptCallback(this.preemptCB.bind(this));
-
-      this._guiState = {
-        algorithm: 'single-pose',
-        input: {
-          mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
-          outputStride: 16,
-          imageScaleFactor: 0.2,
-        },
-        singlePoseDetection: {
-          minPoseConfidence: 0.1,
-          minPartConfidence: 0.5,
-        },
-        multiPoseDetection: {
-          maxPoseDetections: 2,
-          minPoseConfidence: 0.1,
-          minPartConfidence: 0.3,
-          nmsRadius: 20.0,
-        },
-        output: {
-          showVideo: true,
-          showSkeleton: true,
-          showPoints: true,
-        },
-        net: null,
-      };
-      this._stats = new Stats();
-    }
-
     setupFPS() {
       this._stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
       document.body.appendChild(this._stats.dom);  // TODO: make the GUI location customizable
     }
 
-    setupGui() {
+    setupGUI() {
       // TODO: make the GUI location customizable
       const gui = new dat.GUI({ width: 300 });
 
@@ -167,62 +126,86 @@ if (Meteor.isClient) {
       });
     }
 
-    async detectPoseInRealTime() {
-      this._guiState.net = await posenet.load();
+  // TODO: Move viz code out from this class
+  export class PoseNetAction {
 
-      const flipHorizontal = true; // since images are being fed from a webcam
+    constructor(collection, id, video) {
+      this._collection = collection;
+      this._id = id;
+      this._video = video;
 
-      const poseDetectionFrame = async () => {
-        if (this._guiState.changeToArchitecture) {
-          // Important to purge variables and free up GPU memory
-          this._guiState.net.dispose();
+      this._as = getActionServer(collection, id);
+      // TODO: change it to publish "feedback"
+      //   allow changing parameters, etc
+      // this._as.registerGoalCallback(this.goalCB.bind(this));
+      // this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-          // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01 version
-          this._guiState.net = await posenet.load(Number(this._guiState.changeToArchitecture));
+      this._net = null;
+      this._params = {
+        algorithm: 'single-pose',
+        input: {
+          mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
+          outputStride: 16,
+          flipHorizontal: true,
+          imageScaleFactor: 0.2,
+        },
+        singlePoseDetection: {
+          minPoseConfidence: 0.1,
+          minPartConfidence: 0.5,
+        },
+        multiPoseDetection: {
+          maxPoseDetections: 2,
+          minPoseConfidence: 0.1,
+          minPartConfidence: 0.3,
+          nmsRadius: 20.0,
+        },
+      };
 
-          this._guiState.changeToArchitecture = null;
-        }
+      this.stats = new Stats();
+    }
 
-        // Begin monitoring code for frames per second
-        this._stats.begin();
+    async loadPoseNet(architecture = Number(this._params.input.mobileNetArchitecture)) {
+      this._net = await posenet.load(architecture);
+    }
 
-        // Scale an image down to a certain factor. Too large of an image will slow down
-        // the GPU
-        const imageScaleFactor = this._guiState.input.imageScaleFactor;
-        const outputStride = Number(this._guiState.input.outputStride);
-
-        let poses = [];
-        let minPoseConfidence;
-        let minPartConfidence;
-        switch (this._guiState.algorithm) {
-          case 'single-pose':
-            const pose = await this._guiState.net.estimateSinglePose(this._video, imageScaleFactor, flipHorizontal, outputStride);
-            poses.push(pose);
-
-            minPoseConfidence = Number(
-              this._guiState.singlePoseDetection.minPoseConfidence);
-            minPartConfidence = Number(
-              this._guiState.singlePoseDetection.minPartConfidence);
-            break;
-          case 'multi-pose':
-            poses = await this._guiState.net.estimateMultiplePoses(this._video, imageScaleFactor, flipHorizontal, outputStride,
-              this._guiState.multiPoseDetection.maxPoseDetections,
-              this._guiState.multiPoseDetection.minPartConfidence,
-              this._guiState.multiPoseDetection.nmsRadius);
-
-            minPoseConfidence = Number(this._guiState.multiPoseDetection.minPoseConfidence);
-            minPartConfidence = Number(this._guiState.multiPoseDetection.minPartConfidence);
-            break;
-        }
-
-        this._collection.update(this._id, {$set: {poses}});
-
-        // End monitoring code for frames per second
-        this._stats.end();
-
+    async detectPose() {
+      if (!this._net) {
+        await this.loadPoseNet();
+      }
+      if (this._params.changeToArchitecture) {
+        this.net.dispose();
+        this.net = await posenet.load(Number(this._params.changeToArchitecture));
+        this._params.changeToArchitecture = null;
       }
 
-      setInterval(poseDetectionFrame, 100);
+      const imageScaleFactor = this._params.input.imageScaleFactor;
+      const outputStride = Number(this._params.input.outputStride);
+
+      let poses = [];
+      let minPoseConfidence;
+      let minPartConfidence;
+      switch (this._params.algorithm) {
+        case 'single-pose':
+          const pose = await this._net.estimateSinglePose(this._video, imageScaleFactor, flipHorizontal, outputStride);
+          poses.push(pose);
+
+          minPoseConfidence = Number(
+            this._params.singlePoseDetection.minPoseConfidence);
+          minPartConfidence = Number(
+            this._params.singlePoseDetection.minPartConfidence);
+          break;
+        case 'multi-pose':
+          poses = await this._net.estimateMultiplePoses(this._video, imageScaleFactor, flipHorizontal, outputStride,
+            this._params.multiPoseDetection.maxPoseDetections,
+            this._params.multiPoseDetection.minPartConfidence,
+            this._params.multiPoseDetection.nmsRadius);
+
+          minPoseConfidence = Number(this._params.multiPoseDetection.minPoseConfidence);
+          minPartConfidence = Number(this._params.multiPoseDetection.minPartConfidence);
+          break;
+      }
+
+      // this._collection.update(this._id, {$set: {poses}});
     }
   }
 
