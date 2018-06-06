@@ -2,6 +2,8 @@ import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 
 import {
+  setupCamera,
+  PoseNetAction,
   serveFaceTrackingAction,
 } from '../api/vision.js';
 import {
@@ -23,16 +25,23 @@ export default class FaceTracking extends Component {
   componentDidMount() {
 
     setTimeout(() => {
-      start();
-      serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
+      setupCamera(this.elements.video).then((video => {
+        video.play();
+        const posenet = new PoseNetAction(this.elements.video, this.elements.canvas);
+        posenet.setupFPS();
+        posenet.setupGui();
+        posenet.detectPoseInRealTime();
+      }))
+      // start();
+      // serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
     }, 100);
   }
 
   render() {
     const style = {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
+      // position: 'absolute',
+      // bottom: 0,
+      // left: 0,
       // display: !!this.props.faceTracking.showVideo ? 'block' : 'none',
     };
 
@@ -47,9 +56,6 @@ export default class FaceTracking extends Component {
           height="500px"
           autoPlay
         ></video>
-        <canvas
-          id="output"
-        />
         <canvas
           width="600px"
           height="500px"

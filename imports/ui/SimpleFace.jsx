@@ -92,7 +92,7 @@ class SimpleFace extends Component {
     const styles = {
       face: {
         backgroundColor: faceColor,
-        margin: 'auto',
+        // margin: 'auto',
         height: faceHeight,
         width: faceWidth,
         position: 'relative',
@@ -135,62 +135,63 @@ class SimpleFace extends Component {
     const speechbubbleActionRobot = this.actions[speechbubbleRobot._id];
     const speechbubbleActionHuman = this.actions[speechbubbleHuman._id];
     return (
-      <div style={styles.face}>
+      <div>
+        <div style={styles.face}>
+          <div>
+            <strong>Robot: </strong>
+            {speechbubbleRobot ?
+              <Speechbubble
+                key={speechbubbleRobot._id}
+                speechbubble={speechbubbleRobot}
+                reset={speechbubbleActionRobot.resetSpeechbubble.bind(speechbubbleActionRobot)}
+                setSucceeded={speechbubbleActionRobot._as.setSucceeded.bind(speechbubbleActionRobot._as)}
+                setAborted={speechbubbleActionRobot._as.setAborted.bind(speechbubbleActionRobot._as)}
+              /> : null
+            }
+          </div>
+          <div>
+            <strong>Human: </strong>
+            {speechbubbleHuman ?
+              <Speechbubble
+                key={speechbubbleHuman._id}
+                speechbubble={speechbubbleHuman}
+                reset={speechbubbleActionHuman.resetSpeechbubble.bind(speechbubbleActionHuman)}
+                setSucceeded={speechbubbleActionHuman._as.setSucceeded.bind(speechbubbleActionHuman._as)}
+                setAborted={speechbubbleActionHuman._as.setAborted.bind(speechbubbleActionHuman._as)}
+              /> : null
+            }
+          </div>
+
+          <div
+            style={Object.assign({}, styles.eye, styles.left)}
+            ref={element => { this.elements['leftEye'] = element; }}
+          >
+            <div
+              style={Object.assign({}, styles.eyelid, styles.upper)}
+              ref={element => { this.elements['upperLeftEyelid'] = element; }}
+            />
+            <div
+              style={Object.assign({}, styles.eyelid, styles.lower)}
+              ref={element => { this.elements['lowerLeftEyelid'] = element; }}
+            />
+          </div>
+          <div
+            style={Object.assign({}, styles.eye, styles.right)}
+            ref={element => { this.elements['rightEye'] = element; }}
+          >
+            <div
+              style={Object.assign({}, styles.eyelid, styles.upper)}
+              ref={element => { this.elements['upperRightEyelid'] = element; }}
+            />
+            <div
+              style={Object.assign({}, styles.eyelid, styles.lower)}
+              ref={element => { this.elements['lowerRightEyelid'] = element; }}
+            />
+          </div>
+        </div>
         <FaceTracking
           faceTracking={this.props.faceTracking}
         />
-
-        <div>
-          <strong>Robot: </strong>
-          {speechbubbleRobot ?
-            <Speechbubble
-              key={speechbubbleRobot._id}
-              speechbubble={speechbubbleRobot}
-              reset={speechbubbleActionRobot.resetSpeechbubble.bind(speechbubbleActionRobot)}
-              setSucceeded={speechbubbleActionRobot._as.setSucceeded.bind(speechbubbleActionRobot._as)}
-              setAborted={speechbubbleActionRobot._as.setAborted.bind(speechbubbleActionRobot._as)}
-            /> : null
-          }
-        </div>
-        <div>
-          <strong>Human: </strong>
-          {speechbubbleHuman ?
-            <Speechbubble
-              key={speechbubbleHuman._id}
-              speechbubble={speechbubbleHuman}
-              reset={speechbubbleActionHuman.resetSpeechbubble.bind(speechbubbleActionHuman)}
-              setSucceeded={speechbubbleActionHuman._as.setSucceeded.bind(speechbubbleActionHuman._as)}
-              setAborted={speechbubbleActionHuman._as.setAborted.bind(speechbubbleActionHuman._as)}
-            /> : null
-          }
-        </div>
-
-        <div
-          style={Object.assign({}, styles.eye, styles.left)}
-          ref={element => { this.elements['leftEye'] = element; }}
-        >
-          <div
-            style={Object.assign({}, styles.eyelid, styles.upper)}
-            ref={element => { this.elements['upperLeftEyelid'] = element; }}
-          />
-          <div
-            style={Object.assign({}, styles.eyelid, styles.lower)}
-            ref={element => { this.elements['lowerLeftEyelid'] = element; }}
-          />
-        </div>
-        <div
-          style={Object.assign({}, styles.eye, styles.right)}
-          ref={element => { this.elements['rightEye'] = element; }}
-        >
-          <div
-            style={Object.assign({}, styles.eyelid, styles.upper)}
-            ref={element => { this.elements['upperRightEyelid'] = element; }}
-          />
-          <div
-            style={Object.assign({}, styles.eyelid, styles.lower)}
-            ref={element => { this.elements['lowerRightEyelid'] = element; }}
-          />
-        </div>
       </div>
     );
   }
