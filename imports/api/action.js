@@ -145,6 +145,7 @@ class MeteorActionClient extends MeteorActionComm {
         result,
       });
     } else {
+      // NOTE: "isPreemptRequested" is set back to false in "setPreempted"
       this._set({
         isPreemptRequested: true,
       });
@@ -165,13 +166,14 @@ class MeteorActionServer extends MeteorActionComm {
     this._set(defaultAction);
   }
 
+  // NOTE: "status" is set to "active" before calling "callback"
   registerGoalCallback(callback = () => {}) {
     if (this.goalCallback) {
       this.removeListener('goal', this.goalCallback)
     }
 
     this.goalCallback = (goal) => {
-      this._set({status: goalStatus.active});  // acceptNewGoal
+      this._set({status: goalStatus.active});
       callback(goal);
     }
     this.on('goal', this.goalCallback);
@@ -207,7 +209,7 @@ class MeteorActionServer extends MeteorActionComm {
     this._set({
       status: goalStatus.preempted,
       result,
-      isPreemptRequested: false,  // TODO: consider doing this in registerPreemptCallback
+      isPreemptRequested: false,
     })
   }
 

@@ -4,13 +4,8 @@ import React, { Component } from 'react';
 import {
   VisionActions,
   setupCamera,
-  PoseNetAction,
-  serveFaceTrackingAction,
+  DetectionAction,
 } from '../api/vision.js';
-import {
-  bindPage,
-  start,
-} from '../api/posenet_utils.js';
 
 const logger = log.getLogger('FaceTracking');
 
@@ -24,18 +19,11 @@ export default class FaceTracking extends Component {
   }
 
   componentDidMount() {
-
-    setTimeout(() => {
-      setupCamera(this.elements.video).then((video => {
-        video.play();
-        const posenet = new PoseNetAction(VisionActions, this.props.faceTracking._id, this.elements.video);
-        posenet.setupFPS();
-        posenet.setupGui();
-        posenet.detectPoseInRealTime();
-      }))
-      // start();
-      // serveFaceTrackingAction(this._id, this.elements.video, this.elements.canvas);
-    }, 100);
+    setupCamera(this.elements.video).then((video => {
+      video.play();
+      const action = new DetectionAction(this.props.faceTracking._id, VisionActions, this.elements.video);
+      action.start();
+    }));
   }
 
   render() {

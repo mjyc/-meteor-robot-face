@@ -21,6 +21,7 @@ if (Meteor.isClient) {
   import 'tracking';
   import 'tracking/build/data/face-min.js';
 
+
   const isAndroid = () => {
     return /Android/i.test(navigator.userAgent);
   }
@@ -55,90 +56,10 @@ if (Meteor.isClient) {
     });
   }
 
-    setupFPS() {
-      this._stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-      document.body.appendChild(this._stats.dom);  // TODO: make the GUI location customizable
-    }
 
-    setupGUI() {
-      // TODO: make the GUI location customizable
-      const gui = new dat.GUI({ width: 300 });
-
-      // The single-pose algorithm is faster and simpler but requires only one person to be
-      // in the frame or results will be innaccurate. Multi-pose works for more than 1 person
-      const algorithmController = gui.add(
-        this._guiState, 'algorithm', ['single-pose', 'multi-pose']);
-
-      // The input parameters have the most effect on accuracy and speed of the network
-      let input = gui.addFolder('Input');
-      // Architecture: there are a few PoseNet models varying in size and accuracy. 1.01
-      // is the largest, but will be the slowest. 0.50 is the fastest, but least accurate.
-      const architectureController =
-        input.add(this._guiState.input, 'mobileNetArchitecture', ['1.01', '1.00', '0.75', '0.50']);
-      // Output stride:  Internally, this parameter affects the height and width of the layers
-      // in the neural network. The lower the value of the output stride the higher the accuracy
-      // but slower the speed, the higher the value the faster the speed but lower the accuracy.
-      input.add(this._guiState.input, 'outputStride', [8, 16, 32]);
-      // Image scale factor: What to scale the image by before feeding it through the network.
-      input.add(this._guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
-      input.open();
-
-      // Pose confidence: the overall confidence in the estimation of a person's
-      // pose (i.e. a person detected in a frame)
-      // Min part confidence: the confidence that a particular estimated keypoint
-      // position is accurate (i.e. the elbow's position)
-      let single = gui.addFolder('Single Pose Detection');
-      single.add(this._guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
-      single.add(this._guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-      single.open();
-
-      let multi = gui.addFolder('Multi Pose Detection');
-      multi.add(
-        this._guiState.multiPoseDetection, 'maxPoseDetections').min(1).max(20).step(1);
-      multi.add(this._guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
-      multi.add(this._guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
-      // nms Radius: controls the minimum distance between poses that are returned
-      // defaults to 20, which is probably fine for most use cases
-      multi.add(this._guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
-
-      let output = gui.addFolder('Output');
-      output.add(this._guiState.output, 'showVideo');
-      output.add(this._guiState.output, 'showSkeleton');
-      output.add(this._guiState.output, 'showPoints');
-      output.open();
-
-
-      architectureController.onChange((architecture) => {
-        this._guiState.changeToArchitecture = architecture;
-      });
-
-      algorithmController.onChange((value) => {
-        switch (this._guiState.algorithm) {
-          case 'single-pose':
-            multi.close();
-            single.open();
-            break;
-          case 'multi-pose':
-            single.close();
-            multi.open();
-            break;
-        }
-      });
-    }
-
-  // TODO: Move viz code out from this class
-  export class PoseNetAction {
-
-    constructor(collection, id, video) {
-      this._collection = collection;
-      this._id = id;
+  class PoseDetection {
+    constructor(video) {
       this._video = video;
-
-      this._as = getActionServer(collection, id);
-      // TODO: change it to publish "feedback"
-      //   allow changing parameters, etc
-      // this._as.registerGoalCallback(this.goalCB.bind(this));
-      // this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
       this._net = null;
       this._params = {
@@ -160,17 +81,11 @@ if (Meteor.isClient) {
           nmsRadius: 20.0,
         },
       };
-
-      this.stats = new Stats();
     }
 
-    async loadPoseNet(architecture = Number(this._params.input.mobileNetArchitecture)) {
-      this._net = await posenet.load(architecture);
-    }
-
-    async detectPose() {
+    async detect() {
       if (!this._net) {
-        await this.loadPoseNet();
+        this._net = await posenet.load(Number(this._params.input.mobileNetArchitecture));
       }
       if (this._params.changeToArchitecture) {
         this.net.dispose();
@@ -179,6 +94,7 @@ if (Meteor.isClient) {
       }
 
       const imageScaleFactor = this._params.input.imageScaleFactor;
+      const flipHorizontal = this._params.input.flipHorizontal;
       const outputStride = Number(this._params.input.outputStride);
 
       let poses = [];
@@ -204,59 +120,80 @@ if (Meteor.isClient) {
           minPartConfidence = Number(this._params.multiPoseDetection.minPartConfidence);
           break;
       }
-
-      // this._collection.update(this._id, {$set: {poses}});
+      return poses;
     }
   }
 
+  class FaceDetection {
+    constructor(video) {
+      this._video = video;
 
-  const trackFaceActions = {};
+      this._tracker = new tracking.ObjectTracker('face');
+      this._tracker.setInitialScale(4);
+      this._tracker.setStepSize(2);
+      this._tracker.setEdgesDensity(0.1);
 
-  export const serveFaceTrackingAction = (id, video, canvas) => {
-    if (trackFaceActions[id]) {
-      logger.debug(`[serveFaceTrackingAction] Skipping; already serving an action with id: ${id}`);
-      return;
+      this._canvas = document.createElement('canvas');
+      this._context = this._canvas.getContext('2d');
+      this._canvas.width = this._video.width;
+      this._canvas.height = this._video.height;
     }
 
-    // setup tracker
-    const context = canvas.getContext('2d');
-
-    const tracker = new tracking.ObjectTracker('face');
-    tracker.setInitialScale(4);
-    tracker.setStepSize(2);
-    tracker.setEdgesDensity(0.1);
-    tracking.track(video, tracker, {camera: true});
-
-    tracker.on('track', (event) => {
-      context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-      event.data.forEach((rect) => {
-        context.strokeStyle = '#a64ceb';
-        context.strokeRect(rect.x, rect.y, rect.width, rect.height);
-        context.font = '11px Helvetica';
-        context.fillStyle = '#fff';
-        context.fillText('x: ' + rect.x + 'px', rect.x + rect.width + 5, rect.y + 11);
-        context.fillText('y: ' + rect.y + 'px', rect.x + rect.width + 5, rect.y + 22);
+    async detect() {
+      this._context.drawImage(this._video, 0, 0, this._video.width, this._video.height);
+      return new Promise(resolve => {
+        this._tracker.once('track', (result) => {
+          resolve(result.data);
+        });
+        tracking.trackCanvasInternal_(this._canvas, this._tracker);
       });
-    });
-
-    // setup action server
-    const actionServer = getActionServer(VisionActions, id);
-
-    actionServer.registerGoalCallback((actionGoal) => {
-      logger.debug('[serveFaceTrackingAction] actionGoal', actionGoal);
-      // TODO: change
-    });
-
-    actionServer.registerPreemptCallback((cancelGoal) => {
-      logger.debug('[serveFaceTrackingAction] cancelGoal', cancelGoal);
-      // change the tracker setting
-    });
-
-    trackFaceActions[id] = actionServer;
-    return actionServer;
+    }
   }
 
+  export class DetectionAction {
+
+    constructor(id, collection, video) {
+      this._pose = new PoseDetection(video);
+      this._face = new FaceDetection(video);
+      this._intervalId = null;
+
+      this._as = getActionServer(collection, id);
+      // this._as.registerGoalCallback(this.goalCB.bind(this));
+      // this._as.registerPreemptCallback(this.preemptCB.bind(this));
+
+      // setTimeout(() => {
+      //   console.log('setupCamera(video)');
+      //   setupCamera(video);
+      // }, 1000);
+      // setTimeout(() => {
+      //   console.log('video.srcObject.getVideoTracks()[0].stop();');
+      //   video.srcObject.getVideoTracks()[0].stop();
+      // }, 4000);
+      // setTimeout(() => {
+      //   console.log('setupCamera(video);');
+      //   setupCamera(video);
+      // }, 8000);
+    }
+
+    start(fps = 10) {
+      this._intervalId = setInterval(async () => {
+        const start = Date.now();
+        if (this._lock) {
+          return;
+        } else {
+          this._lock = true;
+        }
+        [poses, face] = await Promise.all([this._pose.detect(), this._face.detect()]);
+        this._lock = false;
+        console.log(poses, face);
+        // console.log(Date.now() - start);
+      }, 1000 / fps);
+    }
+
+    stop() {
+      clearInterval(this._intervalId);
+    }
+  }
 }
 
 
