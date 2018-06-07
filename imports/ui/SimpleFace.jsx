@@ -18,14 +18,16 @@ import {
   MediaFiles,
   serveSoundPlayAction,
 } from '../api/media.js';
-import { VisionActions } from '../api/vision.js';
 import {
   FacialExpressionAction,
   FacialExpressionActions,
   ExpressiveEyes,
 } from '../api/facial_expression.js';
+import {
+  VisionActions,
+  DetectionAction,
+} from '../api/vision.js';
 
-// import '../../client/main.css';
 import Speechbubble from '../ui/Speechbubble.jsx';
 import FaceTracking from '../ui/FaceTracking.jsx';
 
@@ -49,13 +51,15 @@ class SimpleFace extends Component {
       // NOTE: the functions inside of setTimeout callback use .observeChanges,
       //  which won't work properly within in withTracker
       setTimeout(() => {
-        // serveSpeechSynthesisAction(this.props.speechSynthesis._id);
-        // serveSpeechRecognitionAction(this.props.speechRecognition._id);
-        // serveSoundPlayAction(this.props.soundPlay._id);
+        serveSpeechSynthesisAction(this.props.speechSynthesis._id);
+        serveSpeechRecognitionAction(this.props.speechRecognition._id);
+        serveSoundPlayAction(this.props.soundPlay._id);
+
         this.actions[this.props.speechbubbleRobot._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
         this.actions[this.props.speechbubbleHuman._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
         this.setState({ready: true});
 
+        // TODO: do this in new FacialExpressionAction(...)
         const eyes = new ExpressiveEyes({
           leftEye: this.elements.leftEye,
           rightEye: this.elements.rightEye,
@@ -70,6 +74,8 @@ class SimpleFace extends Component {
           this.props.facialExpression._id,
           eyes,
         );
+
+        this.actions[this.props.poseDetection._id] = new DetectionAction(VisionActions, this.props.poseDetection._id, this.elements.video);
       }, 0);
     }
   }
@@ -189,9 +195,17 @@ class SimpleFace extends Component {
             />
           </div>
         </div>
-        <FaceTracking
-          faceTracking={this.props.faceTracking}
-        />
+
+        <div>
+          <video
+            id="video"
+            style={{display: none}}
+            ref={(element) => { this.elements['video'] = element; }}
+            width="600px"
+            height="500px"
+            autoPlay
+          ></video>
+        </div>
       </div>
     );
   }
@@ -216,8 +230,8 @@ export default withTracker(({faceQuery}) => {
   const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, faceQuery));
   const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, faceQuery));
   const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, faceQuery));
-  const faceTracking = VisionActions.findOne(Object.assign({type: 'face_tracking'}, faceQuery));
   const facialExpression = FacialExpressionActions.findOne(faceQuery);
+  const poseDetection = VisionActions.findOne(Object.assign({type: 'face_tracking'}, faceQuery));
 
   return {
     loading,
@@ -226,7 +240,7 @@ export default withTracker(({faceQuery}) => {
     speechSynthesis,
     speechRecognition,
     soundPlay,
-    faceTracking,
     facialExpression,
+    poseDetection,
   };
 })(SimpleFace);

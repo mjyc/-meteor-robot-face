@@ -151,7 +151,7 @@ if (Meteor.isClient) {
   }
 
   export class DetectionAction {
-    constructor(id, collection, video) {
+    constructor(collection, id, video) {
       this._video = video;
       this._pose = new PoseDetection(this._video);
       this._face = new FaceDetection(this._video);
