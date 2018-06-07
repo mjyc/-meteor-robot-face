@@ -161,37 +161,40 @@ if (Meteor.isClient) {
       // this._as.registerGoalCallback(this.goalCB.bind(this));
       // this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-      // setTimeout(() => {
-      //   console.log('setupCamera(video)');
-      //   setupCamera(video);
-      // }, 1000);
-      // setTimeout(() => {
-      //   console.log('video.srcObject.getVideoTracks()[0].stop();');
-      //   video.srcObject.getVideoTracks()[0].stop();
-      // }, 4000);
-      // setTimeout(() => {
-      //   console.log('setupCamera(video);');
-      //   setupCamera(video);
-      // }, 8000);
     }
 
-    start(fps = 10) {
-      this._intervalId = setInterval(async () => {
-        const start = Date.now();
-        if (this._lock) {
-          return;
+    start(fps = 1) {
+
+      const interval = 1000 / fps;
+      let start = Date.now();
+      const execute = async () => {
+        const elapsed = Date.now() - start;
+        if (elapsed > interval) {
+          start = Date.now();
+          [poses, face] = await Promise.all([this._pose.detect(), this._face.detect()]);
+          this._timeoutID = setTimeout(execute, 0);
         } else {
-          this._lock = true;
+          this._timeoutID = setTimeout(execute, interval - elapsed);
         }
-        [poses, face] = await Promise.all([this._pose.detect(), this._face.detect()]);
-        this._lock = false;
-        console.log(poses, face);
-        // console.log(Date.now() - start);
-      }, 1000 / fps);
+      }
+      execute();
+
+      // this._intervalId = setInterval(async () => {
+      //   const start = Date.now();
+      //   if (this._lock) {
+      //     return;
+      //   } else {
+      //     this._lock = true;
+      //   }
+      //   [poses, face] = await Promise.all([this._pose.detect(), this._face.detect()]);
+      //   this._lock = false;
+      //   console.log(poses, face);
+      //   // console.log(Date.now() - start);
+      // }, 1000 / fps);
     }
 
     stop() {
-      clearInterval(this._intervalId);
+      clearTimeout(this._timeoutID);
     }
   }
 }
