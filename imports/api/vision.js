@@ -151,20 +151,22 @@ if (Meteor.isClient) {
   }
 
   export class DetectionAction {
-
     constructor(id, collection, video) {
-      this._pose = new PoseDetection(video);
-      this._face = new FaceDetection(video);
+      this._video = video;
+      this._pose = new PoseDetection(this._video);
+      this._face = new FaceDetection(this._video);
       this._intervalId = null;
 
       this._as = getActionServer(collection, id);
-      // this._as.registerGoalCallback(this.goalCB.bind(this));
-      // this._as.registerPreemptCallback(this.preemptCB.bind(this));
+      this._as.registerGoalCallback(this.goalCB.bind(this));
+      this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
     }
 
-    start(fps = 1) {
+    async goalCB({goal} = {}) {
+      await setupCamera(this._video);
 
+      const fps = (goal.fps && goal.fps > 0) ? goal.fps : 10;
       const interval = 1000 / fps;
       let start = Date.now();
       const execute = async () => {
@@ -178,23 +180,21 @@ if (Meteor.isClient) {
         }
       }
       execute();
-
-      // this._intervalId = setInterval(async () => {
-      //   const start = Date.now();
-      //   if (this._lock) {
-      //     return;
-      //   } else {
-      //     this._lock = true;
-      //   }
-      //   [poses, face] = await Promise.all([this._pose.detect(), this._face.detect()]);
-      //   this._lock = false;
-      //   console.log(poses, face);
-      //   // console.log(Date.now() - start);
-      // }, 1000 / fps);
     }
 
-    stop() {
+    preemptCB() {
       clearTimeout(this._timeoutID);
+
+      const tracks = this._video.srcObject.getVideoTracks();
+      if (tracks.length != 1) {
+        logger.error(`Invalid number of video tracks: ${tracks.length}`);
+        this._as.setAborted();
+        return;
+      }
+      tracks[0].stop();
+      // NOTE: "tracks[0].onended" was not being called on stop and seems to set
+      //   "tracks[0].readyState" to "ended" immediate; so considering stop sync
+      this._as.setPreempted();
     }
   }
 }

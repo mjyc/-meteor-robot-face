@@ -19,11 +19,7 @@ export default class FaceTracking extends Component {
   }
 
   componentDidMount() {
-    setupCamera(this.elements.video).then((video => {
-      video.play();
-      const action = new DetectionAction(this.props.faceTracking._id, VisionActions, this.elements.video);
-      action.start();
-    }));
+    const action = new DetectionAction(this.props.faceTracking._id, VisionActions, this.elements.video);
   }
 
   render() {
