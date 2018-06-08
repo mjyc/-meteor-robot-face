@@ -1,5 +1,5 @@
-import util from 'util';
 import log from 'meteor/mjyc:loglevel';
+import util from 'util';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 

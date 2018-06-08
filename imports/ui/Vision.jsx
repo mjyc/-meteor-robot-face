@@ -32,6 +32,8 @@ export default class Vision extends Component {
       this.elements.video,
       createDetector('face'),
     );
+
+    if (this.props.setVideo) this.props.setVideo(this.elements.video);
   }
 
   render() {

@@ -1,6 +1,6 @@
+import log from 'meteor/mjyc:loglevel';
 import util from 'util';
 import { EventEmitter } from 'events';
-import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';

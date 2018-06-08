@@ -121,6 +121,7 @@ class SimpleFace extends Component {
         <Vision
           poseDetection={this.props.poseDetection}
           faceDetection={this.props.faceDetection}
+          setVideo={this.props.setVideo}
         />
       </div>
     );
