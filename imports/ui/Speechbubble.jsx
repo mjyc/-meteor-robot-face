@@ -10,9 +10,8 @@ const logger = log.getLogger('Speechbubble');
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 
-// Speechbubble component - represents a speech bubble; it can display text,
+// Speechbubble component - represents a speech bubble that can display text,
 //   image, or video
-// IMPORTANT! MAKE SURE MediaFiles COLLECTION IS SUBSCRIBED!
 export default class Speechbubble extends Component {
   constructor(props) {
     super(props);

@@ -11,7 +11,7 @@ export const FacialExpressionActions = new Mongo.Collection('facial_expression_a
 if (Meteor.isClient) {
 
   export class FacialExpressionAction {
-    constructor(collection, id, eyes) {
+    constructor(collection, id, eyes) {  // TODO: make 'eyes' options
       this._collection = collection;
       this._id = id;
       this._eyes = eyes;
@@ -21,23 +21,19 @@ if (Meteor.isClient) {
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
     }
 
+    // setEyes and call startBlinking here (well stop the running one first if any)
+
     goalCB(action) {
-      this._eyes.makeFacialExpression(action.goal);
-      // this._collection.update(this._id, {
-      //   $set: {
-      //     type: action.goal.type,
-      //     data: action.goal.data,
-      //   }
-      // });
+      this._eyes.express(action.goal);
     }
 
     preemptCB() {
-      logger.warn('not implemented');
+      // TODO: stop the animation once such is implemented in EyesController
       this._as.setPreempted();
     }
   }
 
-  export class ExpressiveEyes {
+  export class EyesController {
     constructor({
       leftEye,
       rightEye,
@@ -46,6 +42,7 @@ if (Meteor.isClient) {
       lowerLeftEyelid,
       lowerRightEyelid,
     } = {}) {
+      // TODO: move below variables into this._elements
       this._leftEye = leftEye;
       this._rightEye = rightEye;
       this._upperLeftEyelid = upperLeftEyelid;
@@ -55,6 +52,8 @@ if (Meteor.isClient) {
 
       this._blinkTimeoutID = null;
     }
+
+    // TODO: create setElements
 
     _createKeyframes ({
       tgtTranYVal = 0,
@@ -70,17 +69,19 @@ if (Meteor.isClient) {
       ];
     }
 
-    makeFacialExpression({
+    express({
       type = '',
       // level = 3,  // 1: min, 5: max  // TODO: implement this feature
       durationMs = 1000,
       enterDurationMs = 75,
       exitDurationMs = 75,
     }) {
+      // TODO: skip if one is not defined (assume they get set all together)
       const options = {
         duration: durationMs,
       }
       switch(type) {
+        // TODO: store outputs of "animate"
         case 'happy':
           this._lowerLeftEyelid.animate(this._createKeyframes({
             tgtTranYVal: -120,
@@ -162,7 +163,8 @@ if (Meteor.isClient) {
     blink({
       duration = 150,  // in ms
     } = {}) {
-      return [this._leftEye, this._rightEye].map((eye) => {
+      // TODO: skip if _leftEye or _rightEye is not defined; or use same strategy above
+      [this._leftEye, this._rightEye].map((eye) => {
         eye.animate([
           {transform: 'rotateX(0deg)'},
           {transform: 'rotateX(90deg)'},
@@ -174,7 +176,13 @@ if (Meteor.isClient) {
       });
     }
 
-    startBlinking(maxIntervalMs = 5000) {
+    startBlinking({
+      maxIntervalMs = 5000
+    } = {}) {
+      if (this._blinkTimeoutID) {
+        logger.warn(`Skipping; already blinking with timeoutID: ${timeoutID}`);
+        return;
+      }
       const blinkRandomly = (timeoutMs) => {
         this._blinkTimeoutID = setTimeout(() => {
           this.blink();
@@ -186,6 +194,7 @@ if (Meteor.isClient) {
 
     stopBlinking() {
       clearTimeout(this._blinkTimeoutID);
+      this._blinkTimeoutID = null;
     }
   }
 }

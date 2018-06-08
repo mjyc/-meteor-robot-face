@@ -209,7 +209,7 @@ if (Meteor.isClient) {
         return this;
       };
       this._video = video;
-      this._detector.setVideo(this._video);
+      if (this._detector) this._detector.setVideo(this._video);
       return this;
     }
 
@@ -233,8 +233,10 @@ if (Meteor.isClient) {
         const elapsed = Date.now() - start;
         if (elapsed > interval) {
           start = Date.now();
-          this._collections.update(this._id, {
-            data: await this._detector.detect(),
+          // TODO: Do this differently, after refactoring XXXActoins, create
+          //   another collection to store these results
+          this._as._collection.update(this._as._id, {
+            $set: {data: await this._detector.detect()},
           });
           this._timeoutID = setTimeout(execute, 0);
         } else {

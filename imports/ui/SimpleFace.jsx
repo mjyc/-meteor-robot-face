@@ -18,19 +18,12 @@ import {
   MediaFiles,
   serveSoundPlayAction,
 } from '../api/media.js';
-import {
-  FacialExpressionAction,
-  FacialExpressionActions,
-  ExpressiveEyes,
-} from '../api/facial_expression.js';
-import {
-  VisionActions,
-  createDetector,
-  DetectionAction,
-} from '../api/vision.js';
+import { FacialExpressionActions } from '../api/facial_expression.js';
+import { VisionActions } from '../api/vision.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
-import FaceTracking from '../ui/FaceTracking.jsx';
+import Eyes from '../ui/Eyes.jsx';
+import Vision from '../ui/Vision.jsx';
 
 const logger = log.getLogger('SimpleFace');
 
@@ -47,20 +40,11 @@ class SimpleFace extends Component {
     this.actions = {};
   }
 
-  componentDidMount() {
-    console.log('this.elements', this.elements);
-  }
-
   componentDidUpdate(prevProps) {
-    console.log('this.elements1', this.elements);
-
     if (prevProps.loading && !this.props.loading) {
       // NOTE: the functions inside of setTimeout callback use .observeChanges,
       //  which won't work properly within in withTracker
-      const elements = this.elements;
       setTimeout(() => {
-        console.log('this.elements2', this.elements);
-
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
         serveSoundPlayAction(this.props.soundPlay._id);
@@ -69,44 +53,13 @@ class SimpleFace extends Component {
           = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
         this.actions[this.props.speechbubbleHuman._id]
           = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
-
-        // TODO: do this in new FacialExpressionAction(...)
-        const eyes = new ExpressiveEyes({
-          leftEye: this.elements.leftEye,
-          rightEye: this.elements.rightEye,
-          upperLeftEyelid: this.elements.upperLeftEyelid,
-          upperRightEyelid: this.elements.upperRightEyelid,
-          lowerLeftEyelid: this.elements.lowerLeftEyelid,
-          lowerRightEyelid: this.elements.lowerRightEyelid,
-        });
-        eyes.startBlinking();  // TODO: consolidate startBlinking into an action
-        this.actions[this.props.facialExpression._id] = new FacialExpressionAction(
-          FacialExpressionActions,
-          this.props.facialExpression._id,
-          eyes,
-        );
-
-        console.log('elements3', elements, this.elements);
-        this.actions[this.props.poseDetection._id] = new DetectionAction(
-          VisionActions,
-          this.props.poseDetection._id,
-          elements.video,
-          createDetector('pose'),
-        );
-        this.actions[this.props.faceDetection._id] = new DetectionAction(
-          VisionActions,
-          this.props.faceDetection._id,
-          elements.video,
-          createDetector('pose'),
-        );
-
         this.setState({ready: true});
-      }, 100);
+      }, 0);
     }
   }
 
   render() {
-    if (this.props.loading) {
+    if (this.props.loading || !this.state.ready) {
       return (
         <div>Loading...</div>
       )
@@ -116,10 +69,8 @@ class SimpleFace extends Component {
     const faceColor = 'whitesmoke';
     const faceHeight = '426.67px';
     const faceWidth = '600px';
-    const eyeColor = 'black';
-    const eyeSize = '120px';  // 20% of faceWidth
-    const eyelidColor = 'gray';
 
+    // TODO: pass this down to Eyes?
     const styles = {
       face: {
         backgroundColor: faceColor,
@@ -128,46 +79,15 @@ class SimpleFace extends Component {
         width: faceWidth,
         position: 'relative',
       },
-      eye: {
-        backgroundColor: eyeColor,
-        borderRadius: '100%',
-        height: eyeSize,
-        width: eyeSize,
-        bottom: `calc(${eyeSize} / 3)`,
-        zIndex: 1,
-        position: 'absolute',
-      },
-      left: {
-        left: `calc(${eyeSize} / 3)`,
-      },
-      right: {
-        right: `calc(${eyeSize} / 3)`,
-      },
-      eyelid: {
-        backgroundColor: eyelidColor,
-        height: eyeSize,
-        width: `calc(${eyeSize} * 1.75)`,
-        zIndex: 2,
-        position: 'absolute',
-      },
-      upper: {
-        bottom: `calc(${eyeSize} * 1)`,
-        left: `calc(${eyeSize} * -0.375)`,
-      },
-      lower: {
-        borderRadius: '100%',
-        bottom: `calc(${eyeSize} * -1)`,
-        left: `calc(${eyeSize} * -0.375)`,
-      },
-    }
+    };
 
     const speechbubbleRobot = this.props.speechbubbleRobot;
     const speechbubbleHuman = this.props.speechbubbleHuman;
     const speechbubbleActionRobot = this.actions[speechbubbleRobot._id];
     const speechbubbleActionHuman = this.actions[speechbubbleHuman._id];
     return (
-      <div>
-        <div style={styles.face}>
+      <div style={styles.face}>
+        <div>
           <div>
             <strong>Robot: </strong>
             {speechbubbleRobot ?
@@ -192,44 +112,16 @@ class SimpleFace extends Component {
               /> : null
             }
           </div>
-
-          <div
-            style={Object.assign({}, styles.eye, styles.left)}
-            ref={element => { this.elements['leftEye'] = element; }}
-          >
-            <div
-              style={Object.assign({}, styles.eyelid, styles.upper)}
-              ref={element => { this.elements['upperLeftEyelid'] = element; }}
-            />
-            <div
-              style={Object.assign({}, styles.eyelid, styles.lower)}
-              ref={element => { this.elements['lowerLeftEyelid'] = element; }}
-            />
-          </div>
-          <div
-            style={Object.assign({}, styles.eye, styles.right)}
-            ref={element => { this.elements['rightEye'] = element; }}
-          >
-            <div
-              style={Object.assign({}, styles.eyelid, styles.upper)}
-              ref={element => { this.elements['upperRightEyelid'] = element; }}
-            />
-            <div
-              style={Object.assign({}, styles.eyelid, styles.lower)}
-              ref={element => { this.elements['lowerRightEyelid'] = element; }}
-            />
-          </div>
         </div>
 
-        <div>
-          <video
-            style={{display: 'none'}}
-            ref={(element) => { this.elements['video'] = element; }}
-            width="600px"
-            height="500px"
-            autoPlay
-          ></video>
-        </div>
+        <Eyes
+          facialExpression={this.props.facialExpression}
+        />
+
+        <Vision
+          poseDetection={this.props.poseDetection}
+          faceDetection={this.props.faceDetection}
+        />
       </div>
     );
   }
