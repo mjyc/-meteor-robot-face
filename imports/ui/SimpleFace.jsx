@@ -25,6 +25,7 @@ import {
 } from '../api/facial_expression.js';
 import {
   VisionActions,
+  createDetector,
   DetectionAction,
 } from '../api/vision.js';
 
@@ -46,18 +47,28 @@ class SimpleFace extends Component {
     this.actions = {};
   }
 
+  componentDidMount() {
+    console.log('this.elements', this.elements);
+  }
+
   componentDidUpdate(prevProps) {
+    console.log('this.elements1', this.elements);
+
     if (prevProps.loading && !this.props.loading) {
       // NOTE: the functions inside of setTimeout callback use .observeChanges,
       //  which won't work properly within in withTracker
+      const elements = this.elements;
       setTimeout(() => {
+        console.log('this.elements2', this.elements);
+
         serveSpeechSynthesisAction(this.props.speechSynthesis._id);
         serveSpeechRecognitionAction(this.props.speechRecognition._id);
         serveSoundPlayAction(this.props.soundPlay._id);
 
-        this.actions[this.props.speechbubbleRobot._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
-        this.actions[this.props.speechbubbleHuman._id] = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
-        this.setState({ready: true});
+        this.actions[this.props.speechbubbleRobot._id]
+          = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
+        this.actions[this.props.speechbubbleHuman._id]
+          = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
 
         // TODO: do this in new FacialExpressionAction(...)
         const eyes = new ExpressiveEyes({
@@ -75,13 +86,27 @@ class SimpleFace extends Component {
           eyes,
         );
 
-        this.actions[this.props.poseDetection._id] = new DetectionAction(VisionActions, this.props.poseDetection._id, this.elements.video);
-      }, 0);
+        console.log('elements3', elements, this.elements);
+        this.actions[this.props.poseDetection._id] = new DetectionAction(
+          VisionActions,
+          this.props.poseDetection._id,
+          elements.video,
+          createDetector('pose'),
+        );
+        this.actions[this.props.faceDetection._id] = new DetectionAction(
+          VisionActions,
+          this.props.faceDetection._id,
+          elements.video,
+          createDetector('pose'),
+        );
+
+        this.setState({ready: true});
+      }, 100);
     }
   }
 
   render() {
-    if (this.props.loading || !this.state.ready) {
+    if (this.props.loading) {
       return (
         <div>Loading...</div>
       )
@@ -198,8 +223,7 @@ class SimpleFace extends Component {
 
         <div>
           <video
-            id="video"
-            style={{display: none}}
+            style={{display: 'none'}}
             ref={(element) => { this.elements['video'] = element; }}
             width="600px"
             height="500px"
@@ -231,7 +255,8 @@ export default withTracker(({faceQuery}) => {
   const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, faceQuery));
   const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, faceQuery));
   const facialExpression = FacialExpressionActions.findOne(faceQuery);
-  const poseDetection = VisionActions.findOne(Object.assign({type: 'face_tracking'}, faceQuery));
+  const poseDetection = VisionActions.findOne(Object.assign({type: 'pose_detection'}, faceQuery));
+  const faceDetection = VisionActions.findOne(Object.assign({type: 'face_detection'}, faceQuery));
 
   return {
     loading,
@@ -242,5 +267,6 @@ export default withTracker(({faceQuery}) => {
     soundPlay,
     facialExpression,
     poseDetection,
+    faceDetection,
   };
 })(SimpleFace);

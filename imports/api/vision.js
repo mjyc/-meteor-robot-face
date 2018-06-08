@@ -34,7 +34,7 @@ if (Meteor.isClient) {
     return isAndroid() || isiOS();
   }
 
-  export async function setupCamera(video) {
+  async function setupCamera(video) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw 'Browser API navigator.mediaDevices.getUserMedia not available';
     }
@@ -56,9 +56,21 @@ if (Meteor.isClient) {
     });
   }
 
+  export const createDetector = (type) => {
+    switch (type) {
+      case 'pose':
+        return new PoseDetector();
+      case 'face':
+        return new FaceDetector();
+      default:
+        logger.warn(`Returning null; unknown detector type: ${type}`);
+        return null;
+    }
+  }
 
-  class PoseDetection {
-    constructor(video) {
+
+  class PoseDetector {
+    constructor(video = document.getElementById('video')) {
       this._video = video;
 
       this._net = null;
@@ -83,7 +95,21 @@ if (Meteor.isClient) {
       };
     }
 
+    setVideo(video) {
+      if (!video) {
+        logger.warn('Invalid input video:', video);
+        return this;
+      };
+      this._video = video;
+      return this;
+    }
+
     async detect() {
+      if (!this._video) {
+        logger.warn('Skipping; no video input');
+        return Promise.resolve();
+      };
+
       if (!this._net) {
         this._net = await posenet.load(Number(this._params.input.mobileNetArchitecture));
       }
@@ -124,10 +150,8 @@ if (Meteor.isClient) {
     }
   }
 
-  class FaceDetection {
-    constructor(video) {
-      this._video = video;
-
+  class FaceDetector {
+    constructor(video = document.getElementById('video')) {
       this._tracker = new tracking.ObjectTracker('face');
       this._tracker.setInitialScale(4);
       this._tracker.setStepSize(2);
@@ -135,11 +159,27 @@ if (Meteor.isClient) {
 
       this._canvas = document.createElement('canvas');
       this._context = this._canvas.getContext('2d');
+
+      this.setVideo(video);
+    }
+
+    setVideo(video) {
+      if (!video) {
+        logger.warn('Invalid input video:', video);
+        return this;
+      };
+      this._video = video;
       this._canvas.width = this._video.width;
       this._canvas.height = this._video.height;
+      return this;
     }
 
     async detect() {
+      if (!this._video) {
+        logger.warn('Skipping; no video input');
+        return Promise.resolve();
+      };
+
       this._context.drawImage(this._video, 0, 0, this._video.width, this._video.height);
       return new Promise(resolve => {
         this._tracker.once('track', (result) => {
@@ -151,16 +191,36 @@ if (Meteor.isClient) {
   }
 
   export class DetectionAction {
-    constructor(collection, id, video) {
+    constructor(collection, id, video = document.getElementById('video'), detector = new PoseDetector()) {
       this._video = video;
-      this._pose = new PoseDetection(this._video);
-      this._face = new FaceDetection(this._video);
-      this._intervalId = null;
 
       this._as = getActionServer(collection, id);
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
+      this._intervalId = null;
+
+      this.setDetector(detector);
+    }
+
+    setVideo(video) {
+      if (!video) {
+        logger.warn('Invalid input video:', video);
+        return this;
+      };
+      this._video = video;
+      this._detector.setVideo(this._video);
+      return this;
+    }
+
+    setDetector(detector) {
+      if (!(detector instanceof PoseDetector) && !(detector instanceof FaceDetector)) {
+        logger.warn('Invalid input detector:', detector);
+        return this;
+      };
+      this._detector = detector;
+      this._detector.setVideo(this._video);
+      return this;
     }
 
     async goalCB({goal} = {}) {
@@ -173,7 +233,9 @@ if (Meteor.isClient) {
         const elapsed = Date.now() - start;
         if (elapsed > interval) {
           start = Date.now();
-          [poses, face] = await Promise.all([this._pose.detect(), this._face.detect()]);
+          this._collections.update(this._id, {
+            data: await this._detector.detect(),
+          });
           this._timeoutID = setTimeout(execute, 0);
         } else {
           this._timeoutID = setTimeout(execute, interval - elapsed);
@@ -236,7 +298,11 @@ if (Meteor.isServer) {
       }
       VisionActions.insert(Object.assign({
         owner: userId,
-        type: 'face_tracking',
+        type: 'pose_detection',
+      }, defaultAction));
+      VisionActions.insert(Object.assign({
+        owner: userId,
+        type: 'face_detection',
       }, defaultAction));
     }
   });

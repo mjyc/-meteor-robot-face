@@ -155,7 +155,7 @@ if (Meteor.isClient) {
           break;
 
         default:
-          console.warn(`Invalid input type: ${type}`);
+          logger.warn(`Invalid input type: ${type}`);
       }
     }
 
