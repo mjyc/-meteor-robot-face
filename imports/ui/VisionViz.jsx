@@ -49,102 +49,6 @@ const drawKeypoints = (keypoints, minConfidence, ctx, scale = 1) => {
   }
 }
 
-class BackgroundLayer extends Component {
-  constructor(props) {
-    super(props);
-
-    this._intervalID = null;
-
-    this.elements = {};
-    this.context = null;
-  }
-
-  componentDidUpdate(prevProps) {
-    console.log('BackgroundLayer.componentDidUpdate');
-  }
-
-  render() {
-    return (
-      <div style={{position: 'absolute', top: 0}}>
-        <video
-          ref={(element) => { this.elements['video'] = element; }}
-          width="600px"
-          height="500px"
-        ></video>
-      </div>
-    );
-  }
-}
-
-
-class PoseLayer extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  componentDidUpdate() {
-    console.log('PoseLayer.componentDidUpdate');
-    // this.ctx.clearRect(0, 0, 600, 500);
-    // this.ctx.save();
-    // this.ctx.scale(-1, 1);
-    // this.ctx.translate(-600, 0);
-    // this.ctx.drawImag  e(this.props.video, 0, 0, 600, 500);
-    // this.ctx.restore();
-    // const poses = this.props.poseDetection.data;
-    // poses.forEach(({ score, keypoints }) => {
-    //   // if (score >= minPoseConfidence) {
-    //     // if (guiState.output.showPoints) {
-    //       drawKeypoints(keypoints, 0.1, this.ctx);
-    //     // }
-    //     // if (guiState.output.showSkeleton) {
-    //       drawSkeleton(keypoints, 0.5, this.ctx);
-    //     // }
-    //   // }
-    // });
-  }
-
-  render() {
-    return (
-      <div style={{position: 'absolute', top: 0}}>
-      </div>
-    );
-  }
-}
-
-class FaceLayer extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  componentDidUpdate() {
-    console.log('FaceLayer.componentDidUpdate');
-    // this.ctx.clearRect(0, 0, 600, 500);
-    // this.ctx.save();
-    // this.ctx.scale(-1, 1);
-    // this.ctx.translate(-600, 0);
-    // this.ctx.drawImag  e(this.props.video, 0, 0, 600, 500);
-    // this.ctx.restore();
-    // const poses = this.props.poseDetection.data;
-    // poses.forEach(({ score, keypoints }) => {
-    //   // if (score >= minPoseConfidence) {
-    //     // if (guiState.output.showPoints) {
-    //       drawKeypoints(keypoints, 0.1, this.ctx);
-    //     // }
-    //     // if (guiState.output.showSkeleton) {
-    //       drawSkeleton(keypoints, 0.5, this.ctx);
-    //     // }
-    //   // }
-    // });
-  }
-
-  render() {
-    return (
-      <div style={{position: 'absolute', top: 0}}>
-      </div>
-    );
-  }
-}
-
 
 class VisionViz extends Component {
   constructor(props) {
@@ -153,71 +57,62 @@ class VisionViz extends Component {
     this._intervalID = null;
 
     this.elements = {};
-    this.contexts = {};
-  }
-
-  componentDidMount() {
-    this.contexts.background = this.elements.background.getContext('2d');
-    this.contexts.pose = this.elements.pose.getContext('2d');
   }
 
   componentDidUpdate(prevProps) {
+    if (!this.props.video || this.props.loading) {
+      logger.warn('Input video or detection is not available');
+      return;
+    }
 
-    console.log('VisionViz.componentDidUpdate');
+    // TODO: make a note that this is just a quick & dirty output
 
-    // if (!this.props.video || this.props.loading) {
-    //   logger.warn('Input video or detection output is not available');
-    //   return;
+    const context = this.elements.canvas.getContext('2d');
+    const width = this.elements.canvas.width;
+    const height = this.elements.canvas.height;
+    // TODO: read below two variables from somewhere else
+    let minPoseConfidence = 0.1;
+    let minPartConfidence = 0.5;
+    // if (this.props.poseDetection._params.algorithm === 'single-pose') {
+    //   minPoseConfidence = this.props.poseDetection._params.singlePoseDetection.minPoseConfidence;
+    //   minPartConfidence = this.props.poseDetection._params.singlePoseDetection.minPartConfidence;
+    // } else {
+    //   minPoseConfidence = this.props.poseDetection._params.multiPoseDetection.minPoseConfidence;
+    //   minPartConfidence = this.props.poseDetection._params.multiPoseDetection.minPartConfidence;
     // }
 
-    // if (!this._intervalID) {
-    //   this._intervalID = setInterval(() => {
-    //     this.contexts.background.clearRect(0, 0, 600, 500);
-    //     this.contexts.background.save();
-    //     this.contexts.background.scale(-1, 1);
-    //     this.contexts.background.translate(-600, 0);
-    //     this.contexts.background.drawImage(this.props.video, 0, 0, 600, 500);
-    //     this.contexts.background.restore();
-    //   }, 100);
-    // }
+    context.clearRect(0, 0, width, height);
+    context.save();
+    context.scale(-1, 1);
+    context.translate(-width, 0);
+    context.drawImage(this.props.video, 0, 0, width, height);
+    context.restore();
 
-    // this.ctx.clearRect(0, 0, 600, 500);
-    // this.ctx.save();
-    // this.ctx.scale(-1, 1);
-    // this.ctx.translate(-600, 0);
-    // this.ctx.drawImage(this.props.video, 0, 0, 600, 500);
-    // this.ctx.restore();
-    // const poses = this.props.poseDetection.data;
-    // poses.forEach(({ score, keypoints }) => {
-    //   // if (score >= minPoseConfidence) {
-    //     // if (guiState.output.showPoints) {
-    //       drawKeypoints(keypoints, 0.1, this.ctx);
-    //     // }
-    //     // if (guiState.output.showSkeleton) {
-    //       drawSkeleton(keypoints, 0.5, this.ctx);
-    //     // }
-    //   // }
-    // });
+    const poses = this.props.poseDetection.data;
+    poses.forEach(({ score, keypoints }) => {
+      if (score >= minPoseConfidence) {
+        drawKeypoints(keypoints, minPartConfidence, context);
+        drawSkeleton(keypoints, minPartConfidence, context);
+      }
+    });
+
+    // TODO: flip the image in FaceDetector.detect and revert to original math here
+    const faces = this.props.faceDetection.data;
+    faces.forEach((rect) => {
+      context.strokeStyle = '#a64ceb';
+      context.strokeRect(width - rect.x, rect.y, -rect.width, rect.height);
+      context.font = '11px Helvetica';
+      context.fillStyle = "#fff";
+      context.fillText('x: ' + (width - rect.x) + 'px', width - rect.x, rect.y + 11);
+      context.fillText('y: ' + rect.y + 'px', width - rect.x, rect.y + 22);
+    });
   }
 
   render() {
     return (
-      <div style={{position: 'relative'}}>
-        <PoseLayer
-          poseDetection={this.props.poseDetection}
-        />
-        <FaceLayer
-          faceDetection={this.props.faceDetection}
-        />
+      <div>
         <canvas
-          style={{position: 'absolute', top: 0}}
-          ref={(element) => { this.elements['background'] = element; }}
-          width="600px"
-          height="500px"
-        ></canvas>
-        <canvas
-          style={{position: 'absolute', top: 0}}
-          ref={(element) => { this.elements['pose'] = element; }}
+          ref={(element) => { this.elements['canvas'] = element; }}
           width="600px"
           height="500px"
         ></canvas>
