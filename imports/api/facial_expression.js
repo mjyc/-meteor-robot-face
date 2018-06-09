@@ -42,7 +42,6 @@ if (Meteor.isClient) {
       lowerLeftEyelid,
       lowerRightEyelid,
     } = {}) {
-      // TODO: move below variables into this._elements
       this._leftEye = leftEye;
       this._rightEye = rightEye;
       this._upperLeftEyelid = upperLeftEyelid;

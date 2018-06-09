@@ -151,7 +151,9 @@ if (Meteor.isClient) {
   }
 
   class FaceDetector {
-    constructor(video = document.getElementById('video')) {
+    constructor(video = document.getElementById('video'), flipHorizontal=true) {
+      this._flipHorizontal = flipHorizontal;
+
       this._tracker = new tracking.ObjectTracker('face');
       this._tracker.setInitialScale(4);
       this._tracker.setStepSize(2);
@@ -171,6 +173,13 @@ if (Meteor.isClient) {
       this._video = video;
       this._canvas.width = this._video.width;
       this._canvas.height = this._video.height;
+
+      if (this._flipHorizontal) {
+        this._context = this._canvas.getContext('2d');
+        this._context.setTransform(-1, 0, 0, 1, 0, 0);
+        this._context.scale(-1, 1);
+        this._context.translate(-this._video.width, 0);
+      }
       return this;
     }
 
@@ -224,7 +233,7 @@ if (Meteor.isClient) {
     }
 
     async goalCB({goal} = {}) {
-      await setupCamera(this._video);
+      // await setupCamera(this._video);
 
       const fps = (goal.fps && goal.fps > 0) ? goal.fps : 10;
       const interval = 1000 / fps;
@@ -249,16 +258,16 @@ if (Meteor.isClient) {
     preemptCB() {
       clearTimeout(this._timeoutID);
 
-      const tracks = this._video.srcObject.getVideoTracks();
-      if (tracks.length != 1) {
-        logger.error(`Invalid number of video tracks: ${tracks.length}`);
-        this._as.setAborted();
-        return;
-      }
-      tracks[0].stop();
-      // NOTE: "tracks[0].onended" was not being called on stop and seems to set
-      //   "tracks[0].readyState" to "ended" immediate; so considering stop sync
-      this._as.setPreempted();
+      // const tracks = this._video.srcObject.getVideoTracks();
+      // if (tracks.length != 1) {
+      //   logger.error(`Invalid number of video tracks: ${tracks.length}`);
+      //   this._as.setAborted();
+      //   return;
+      // }
+      // tracks[0].stop();
+      // // NOTE: "tracks[0].onended" was not being called on stop and seems to set
+      // //   "tracks[0].readyState" to "ended" immediate; so considering stop sync
+      // this._as.setPreempted();
     }
   }
 }
