@@ -34,7 +34,7 @@ if (Meteor.isClient) {
     return isAndroid() || isiOS();
   }
 
-  async function setupCamera(video) {
+  const setupCamera = async (video) => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw 'Browser API navigator.mediaDevices.getUserMedia not available';
     }
@@ -56,6 +56,19 @@ if (Meteor.isClient) {
     });
   }
 
+  const stopCamera = (video) => {
+    let track;
+    if (video && video.srcObject && video.srcObject.getVideoTracks().length === 1) {
+      track = video.srcObject.getVideoTracks()[0];
+    } else {
+      logger.warn('Invalid input video:', video);
+      return video;
+    }
+    // NOTE: On Chrome 67, "track.onended" was not being called on "stop"
+    track.stop();
+    this._as.setPreempted();
+  }
+
   export const createDetector = (type) => {
     switch (type) {
       case 'pose':
@@ -68,6 +81,48 @@ if (Meteor.isClient) {
     }
   }
 
+  export class VideoControlAction {
+    constructor(collection, id, video = document.getElementById('video')) {
+      this._video = video;
+
+      this._as = getActionServer(collection, id);
+      this._as.registerGoalCallback(this.goalCB.bind(this));
+      this._as.registerPreemptCallback(this.preemptCB.bind(this));
+
+      this.setVideo(this._video);
+    }
+
+    setVideo(video) {
+      if (!video) {
+        logger.warn('Invalid input video:', video);
+        return this;
+      };
+      this._video = video;
+      return this;
+    }
+
+    async goalCB({goal} = {}) {
+      try {
+        switch (goal.type) {
+          case 'play':
+            this._video = await setupCamera(this._video);
+            break;
+          case 'stop':
+            stopCamera(this._video);
+            break;
+          default:
+            logger.warn(`Invalid input type: ${goal.type}`);
+        }
+        this._as.setSucceeded();
+      } catch (err) {
+        this._as.setAborted(err);
+      }
+    }
+
+    preemptCB() {
+      this._as.setPreempted();
+    }
+  }
 
   class PoseDetector {
     constructor(video = document.getElementById('video')) {
@@ -145,6 +200,8 @@ if (Meteor.isClient) {
           minPoseConfidence = Number(this._params.multiPoseDetection.minPoseConfidence);
           minPartConfidence = Number(this._params.multiPoseDetection.minPartConfidence);
           break;
+        default:
+          logger.warn(`Invalid input algorithm: ${this._params.algorithm}`);
       }
       return poses;
     }
@@ -176,7 +233,7 @@ if (Meteor.isClient) {
 
       if (this._flipHorizontal) {
         this._context = this._canvas.getContext('2d');
-        this._context.setTransform(-1, 0, 0, 1, 0, 0);
+        this._context.setTransform(1, 0, 0, 1, 0, 0);
         this._context.scale(-1, 1);
         this._context.translate(-this._video.width, 0);
       }
@@ -244,8 +301,9 @@ if (Meteor.isClient) {
           start = Date.now();
           // TODO: Do this differently, after refactoring XXXActoins, create
           //   another collection to store these results
+          const data = await this._detector.detect();
           this._as._collection.update(this._as._id, {
-            $set: {data: await this._detector.detect()},
+            $set: {'data.data': data},
           });
           this._timeoutID = setTimeout(execute, 0);
         } else {
@@ -257,17 +315,7 @@ if (Meteor.isClient) {
 
     preemptCB() {
       clearTimeout(this._timeoutID);
-
-      // const tracks = this._video.srcObject.getVideoTracks();
-      // if (tracks.length != 1) {
-      //   logger.error(`Invalid number of video tracks: ${tracks.length}`);
-      //   this._as.setAborted();
-      //   return;
-      // }
-      // tracks[0].stop();
-      // // NOTE: "tracks[0].onended" was not being called on stop and seems to set
-      // //   "tracks[0].readyState" to "ended" immediate; so considering stop sync
-      // this._as.setPreempted();
+      this._as.setPreempted();
     }
   }
 }
@@ -309,11 +357,17 @@ if (Meteor.isServer) {
       }
       VisionActions.insert(Object.assign({
         owner: userId,
+        type: 'video_control',
+      }, defaultAction));
+      VisionActions.insert(Object.assign({
+        owner: userId,
         type: 'pose_detection',
+        data: {},
       }, defaultAction));
       VisionActions.insert(Object.assign({
         owner: userId,
         type: 'face_detection',
+        data: {},
       }, defaultAction));
     }
   });

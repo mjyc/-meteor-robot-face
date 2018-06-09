@@ -5,6 +5,7 @@ import {
   VisionActions,
   createDetector,
   DetectionAction,
+  VideoControlAction,
 } from '../api/vision.js';
 
 const logger = log.getLogger('Vision');
@@ -20,6 +21,11 @@ export default class Vision extends Component {
   }
 
   componentDidMount() {
+    this.actions[this.props.videoControl._id] = new VideoControlAction(
+      VisionActions,
+      this.props.videoControl._id,
+      this.elements.video,
+    );
     this.actions[this.props.poseDetection._id] = new DetectionAction(
       VisionActions,
       this.props.poseDetection._id,

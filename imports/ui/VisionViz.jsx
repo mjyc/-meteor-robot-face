@@ -85,7 +85,7 @@ class VisionViz extends Component {
     context.drawImage(this.props.video, 0, 0, width, height);
     context.restore();
 
-    const poses = this.props.poseDetection.data;
+    const poses = this.props.poseDetection.data.data;
     poses && poses.forEach(({ score, keypoints }) => {
       if (score >= minPoseConfidence) {
         drawKeypoints(keypoints, minPartConfidence, context);
@@ -93,7 +93,7 @@ class VisionViz extends Component {
       }
     });
 
-    const faces = this.props.faceDetection.data;
+    const faces = this.props.faceDetection.data.data;
     faces && faces.forEach((rect) => {
       context.strokeStyle = 'magenta';
       context.strokeRect(rect.x, rect.y, rect.width, rect.height);

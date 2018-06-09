@@ -119,6 +119,7 @@ class SimpleFace extends Component {
         />
 
         <Vision
+          videoControl={this.props.videoControl}
           poseDetection={this.props.poseDetection}
           faceDetection={this.props.faceDetection}
           setVideo={this.props.setVideo}
@@ -148,6 +149,7 @@ export default withTracker(({faceQuery}) => {
   const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, faceQuery));
   const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, faceQuery));
   const facialExpression = FacialExpressionActions.findOne(faceQuery);
+  const videoControl = VisionActions.findOne(Object.assign({type: 'video_control'}, faceQuery));
   const poseDetection = VisionActions.findOne(Object.assign({type: 'pose_detection'}, faceQuery));
   const faceDetection = VisionActions.findOne(Object.assign({type: 'face_detection'}, faceQuery));
 
@@ -159,6 +161,7 @@ export default withTracker(({faceQuery}) => {
     speechRecognition,
     soundPlay,
     facialExpression,
+    videoControl,
     poseDetection,
     faceDetection,
   };
