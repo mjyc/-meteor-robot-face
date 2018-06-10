@@ -212,14 +212,36 @@ if (Meteor.isClient) {
       this._flipHorizontal = flipHorizontal;
 
       this._tracker = new tracking.ObjectTracker('face');
-      this._tracker.setInitialScale(4);
-      this._tracker.setStepSize(2);
-      this._tracker.setEdgesDensity(0.1);
-
       this._canvas = document.createElement('canvas');
       this._context = this._canvas.getContext('2d');
+      this._params = {
+        initialScale: 4,
+        stepSize: 2,
+        edgesDensity: 0.1,
+      }
 
       this.setVideo(video);
+    }
+
+    get _params() {
+      return {
+        edgesDensity: this._tracker.edgesDensity,
+        initialScale: this._tracker.initialScale,
+        scaleFactor: this._tracker.scaleFactor,
+        stepSize: this._tracker.stepSize,
+      }
+    }
+
+    set _params({
+      edgesDensity = this._tracker.edgesDensity,
+      initialScale = this._tracker.initialScale,
+      scaleFactor = this._tracker.scaleFactor,
+      stepSize = this._tracker.stepSize,
+    } = {}) {
+      this._tracker.setEdgesDensity(edgesDensity);
+      this._tracker.setInitialScale(initialScale);
+      this._tracker.setScaleFactor(scaleFactor);
+      this._tracker.setStepSize(stepSize);
     }
 
     setVideo(video) {
@@ -286,6 +308,9 @@ if (Meteor.isClient) {
       };
       this._detector = detector;
       this._detector.setVideo(this._video);
+      this._as._collection.update(this._as._id, {
+        $set: {'data.params': this._detector._params},
+      });
       return this;
     }
 

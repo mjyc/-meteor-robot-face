@@ -68,15 +68,15 @@ class VisionViz extends Component {
     const width = this.elements.canvas.width;
     const height = this.elements.canvas.height;
     // TODO: read below two variables from somewhere else
-    let minPoseConfidence = 0.1;
-    let minPartConfidence = 0.5;
-    // if (this.props.poseDetection._params.algorithm === 'single-pose') {
-    //   minPoseConfidence = this.props.poseDetection._params.singlePoseDetection.minPoseConfidence;
-    //   minPartConfidence = this.props.poseDetection._params.singlePoseDetection.minPartConfidence;
-    // } else {
-    //   minPoseConfidence = this.props.poseDetection._params.multiPoseDetection.minPoseConfidence;
-    //   minPartConfidence = this.props.poseDetection._params.multiPoseDetection.minPartConfidence;
-    // }
+    let minPoseConfidence;
+    let minPartConfidence;
+    if (this.props.poseDetection.data.params.algorithm === 'single-pose') {
+      minPoseConfidence = this.props.poseDetection.data.params.singlePoseDetection.minPoseConfidence;
+      minPartConfidence = this.props.poseDetection.data.params.singlePoseDetection.minPartConfidence;
+    } else {
+      minPoseConfidence = this.props.poseDetection.data.params.multiPoseDetection.minPoseConfidence;
+      minPartConfidence = this.props.poseDetection.data.params.multiPoseDetection.minPartConfidence;
+    }
 
     context.clearRect(0, 0, width, height);
     context.save();
