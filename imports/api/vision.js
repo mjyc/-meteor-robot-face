@@ -66,7 +66,6 @@ if (Meteor.isClient) {
     }
     // NOTE: On Chrome 67, "track.onended" was not being called on "stop"
     track.stop();
-    this._as.setPreempted();
   }
 
   export const createDetector = (type) => {
