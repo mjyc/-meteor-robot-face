@@ -307,7 +307,7 @@ if (Meteor.isClient) {
       };
       this._detector = detector;
       this._detector.setVideo(this._video);
-      this._as._collection.update(this._as._id, {
+      this._as._comm._collection.update(this._as._comm._id, {
         $set: {'data.params': this._detector._params},
       });
       return this;
@@ -326,7 +326,7 @@ if (Meteor.isClient) {
           // TODO: Do this differently, after refactoring XXXActoins, create
           //   another collection to store these results
           const data = await this._detector.detect();
-          this._as._collection.update(this._as._id, {
+          this._as._comm._collection.update(this._as._comm._id, {
             $set: {'data.data': data},
           });
           this._timeoutID = setTimeout(execute, 0);
