@@ -34,9 +34,9 @@ class WebActionComm extends EventEmitter {
     new Error('Not implemented');
   }
 
-  // promisify "once", similar to the Firebase's decision on "on" & "once"
-  //   https://firebase.google.com/docs/reference/js/firebase.database.Query#on
+  // promisify "once" only, similar to how Firebase promisified "once" but not "on"
   //   https://firebase.google.com/docs/reference/js/firebase.database.Query#once
+  //   https://firebase.google.com/docs/reference/js/firebase.database.Query#on
   once(eventName) {
     return new Promise((resolve, reject) => {
       super.once(eventName, resolve);
@@ -45,8 +45,11 @@ class WebActionComm extends EventEmitter {
 }
 
 class WebActionServer {
-  constructor(comm) {
+  constructor(comm = new WebActionComm()) {
     this._comm = comm;
+
+    // "reset"
+    this._comm.set(defaultAction);
   }
 
   registerGoalCallback(callback = () => {}) {
@@ -110,26 +113,27 @@ class WebActionServer {
 }
 
 class WebActionClient {
-  constructor(comm) {
+  constructor(comm = new WebActionComm()) {
     this._comm = comm;
   }
 
   getResult() {
-    new Error('Not implemented');
+    const doc = Object.assign({}, this._comm.get());
+    return {
+      goalId: doc.goalId,
+      status: doc.status,
+      result: doc.result,
+    };
   }
 
-  getStatus() {
-    new Error('Not implemented');
-  }
-
-  sendGoal(goal = {}) {
-    logger.debug(`[MeteorActionClient.sendGoal] cancel goalId: ${this._comm.get().goalId}`);
-    const goalId = this._comm.get().goalId;
-    const result = Promise.await( this.cancelGoal() );
-    if (goalId !== result.goalId) {
-      logger.warn('[MeteorActionClient.sendGoal] Not sending goal; cancel failed');
-      return;
-    }
+  async sendGoal(goal = {}) {
+    this.cancelGoal();
+    await this.waitForResult();
+    const {
+      goalId,
+      status,
+      result
+    } = this.getResult();
 
     logger.debug(`[MeteorActionClient.sendGoal] Sending goal: ${obj2str(goal)}`);
     this._comm.set({
@@ -140,38 +144,49 @@ class WebActionClient {
   }
 
   cancelGoal() {
-    const goalId = this._comm.get().goalId;
-    const status = this._comm.get().status;
-    const result = this._comm.get().result;
+    const {
+      goalId,
+      status,
+      result,
+    } = this.getResult();
+
+    logger.debug(`[MeteorActionClient.cancelGoal] goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
 
     if (
       status === goalStatus.preempted
       || status === goalStatus.succeeded
       || status === goalStatus.aborted
     ) {
-      logger.warn(`[MeteorActionClient] Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
-      return Promise.resolve({  // return current goalId, status, result
-        goalId,
-        status,
-        result,
-      });
+      logger.warn(`[MeteorActionClient.cancelGoal] No active goal`);
     } else {
-      // NOTE: "isPreemptRequested" is set back to false in "setPreempted"
+      // "isPreemptRequested" is set back to false in "setPreempted"
       this._comm.set({
         isPreemptRequested: true,
       });
-     return this._comm.once('result');
     }
   }
 
   async waitForResult() {
-    new Error('Not implemented');
+    const {
+      goalId,
+      status,
+      result,
+    } = this.getResult();
+    if (
+      status === goalStatus.preempted
+      || status === goalStatus.succeeded
+      || status === goalStatus.aborted
+    ) {
+      return true;
+    } else {
+      await this._comm.once('result');
+      return true;
+    }
   }
 }
 
 class MeteorActionComm extends WebActionComm {
-
-  constructor(collection, id) {  // TODO: check inputs
+  constructor(collection, id) {
     super();
 
     this._collection = collection;
@@ -232,13 +247,12 @@ class MeteorActionComm extends WebActionComm {
   set(doc = {}) {
     this._collection.update(this._id, {$set: doc});
   }
-
 }
+
 
 const actionClients = {};
 
 export const getActionClient = (collection, id) => {
-  // TODO: check inputs
   if (!actionClients[`${collection._name}_${id}`]) {
     actionClients[`${collection._name}_${id}`] = new WebActionClient(new MeteorActionComm(collection, id));
   }
@@ -248,7 +262,6 @@ export const getActionClient = (collection, id) => {
 const actionServers = {};
 
 export const getActionServer = (collection, id) => {
-  // TODO: check inputs
   if (!actionServers[`${collection._name}_${id}`]) {
     actionServers[`${collection._name}_${id}`] = new WebActionServer(new MeteorActionComm(collection, id));
   }

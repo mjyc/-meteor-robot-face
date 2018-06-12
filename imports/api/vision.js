@@ -161,7 +161,7 @@ if (Meteor.isClient) {
     async detect() {
       if (!this._video) {
         logger.warn('Skipping; no video input');
-        return Promise.resolve();
+        return;
       };
 
       if (!this._net) {
@@ -264,7 +264,7 @@ if (Meteor.isClient) {
     async detect() {
       if (!this._video) {
         logger.warn('Skipping; no video input');
-        return Promise.resolve();
+        return;
       };
 
       this._context.drawImage(this._video, 0, 0, this._video.width, this._video.height);
@@ -314,8 +314,6 @@ if (Meteor.isClient) {
     }
 
     async goalCB({goal} = {}) {
-      // await setupCamera(this._video);
-
       const fps = (goal.fps && goal.fps > 0) ? goal.fps : 10;
       const interval = 1000 / fps;
       let start = Date.now();
@@ -323,8 +321,8 @@ if (Meteor.isClient) {
         const elapsed = Date.now() - start;
         if (elapsed > interval) {
           start = Date.now();
-          // TODO: Do this differently, after refactoring XXXActoins, create
-          //   another collection to store these results
+          // TODO: store detection outputs in a dedicated collection after
+          //   refactoring XXXActions
           const data = await this._detector.detect();
           this._as._comm._collection.update(this._as._comm._id, {
             $set: {'data.data': data},
