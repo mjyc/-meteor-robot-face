@@ -21,6 +21,7 @@ Package.onUse(function(api) {
   api.use('ecmascript');
   api.use('mongo');
   api.use('mjyc:loglevel');
+  api.use('mjyc:action');
   api.use('react-meteor-data', 'client');
   api.mainModule('client/main.js', 'client');
   api.mainModule('server/main.js', 'server');

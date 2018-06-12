@@ -1,7 +1,7 @@
 import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
-import { defaultAction, getActionServer } from './action.js';
+import { defaultAction, getActionServer } from 'meteor/mjyc:action';
 
 const logger = log.getLogger('vision');
 

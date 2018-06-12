@@ -3,8 +3,7 @@ import { EventEmitter } from 'events';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
-import { Promise } from 'meteor/promise';
-import { defaultAction, getActionServer } from './action.js';
+import { defaultAction, getActionServer } from 'meteor/mjyc:action';
 
 const logger = log.getLogger('speechbubbles');
 

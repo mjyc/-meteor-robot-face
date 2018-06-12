@@ -1,6 +1,3 @@
-// TODO: consider not exporting some variables
-export * as action from '../imports/api/action.js'
-
 export {
   Speechbubbles as Speechbubbles,
 } from '../imports/api/speechbubbles.js'

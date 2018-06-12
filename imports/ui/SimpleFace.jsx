@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import { getActionServer } from '../api/action.js';
 import {
   Speechbubbles,
   SpeechbubbleAction,
