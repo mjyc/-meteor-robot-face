@@ -101,61 +101,6 @@ class MeteorActionComm extends EventEmitter {
 
 }
 
-
-// TODO: consider composing MeteorActionCommon instead of inheriting it
-class MeteorActionClient extends MeteorActionComm {
-
-  constructor(collection, id) {
-    super(collection, id);
-  }
-
-  sendGoal(goal = {}) {
-    logger.debug(`[MeteorActionClient.sendGoal] cancel goalId: ${this._get().goalId}`);
-    const goalId = this._get().goalId;
-    const result = Promise.await( this.cancel() );
-    if (goalId !== result.goalId) {
-      logger.warn('[MeteorActionClient.sendGoal] Not sending goal; cancel failed');
-      return;
-    }
-
-    logger.debug(`[MeteorActionClient.sendGoal] Sending goal: ${obj2str(goal)}`);
-    this._set({
-      goalId: Random.id(),
-      status: goalStatus.pending,
-      goal,
-    });
-
-    return this.once('result');
-  }
-
-  cancel() {
-    const goalId = this._get().goalId;
-    const status = this._get().status;
-    const result = this._get().result;
-
-    if (
-      status === goalStatus.preempted
-      || status === goalStatus.succeeded
-      || status === goalStatus.aborted
-    ) {
-      logger.debug(`[MeteorActionClient] Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
-      return Promise.resolve({  // return current goalId, status, result
-        goalId,
-        status,
-        result,
-      });
-    } else {
-      // NOTE: "isPreemptRequested" is set back to false in "setPreempted"
-      this._set({
-        isPreemptRequested: true,
-      });
-      return this.once('result');
-    }
-  }
-
-}
-
-
 // TODO: consider composing MeteorActionCommon instead of inheriting it
 class MeteorActionServer extends MeteorActionComm {
 
@@ -224,6 +169,65 @@ class MeteorActionServer extends MeteorActionComm {
       result,
     })
   }
+
+}
+
+// TODO: consider composing MeteorActionCommon instead of inheriting it
+class MeteorActionClient extends MeteorActionComm {
+
+  constructor(collection, id) {
+    super(collection, id);
+  }
+
+  getResult() {
+    new Error('Not implemented');
+  }
+
+  getStatus() {
+    new Error('Not implemented');
+  }
+
+  sendGoal(goal = {}) {
+    logger.debug(`[MeteorActionClient.sendGoal] cancel goalId: ${this._get().goalId}`);
+    const goalId = this._get().goalId;
+    const result = Promise.await( this.cancel() );
+    if (goalId !== result.goalId) {
+      logger.warn('[MeteorActionClient.sendGoal] Not sending goal; cancel failed');
+      return;
+    }
+
+    logger.debug(`[MeteorActionClient.sendGoal] Sending goal: ${obj2str(goal)}`);
+    this._set({
+      goalId: Random.id(),
+      status: goalStatus.pending,
+      goal,
+    });
+  }
+
+  cancelGoal() {
+    const goalId = this._get().goalId;
+    const status = this._get().status;
+    const result = this._get().result;
+
+    if (
+      status === goalStatus.preempted
+      || status === goalStatus.succeeded
+      || status === goalStatus.aborted
+    ) {
+      logger.warn(`[MeteorActionClient] Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
+    } else {
+      // NOTE: "isPreemptRequested" is set back to false in "setPreempted"
+      this._set({
+        isPreemptRequested: true,
+      });
+    }
+  }
+
+  async waitForResult() {
+    this.
+    new Error('Not implemented');
+  }
+
 }
 
 
