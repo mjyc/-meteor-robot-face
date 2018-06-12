@@ -10,7 +10,7 @@ export const VisionActions = new Mongo.Collection('vision_actions');
 
 if (Meteor.isClient) {
 
-  // Code below are adapted from
+  // Below code is adapted from
   //   https://github.com/tensorflow/tfjs-models/blob/master/posenet/demos/camera.js
   //   https://github.com/tensorflow/tfjs-models/blob/master/posenet/demos/demo_util.js
   //   https://github.com/eduardolundgren/tracking.js/blob/master/examples/face_camera.html
@@ -64,7 +64,7 @@ if (Meteor.isClient) {
       logger.warn('Invalid input video:', video);
       return video;
     }
-    // NOTE: On Chrome 67, "track.onended" was not being called on "stop"
+    // On Chrome 67, "track.onended" was not being called on "stop"
     track.stop();
   }
 
@@ -79,6 +79,7 @@ if (Meteor.isClient) {
         return null;
     }
   }
+
 
   export class VideoControlAction {
     constructor(collection, id, video = document.getElementById('video')) {
@@ -123,9 +124,23 @@ if (Meteor.isClient) {
     }
   }
 
-  class PoseDetector {
+  class Detector {
+    getParams() {
+      new Error('Not implemented');
+    }
+
+    setVideo() {
+      new Error('Not implemented');
+    }
+
+    async detect() {
+      new Error('Not implemented');
+    }
+  }
+
+  class PoseDetector extends Detector {
     constructor(video = document.getElementById('video')) {
-      this._video = video;
+      super();
 
       this._net = null;
       this._params = {
@@ -147,6 +162,12 @@ if (Meteor.isClient) {
           nmsRadius: 20.0,
         },
       };
+
+      this.setVideo(this._video);
+    }
+
+    getParams() {
+      return this._params;
     }
 
     setVideo(video) {
@@ -206,10 +227,11 @@ if (Meteor.isClient) {
     }
   }
 
-  class FaceDetector {
+  class FaceDetector extends Detector {
     constructor(video = document.getElementById('video'), flipHorizontal=true) {
-      this._flipHorizontal = flipHorizontal;
+      super();
 
+      this._flipHorizontal = flipHorizontal;
       this._tracker = new tracking.ObjectTracker('face');
       this._canvas = document.createElement('canvas');
       this._context = this._canvas.getContext('2d');
@@ -241,6 +263,10 @@ if (Meteor.isClient) {
       this._tracker.setInitialScale(initialScale);
       this._tracker.setScaleFactor(scaleFactor);
       this._tracker.setStepSize(stepSize);
+    }
+
+    getParams() {
+      return this._params;
     }
 
     setVideo(video) {
@@ -308,7 +334,7 @@ if (Meteor.isClient) {
       this._detector = detector;
       this._detector.setVideo(this._video);
       this._as._comm._collection.update(this._as._comm._id, {
-        $set: {'data.params': this._detector._params},
+        $set: {'data.params': this._detector.getParams()},
       });
       return this;
     }
@@ -340,6 +366,7 @@ if (Meteor.isClient) {
       this._as.setPreempted();
     }
   }
+
 }
 
 
@@ -393,4 +420,5 @@ if (Meteor.isServer) {
       }, defaultAction));
     }
   });
+
 }
