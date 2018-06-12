@@ -1,5 +1,4 @@
 import log from 'meteor/mjyc:loglevel';
-import util from 'util';
 import { EventEmitter } from 'events';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
@@ -8,9 +7,6 @@ import { Promise } from 'meteor/promise';
 import { defaultAction, getActionServer } from './action.js';
 
 const logger = log.getLogger('speechbubbles');
-
-const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
-
 
 export const Speechbubbles = new Mongo.Collection('speechbubbles');
 

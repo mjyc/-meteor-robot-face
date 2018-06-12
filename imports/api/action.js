@@ -2,11 +2,9 @@ import log from 'meteor/mjyc:loglevel';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { Meteor } from 'meteor/meteor';
-import { Mongo } from 'meteor/mongo';
 import { Random } from 'meteor/random';
 
 const logger = log.getLogger('action');
-
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 
@@ -190,7 +188,7 @@ class MeteorActionClient extends MeteorActionComm {
   sendGoal(goal = {}) {
     logger.debug(`[MeteorActionClient.sendGoal] cancel goalId: ${this._get().goalId}`);
     const goalId = this._get().goalId;
-    const result = Promise.await( this.cancel() );
+    const result = Promise.await( this.cancelGoal() );
     if (goalId !== result.goalId) {
       logger.warn('[MeteorActionClient.sendGoal] Not sending goal; cancel failed');
       return;
@@ -215,16 +213,21 @@ class MeteorActionClient extends MeteorActionComm {
       || status === goalStatus.aborted
     ) {
       logger.warn(`[MeteorActionClient] Skipping; no active goal; goalId: ${goalId}, status: ${status}, result: ${obj2str(result)}`);
+      return Promise.resolve({  // return current goalId, status, result
+        goalId,
+        status,
+        result,
+      });
     } else {
       // NOTE: "isPreemptRequested" is set back to false in "setPreempted"
       this._set({
         isPreemptRequested: true,
       });
+     return this.once('result');
     }
   }
 
   async waitForResult() {
-    this.
     new Error('Not implemented');
   }
 

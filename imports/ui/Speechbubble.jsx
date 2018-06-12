@@ -6,7 +6,6 @@ import { Meteor } from 'meteor/meteor';
 import { MediaFiles } from '../api/media.js';
 
 const logger = log.getLogger('Speechbubble');
-
 const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 

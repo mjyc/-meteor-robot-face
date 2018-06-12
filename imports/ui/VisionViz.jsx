@@ -58,7 +58,7 @@ class VisionViz extends Component {
 
   componentDidUpdate(prevProps) {
     if (!this.props.video || this.props.loading) {
-      logger.warn('Input video or detection is not available');
+      logger.debug('Input video is not available or subscribing to collections');
       return;
     }
 

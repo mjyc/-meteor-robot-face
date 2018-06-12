@@ -22,9 +22,9 @@
       "integrity": "sha1-U4tm8+5izRq1HsMjgp0flIDHS+s="
     },
     "fbjs": {
-      "version": "0.8.16",
-      "resolved": "https://registry.npmjs.org/fbjs/-/fbjs-0.8.16.tgz",
-      "integrity": "sha1-XmdDL1UNxBtXK/VYR7ispk5TN9s="
+      "version": "0.8.17",
+      "resolved": "https://registry.npmjs.org/fbjs/-/fbjs-0.8.17.tgz",
+      "integrity": "sha1-xNWY6taUkRJlPWWIsBpc3Nn5D90="
     },
     "iconv-lite": {
       "version": "0.4.23",
