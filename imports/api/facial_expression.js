@@ -10,31 +10,14 @@ export const FacialExpressionActions = new Mongo.Collection('facial_expression_a
 
 if (Meteor.isClient) {
 
-  export class FacialExpressionAction {
-    constructor(collection, id, eyes) {  // TODO: make 'eyes' options
-      this._collection = collection;
-      this._id = id;
-      this._eyes = eyes;
+  export class EyeController {
+    constructor(elements = {}) {
+      this._blinkTimeoutID = null;
 
-      this._as = getActionServer(collection, id);
-      this._as.registerGoalCallback(this.goalCB.bind(this));
-      this._as.registerPreemptCallback(this.preemptCB.bind(this));
+      this.setElements(elements);
     }
 
-    // setEyes and call startBlinking here (well stop the running one first if any)
-
-    goalCB(action) {
-      this._eyes.express(action.goal);
-    }
-
-    preemptCB() {
-      // TODO: stop the animation once such is implemented in EyesController
-      this._as.setPreempted();
-    }
-  }
-
-  export class EyesController {
-    constructor({
+    setElements({
       leftEye,
       rightEye,
       upperLeftEyelid,
@@ -48,11 +31,8 @@ if (Meteor.isClient) {
       this._upperRightEyelid = upperRightEyelid;
       this._lowerLeftEyelid = lowerLeftEyelid;
       this._lowerRightEyelid = lowerRightEyelid;
-
-      this._blinkTimeoutID = null;
+      return this;
     }
-
-    // TODO: create setElements
 
     _createKeyframes ({
       tgtTranYVal = 0,
@@ -62,97 +42,109 @@ if (Meteor.isClient) {
     } = {}) {
       return [
         {transform: `translateY(0px) rotate(0deg)`, offset: 0.0},
-        {transform: `translateY(${tgtTranYVal}px) rotate(${tgtRotVal}deg)`, offset: enteredOffset},
-        {transform: `translateY(${tgtTranYVal}px) rotate(${tgtRotVal}deg)`, offset: exitingOffset},
+        {transform: `translateY(${tgtTranYVal}vh) rotate(${tgtRotVal}deg)`, offset: enteredOffset},
+        {transform: `translateY(${tgtTranYVal}vh) rotate(${tgtRotVal}deg)`, offset: exitingOffset},
         {transform: `translateY(0px) rotate(0deg)`, offset: 1.0},
       ];
     }
 
     express({
       type = '',
-      // level = 3,  // 1: min, 5: max  // TODO: implement this feature
-      durationMs = 1000,
-      enterDurationMs = 75,
-      exitDurationMs = 75,
+      // level = 3,  // 1: min, 5: max
+      duration = 1000,
+      enterDuration = 75,
+      exitDuration = 75,
     }) {
-      // TODO: skip if one is not defined (assume they get set all together)
-      const options = {
-        duration: durationMs,
+      if (!this._leftEye) {  // assumes all elements are always set together
+        logger.warn('Skipping; eye elements are not set');
       }
+
+      const options = {
+        duration: duration,
+      }
+
       switch(type) {
-        // TODO: store outputs of "animate"
         case 'happy':
-          this._lowerLeftEyelid.animate(this._createKeyframes({
-            tgtTranYVal: -120,
-            tgtRotVal: 30,
-            enteredOffset: enterDurationMs / durationMs,
-            exitingOffset: 1 - (exitDurationMs / durationMs),
-          }), options);
-          this._lowerRightEyelid.animate(this._createKeyframes({
-            tgtTranYVal: -120,
-            tgtRotVal: -30,
-            enteredOffset: enterDurationMs / durationMs,
-            exitingOffset: 1 - (exitDurationMs / durationMs),
-          }), options);
-          break;
+          return {
+            lowerLeftEyelid: this._lowerLeftEyelid.animate(this._createKeyframes({
+              tgtTranYVal: -20,
+              tgtRotVal: 30,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+            lowerRightEyelid: this._lowerRightEyelid.animate(this._createKeyframes({
+              tgtTranYVal: -20,
+              tgtRotVal: -30,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+          };
 
         case 'sad':
-          this._upperLeftEyelid.animate(this._createKeyframes({
-            tgtTranYVal: 80,
-            tgtRotVal: -20,
-            enteredOffset: enterDurationMs / durationMs,
-            exitingOffset: 1 - (exitDurationMs / durationMs),
-          }), options);
-          this._upperRightEyelid.animate(this._createKeyframes({
-            tgtTranYVal: 80,
-            tgtRotVal: 20,
-            enteredOffset: enterDurationMs / durationMs,
-            exitingOffset: 1 - (exitDurationMs / durationMs),
-          }), options);
-          break;
+          return {
+            upperLeftEyelid: this._upperLeftEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 13.33,
+              tgtRotVal: -20,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+            upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 13.33,
+              tgtRotVal: 20,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+          };
 
         case 'angry':
-          this._upperLeftEyelid.animate(this._createKeyframes({
-            tgtTranYVal: 50,
-            tgtRotVal: 30,
-            enteredOffset: enterDurationMs / durationMs,
-            exitingOffset: 1 - (exitDurationMs / durationMs),
-          }), options);
-          this._upperRightEyelid.animate(this._createKeyframes({
-            tgtTranYVal: 50,
-            tgtRotVal: -30,
-            enteredOffset: enterDurationMs / durationMs,
-            exitingOffset: 1 - (exitDurationMs / durationMs),
-          }), options);
-          break;
+          return {
+            upperLeftEyelid: this._upperLeftEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 8.33,
+              tgtRotVal: 30,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+            upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 8.33,
+              tgtRotVal: -30,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+          };
 
         case 'focused':
-          [this._upperLeftEyelid, this._upperRightEyelid].map(eyelid => {
-            eyelid.animate(this._createKeyframes({
-              tgtTranYVal: 60,
-              enteredOffset: enterDurationMs / durationMs,
-              exitingOffset: 1 - (exitDurationMs / durationMs),
-            }), options);
-          });
-          [this._lowerLeftEyelid, this._lowerRightEyelid].map(eyelid => {
-            eyelid.animate(this._createKeyframes({
-              tgtTranYVal: -60,
-              enteredOffset: enterDurationMs / durationMs,
-              exitingOffset: 1 - (exitDurationMs / durationMs),
-            }), options);
-          });
-          break;
+          return {
+            upperLeftEyelid: this._upperLeftEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 10,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+            upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 10,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+            lowerLeftEyelid: this._lowerLeftEyelid.animate(this._createKeyframes({
+              tgtTranYVal: -10,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+            lowerRightEyelid: this._lowerRightEyelid.animate(this._createKeyframes({
+              tgtTranYVal: -10,
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+          }
 
         case 'confused':
-          [this._upperRightEyelid].map(eyelid => {
-            eyelid.animate(this._createKeyframes({
-              tgtTranYVal: 60,
+          return {
+            upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
+              tgtTranYVal: 10,
               tgtRotVal: -10,
-              enteredOffset: enterDurationMs / durationMs,
-              exitingOffset: 1 - (exitDurationMs / durationMs),
-            }), options);
-          });
-          break;
+              enteredOffset: enterDuration / duration,
+              exitingOffset: 1 - (exitDuration / duration),
+            }), options),
+          }
 
         default:
           logger.warn(`Invalid input type: ${type}`);
@@ -162,7 +154,10 @@ if (Meteor.isClient) {
     blink({
       duration = 150,  // in ms
     } = {}) {
-      // TODO: skip if _leftEye or _rightEye is not defined; or use same strategy above
+      if (!this._leftEye) {  // assumes all elements are always set together
+        logger.warn('Skipping; eye elements are not set');
+      }
+
       [this._leftEye, this._rightEye].map((eye) => {
         eye.animate([
           {transform: 'rotateX(0deg)'},
@@ -176,19 +171,19 @@ if (Meteor.isClient) {
     }
 
     startBlinking({
-      maxIntervalMs = 5000
+      maxInterval = 5000
     } = {}) {
       if (this._blinkTimeoutID) {
-        logger.warn(`Skipping; already blinking with timeoutID: ${timeoutID}`);
+        logger.warn(`Skipping; already blinking with timeoutID: ${this._blinkTimeoutID}`);
         return;
       }
-      const blinkRandomly = (timeoutMs) => {
+      const blinkRandomly = (timeout) => {
         this._blinkTimeoutID = setTimeout(() => {
           this.blink();
-          blinkRandomly(Math.random() * maxIntervalMs);
-        }, timeoutMs);
+          blinkRandomly(Math.random() * maxInterval);
+        }, timeout);
       }
-      blinkRandomly(Math.random() * maxIntervalMs);
+      blinkRandomly(Math.random() * maxInterval);
     }
 
     stopBlinking() {
@@ -196,6 +191,41 @@ if (Meteor.isClient) {
       this._blinkTimeoutID = null;
     }
   }
+
+  export class EyeExpressionAction {
+    constructor(collection, id, eyes = new EyeController()) {
+      this._collection = collection;
+      this._id = id;
+      this._eyeController = eyes;
+
+      this._as = getActionServer(collection, id);
+      this._as.registerGoalCallback(this.goalCB.bind(this));
+      this._as.registerPreemptCallback(this.preemptCB.bind(this));
+
+      this._animations = [];
+    }
+
+    goalCB(action) {
+      this._animations = this._eyeController.express(action.goal);
+      const animations = Object.keys(this._animations).map((key) => {
+        return new Promise((resolve, reject) => {
+          this._animations[key].onfinish = resolve;
+        })
+      });
+      Promise.all(animations).then(() => {
+        this._as.setSucceeded();
+      });
+    }
+
+    preemptCB() {
+      Object.keys(this._animations).map((key) => {
+        this._animations[key].cancel();
+      });
+      this._animations = [];
+      this._as.setPreempted();
+    }
+  }
+
 }
 
 

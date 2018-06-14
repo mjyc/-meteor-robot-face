@@ -64,19 +64,21 @@ class SimpleFace extends Component {
       )
     };
 
-    // TODO: expose the variables below as props
     const faceColor = 'whitesmoke';
-    const faceHeight = '426.67px';
-    const faceWidth = '600px';
+    const faceHeight = '375px';  // TODO: change to 100vh after moving SimpleFace out from EditPage
+    const faceWidth = '600px';  // TODO: change to 100vw after moving SimpleFace out from EditPage
+    const eyeColor = 'black';
+    const eyeSize = '120px';  // TODO: change to 33.33vh after moving SimpleFace out from EditPage
+    const eyelidColor = 'gray';  // for debug, use 'whitesmoke' for production
 
-    // TODO: pass this down to Eyes?
     const styles = {
       face: {
         backgroundColor: faceColor,
-        // margin: 'auto',
+        // margin: 'auto',  // TODO: uncomment after moving SimpleFace out from EditPage
         height: faceHeight,
         width: faceWidth,
         position: 'relative',
+        overflow: 'hidden',
       },
     };
 
@@ -115,6 +117,9 @@ class SimpleFace extends Component {
 
         <Eyes
           facialExpression={this.props.facialExpression}
+          eyeColor={eyeColor}
+          eyeSize={eyeSize}
+          eyelidColor={eyelidColor}
         />
 
         <Vision

@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 
 import {
-  FacialExpressionAction,
+  EyeController,
+  EyeExpressionAction,
   FacialExpressionActions,
-  EyesController,
 } from '../api/facial_expression.js';
 
 
@@ -17,7 +17,7 @@ export default class Eyes extends Component {
   }
 
   componentDidMount() {
-    const eyes = new EyesController({
+    const eyeController = new EyeController({
       leftEye: this.elements.leftEye,
       rightEye: this.elements.rightEye,
       upperLeftEyelid: this.elements.upperLeftEyelid,
@@ -25,20 +25,18 @@ export default class Eyes extends Component {
       lowerLeftEyelid: this.elements.lowerLeftEyelid,
       lowerRightEyelid: this.elements.lowerRightEyelid,
     });
-    // TODO update to not call startBlinking here
-    eyes.startBlinking();
-    this.actions[this.props.facialExpression._id] = new FacialExpressionAction(
+    eyeController.startBlinking();
+    this.actions[this.props.facialExpression._id] = new EyeExpressionAction(
       FacialExpressionActions,
       this.props.facialExpression._id,
-      eyes,
+      eyeController,
     );
   }
 
   render() {
-    // TODO: expose the variables below as props
-    const eyeColor = 'black';
-    const eyeSize = '120px';  // 20% of faceWidth
-    const eyelidColor = 'gray';
+    const eyeColor = this.props.eyeColor ? this.props.eyeColor : 'black';
+    const eyeSize = this.props.eyeSize ? this.props.eyeSize : '200px';  // 1/3 of 600px (height)
+    const eyelidColor = this.props.eyelidColor ? this.props.eyelidColor : 'whitesmoke';
 
     const styles = {
       eye: {
