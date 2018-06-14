@@ -62,12 +62,9 @@ class VisionViz extends Component {
       return;
     }
 
-    // TODO: make a note that this is just a quick & dirty output
-
     const context = this.elements.canvas.getContext('2d');
     const width = this.elements.canvas.width;
     const height = this.elements.canvas.height;
-    // TODO: read below two variables from somewhere else
     let minPoseConfidence;
     let minPartConfidence;
     if (this.props.poseDetection.data.params.algorithm === 'single-pose') {

@@ -10,76 +10,70 @@ export const SpeechActions = new Mongo.Collection('speech_actions');
 
 if (Meteor.isClient) {
 
-  const speechSynthesisActions = {};
-  const speechRecognitionActions = {};
+  export class SpeechSynthesisAction {
+    constructor(collection, id) {
+      this._as = getActionServer(collection, id);
+      this._as.registerGoalCallback(this.goalCB.bind(this));
+      this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-  export const serveSpeechSynthesisAction = (id) => {
-
-    if (speechSynthesisActions[id]) {
-      logger.debug(`[serveSpeechSynthesisAction] Skipping; already serving an action with id: ${id}`);
-      return;
+      this._synth = window.speechSynthesis;
     }
 
-    const synth = window.speechSynthesis;
-    const actionServer = getActionServer(SpeechActions, id);
-
-    actionServer.registerGoalCallback((actionGoal) => {
+    goalCB(actionGoal) {
       const utterThis = new SpeechSynthesisUtterance();
       ['lang', 'pitch', 'rate', 'text', 'volume'].map((param) => {
         if (param in actionGoal.goal) utterThis[param] = actionGoal.goal[param];
       });
       logger.debug('[serveSpeechSynthesisAction] utterThis:', utterThis);
       utterThis.onend = (event) => {
-        actionServer.setSucceeded(event);
+        this._as.setSucceeded(event);
       }
       utterThis.onerror = (event) => {
-        actionServer.setAborted(event.error);
+        this._as.setAborted(event.error);
       }
       synth.speak(utterThis);
-    });
-
-    actionServer.registerPreemptCallback((cancelGoal) => {
-      synth.cancel();
-      actionServer.setPreempted();
-    });
-
-    speechSynthesisActions[id] = actionServer;
-    return actionServer;
-  }
-
-  export const serveSpeechRecognitionAction = (id) => {
-    if (speechRecognitionActions[id]) {
-      logger.debug(`[serveSpeechSynthesisAction] Skipping; already serving an action with id: ${id}`);
-      return;
     }
 
-    const SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
-    const SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
-    const recognition = new SpeechRecognition();
-    const actionServer = getActionServer(SpeechActions, id);
+    preemptCB(cancelGoal) {
+      this._synth.cancel();
+      this._as.setPreempted();
+    }
+  }
 
-    actionServer.registerGoalCallback((actionGoal) => {
-      recognition.abort();
+  const SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+  const SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList;
+
+  export class SpeechRecognitionAction {
+    constructor(collection, id) {
+      this._as = getActionServer(collection, id);
+      this._as.registerGoalCallback(this.goalCB.bind(this));
+      this._as.registerPreemptCallback(this.preemptCB.bind(this));
+
+      this._recognition = new SpeechRecognition();
+    }
+
+    goalCB(actionGoal) {
+      this._recognition.abort();
       ['lang', 'continuous', 'interimResults', 'maxAlternatives', 'serviceURI'].map((param) => {
-        if (param in actionGoal.goal) recognition[param] = actionGoal.goal[param];
+        if (param in actionGoal.goal) this._recognition[param] = actionGoal.goal[param];
       });
       if ('grammars' in actionGoal.goal) {
         const speechRecognitionList = new SpeechGrammarList();
         actionGoal.goal.grammars.map(({string, weight = 1} = {}) => {
           speechRecognitionList.addFromString(string, weight);
         });
-        recognition.grammars = speechRecognitionList;
+        this._recognition.grammars = speechRecognitionList;
       }
 
-      recognition.onend = (event) => {
+      this._recognition.onend = (event) => {
         logger.debug('[serveSpeechSynthesisAction] onend event:', event);
         // TODO: think about what should I do here
       };
-      recognition.onerror = (event) => {
+      this._recognition.onerror = (event) => {
         logger.debug('[serveSpeechSynthesisAction] onerror event:', event);
-        actionServer.setAborted(event.error);
+        this._as.setAborted(event.error);
       };
-      recognition.onresult = (event) => {
+      this._recognition.onresult = (event) => {
         logger.debug('[serveSpeechSynthesisAction] onresult event:', event);
         // NOTE: SpeechRecognition returns SpeechRecognitionResultList as a
         //   result; see https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognitionResultList
@@ -98,19 +92,16 @@ if (Meteor.isClient) {
             };
           }
         }
-        actionServer.setSucceeded(result);
+        this._as.setSucceeded(result);
       };
 
-      recognition.start();
-    });
+      this._recognition.start();
+    }
 
-    actionServer.registerPreemptCallback((cancelGoal) => {
-      recognition.abort();
-      actionServer.setPreempted();
-    });
-
-    speechRecognitionActions[id] = actionServer;
-    return actionServer;
+    preemptCB(cancelGoal) {
+      this._synth.cancel();
+      this._as.setPreempted();
+    }
   }
 
 }

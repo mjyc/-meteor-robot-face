@@ -6,7 +6,6 @@ import { Meteor } from 'meteor/meteor';
 import { MediaFiles } from '../api/media.js';
 
 const logger = log.getLogger('Speechbubble');
-const obj2str = (obj) => { return util.inspect(obj, true, null, true); }
 
 
 // Speechbubble component - represents a speech bubble that can display text,
@@ -46,7 +45,7 @@ export default class Speechbubble extends Component {
         if (!image) {
           this.props.reset((err, res) => {
             this.props.setAborted({
-              message: `Invalid input query: ${obj2str(speechbubble.data.query)}`
+              message: `Invalid input query: ${util.inspect(speechbubble.data.query, true, null)}`
             });
           });
           return null;
@@ -63,7 +62,7 @@ export default class Speechbubble extends Component {
         if (!video) {
           this.props.reset((err, res) => {
             this.props.setAborted({
-              message: `Invalid input query: ${obj2str(speechbubble.data.query)}`
+              message: `Invalid input query: ${util.inspect(speechbubble.data.query, true, null)}`
             });
           });
           return null;

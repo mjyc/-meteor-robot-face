@@ -3,21 +3,21 @@ import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 
+import { FacialExpressionActions } from '../api/facial_expression.js';
+import {
+  MediaActions,
+  MediaFiles,
+  SoundPlayAction,
+} from '../api/media.js';
+import {
+  SpeechActions,
+  SpeechSynthesisAction,
+  SpeechRecognitionAction,
+} from '../api/speech.js';
 import {
   Speechbubbles,
   SpeechbubbleAction,
 } from '../api/speechbubbles.js';
-import {
-  SpeechActions,
-  serveSpeechSynthesisAction,
-  serveSpeechRecognitionAction,
-} from '../api/speech.js';
-import {
-  MediaActions,
-  MediaFiles,
-  serveSoundPlayAction,
-} from '../api/media.js';
-import { FacialExpressionActions } from '../api/facial_expression.js';
 import { VisionActions } from '../api/vision.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
@@ -41,13 +41,15 @@ class SimpleFace extends Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.loading && !this.props.loading) {
-      // NOTE: the functions inside of setTimeout callback use .observeChanges,
-      //  which won't work properly within in withTracker
+      // the functions inside of setTimeout callback use .observeChanges, which
+      //   don't work properly within withTracker
       setTimeout(() => {
-        serveSpeechSynthesisAction(this.props.speechSynthesis._id);
-        serveSpeechRecognitionAction(this.props.speechRecognition._id);
-        serveSoundPlayAction(this.props.soundPlay._id);
-
+        this.actions[this.props.soundPlay._id]
+          = new SoundPlayAction(MediaActions, this.props.soundPlay._id);
+        this.actions[this.props.speechSynthesis._id]
+          = new SpeechSynthesisAction(SpeechActions, this.props.speechSynthesis._id);
+          this.actions[this.props.speechRecognition._id]
+          = new SpeechRecognitionAction(SpeechActions, this.props.speechRecognition._id);
         this.actions[this.props.speechbubbleRobot._id]
           = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
         this.actions[this.props.speechbubbleHuman._id]
@@ -133,38 +135,39 @@ class SimpleFace extends Component {
   }
 }
 
-export default withTracker(({faceQuery}) => {
-  const speechbubblesHandle = Meteor.subscribe('speechbubbles');
-  const speechHandle = Meteor.subscribe('speech_actions');
-  const mediaActionsHandle = Meteor.subscribe('media_actions');
-  const visionActionsHandle = Meteor.subscribe('vision_actions');
+export default withTracker(({query}) => {
   const facialExpressionActionsHandle = Meteor.subscribe('facial_expression_actions');
+  const mediaActionsHandle = Meteor.subscribe('media_actions');
   const mediaFilesHandle = Meteor.subscribe('media_files');
-  const loading = !speechbubblesHandle.ready()
-    || !speechHandle.ready()
-    || !mediaActionsHandle.ready()
-    || !visionActionsHandle.ready()
-    || !mediaFilesHandle.ready()
-    || !facialExpressionActionsHandle.ready();
+  const speechHandle = Meteor.subscribe('speech_actions');
+  const speechbubblesHandle = Meteor.subscribe('speechbubbles');
+  const visionActionsHandle = Meteor.subscribe('vision_actions');
 
-  const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, faceQuery));
-  const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, faceQuery));
-  const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, faceQuery));
-  const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, faceQuery));
-  const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, faceQuery));
-  const facialExpression = FacialExpressionActions.findOne(faceQuery);
-  const videoControl = VisionActions.findOne(Object.assign({type: 'video_control'}, faceQuery));
-  const poseDetection = VisionActions.findOne(Object.assign({type: 'pose_detection'}, faceQuery));
-  const faceDetection = VisionActions.findOne(Object.assign({type: 'face_detection'}, faceQuery));
+  const loading = !facialExpressionActionsHandle.ready()
+    || !mediaActionsHandle.ready()
+    || !mediaFilesHandle.ready()
+    || !speechHandle.ready()
+    || !speechbubblesHandle.ready()
+    || !visionActionsHandle.ready();
+
+  const facialExpression = FacialExpressionActions.findOne(query);
+  const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, query));
+  const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, query));
+  const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, query));
+  const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, query));
+  const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, query));
+  const videoControl = VisionActions.findOne(Object.assign({type: 'video_control'}, query));
+  const poseDetection = VisionActions.findOne(Object.assign({type: 'pose_detection'}, query));
+  const faceDetection = VisionActions.findOne(Object.assign({type: 'face_detection'}, query));
 
   return {
     loading,
-    speechbubbleRobot,
-    speechbubbleHuman,
+    facialExpression,
+    soundPlay,
     speechSynthesis,
     speechRecognition,
-    soundPlay,
-    facialExpression,
+    speechbubbleRobot,
+    speechbubbleHuman,
     videoControl,
     poseDetection,
     faceDetection,
