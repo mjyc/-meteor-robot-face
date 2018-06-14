@@ -68,19 +68,6 @@ if (Meteor.isClient) {
     track.stop();
   }
 
-  export const createDetector = (type) => {
-    switch (type) {
-      case 'pose':
-        return new PoseDetector();
-      case 'face':
-        return new FaceDetector();
-      default:
-        logger.warn(`Returning null; unknown detector type: ${type}`);
-        return null;
-    }
-  }
-
-
   export class VideoControlAction {
     constructor(collection, id, video = document.getElementById('video')) {
       this._video = video;
@@ -300,6 +287,18 @@ if (Meteor.isClient) {
         });
         tracking.trackCanvasInternal_(this._canvas, this._tracker);
       });
+    }
+  }
+
+  export const createDetector = (type) => {
+    switch (type) {
+      case 'pose':
+        return new PoseDetector();
+      case 'face':
+        return new FaceDetector();
+      default:
+        logger.warn(`Returning null; unknown detector type: ${type}`);
+        return null;
     }
   }
 
