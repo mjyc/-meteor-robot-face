@@ -24,14 +24,14 @@ if (Meteor.isClient) {
       ['lang', 'pitch', 'rate', 'text', 'volume'].map((param) => {
         if (param in actionGoal.goal) utterThis[param] = actionGoal.goal[param];
       });
-      logger.debug('[serveSpeechSynthesisAction] utterThis:', utterThis);
+      logger.debug('[SpeechSynthesisAction.goalCB] utterThis:', utterThis);
       utterThis.onend = (event) => {
         this._as.setSucceeded(event);
       }
       utterThis.onerror = (event) => {
         this._as.setAborted(event.error);
       }
-      synth.speak(utterThis);
+      this._synth.speak(utterThis);
     }
 
     preemptCB(cancelGoal) {
@@ -66,15 +66,15 @@ if (Meteor.isClient) {
       }
 
       this._recognition.onend = (event) => {
-        logger.debug('[serveSpeechSynthesisAction] onend event:', event);
-        // TODO: think about what should I do here
+        logger.debug('[SpeechRecognitionAction.goalCB.onend] event:', event);
+        this._as.setSucceeded(event.error);
       };
       this._recognition.onerror = (event) => {
-        logger.debug('[serveSpeechSynthesisAction] onerror event:', event);
+        logger.debug('[SpeechRecognitionAction.goalCB.onerror] event:', event);
         this._as.setAborted(event.error);
       };
       this._recognition.onresult = (event) => {
-        logger.debug('[serveSpeechSynthesisAction] onresult event:', event);
+        logger.debug('[SpeechRecognitionAction.goalCB.onresult] event:', event);
         // NOTE: SpeechRecognition returns SpeechRecognitionResultList as a
         //   result; see https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognitionResultList
         const result = {
@@ -99,7 +99,7 @@ if (Meteor.isClient) {
     }
 
     preemptCB(cancelGoal) {
-      this._synth.cancel();
+      this._recognition.cancel();
       this._as.setPreempted();
     }
   }
