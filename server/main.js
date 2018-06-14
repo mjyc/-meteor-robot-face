@@ -7,7 +7,6 @@ export {
 } from '../imports/api/speech.js'
 
 export {
-  MediaActions,
   MediaFiles,
 } from '../imports/api/media.js'
 

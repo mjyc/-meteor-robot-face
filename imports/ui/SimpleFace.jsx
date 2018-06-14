@@ -2,10 +2,10 @@ import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
 import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
+import { Actions } from 'meteor/mjyc:action';
 
 import { FacialExpressionActions } from '../api/facial_expression.js';
 import {
-  MediaActions,
   MediaFiles,
   SoundPlayAction,
 } from '../api/media.js';
@@ -45,7 +45,7 @@ class SimpleFace extends Component {
       //   don't work properly within withTracker
       setTimeout(() => {
         this.actions[this.props.soundPlay._id]
-          = new SoundPlayAction(MediaActions, this.props.soundPlay._id);
+          = new SoundPlayAction(Actions, this.props.soundPlay._id);
         this.actions[this.props.speechSynthesis._id]
           = new SpeechSynthesisAction(SpeechActions, this.props.speechSynthesis._id);
           this.actions[this.props.speechRecognition._id]
@@ -136,22 +136,22 @@ class SimpleFace extends Component {
 }
 
 export default withTracker(({query}) => {
+  const actionsHandle = Meteor.subscribe('actions');
   const facialExpressionActionsHandle = Meteor.subscribe('facial_expression_actions');
-  const mediaActionsHandle = Meteor.subscribe('media_actions');
   const mediaFilesHandle = Meteor.subscribe('media_files');
   const speechHandle = Meteor.subscribe('speech_actions');
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const visionActionsHandle = Meteor.subscribe('vision_actions');
 
-  const loading = !facialExpressionActionsHandle.ready()
-    || !mediaActionsHandle.ready()
+  const loading = !actionsHandle.ready()
+    || !facialExpressionActionsHandle.ready()
     || !mediaFilesHandle.ready()
     || !speechHandle.ready()
     || !speechbubblesHandle.ready()
     || !visionActionsHandle.ready();
 
   const facialExpression = FacialExpressionActions.findOne(query);
-  const soundPlay = MediaActions.findOne(Object.assign({type: 'sound'}, query));
+  const soundPlay = Actions.findOne(Object.assign({type: 'soundPlay'}, query));
   const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, query));
   const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, query));
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, query));

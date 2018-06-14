@@ -2,11 +2,13 @@ import log from 'meteor/mjyc:loglevel';
 import util from 'util';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
-import { defaultAction, getActionServer } from 'meteor/mjyc:action';
+import {
+  Actions,
+  defaultAction,
+  getActionServer,
+} from 'meteor/mjyc:action';
 
 const logger = log.getLogger('media');
-
-export const MediaActions = new Mongo.Collection('media_actions');
 
 export const MediaFiles = new Mongo.Collection('media_files');
 
@@ -48,39 +50,17 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  MediaActions.allow({
-    insert: (userId, doc) => {
-      return false;
-    },
-    update: (userId, doc, fields, modifier) => {
-      return userId &&
-        (doc.owner === userId);
-    },
-    remove: (userId, doc) => {
-       return userId &&
-        (doc.owner === userId);
-    },
-    fetch: ['owner']
-  });
-
-
-  Meteor.publish('media_actions', function mediaActionsPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return MediaActions.find();
-  });
-
-
   Meteor.methods({
-    'media_actions.addUser'(userId = this.userId) {
+    'actions.insert.soundPlay'(userId = this.userId) {
       if (!Meteor.users.findOne(userId)) {
         throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (MediaActions.findOne({owner: userId})) {
+      if (Actions.findOne({owner: userId})) {
         logger.warn(`Skipping; user ${this.userId} already has media action documents`);
         return;
       }
-      MediaActions.insert(Object.assign({owner: userId, type: 'sound'}, defaultAction));
+      Actions.insert(Object.assign({owner: userId, type: 'soundPlay'}, defaultAction));
     }
   });
 
