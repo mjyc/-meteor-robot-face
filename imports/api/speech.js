@@ -1,11 +1,13 @@
 import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
-import { defaultAction, getActionServer } from 'meteor/mjyc:action';
+import {
+  Actions,
+  defaultAction,
+  getActionServer,
+} from 'meteor/mjyc:action';
 
 const logger = log.getLogger('speech');
-
-export const SpeechActions = new Mongo.Collection('speech_actions');
 
 
 if (Meteor.isClient) {
@@ -109,40 +111,29 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  SpeechActions.allow({
-    insert: (userId, doc) => {
-      return false;
-    },
-    update: (userId, doc, fields, modifier) => {
-      return userId &&
-        (doc.owner === userId);
-    },
-    remove: (userId, doc) => {
-       return userId &&
-        (doc.owner === userId);
-    },
-    fetch: ['owner']
-  });
-
-
-  Meteor.publish('speech_actions', function speechPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return SpeechActions.find();
-  });
-
-
   Meteor.methods({
-    'speech_actions.addUser'(userId = this.userId) {
+    'actions.insert.speechSynthesis'(userId = this.userId) {
       if (!Meteor.users.findOne(userId)) {
         throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (SpeechActions.findOne({owner: userId})) {
-        logger.warn(`Skipping; user ${this.userId} already has speech action documents`);
+      if (Actions.findOne({owner: userId, type: 'speechSynthesis'})) {
+        logger.warn(`Skipping; user ${this.userId} already has speechSynthesis action documents`);
         return;
       }
-      SpeechActions.insert(Object.assign({owner: userId, type: 'synthesis'}, defaultAction));
-      SpeechActions.insert(Object.assign({owner: userId, type: 'recognition'}, defaultAction));
+      Actions.insert(Object.assign({owner: userId, type: 'speechSynthesis'}, defaultAction));
+    },
+
+    'actions.insert.speechRecognition'(userId = this.userId) {
+      if (!Meteor.users.findOne(userId)) {
+        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
+      }
+
+      if (Actions.findOne({owner: userId, type: 'speechRecognition'})) {
+        logger.warn(`Skipping; user ${this.userId} already has speechRecognition action documents`);
+        return;
+      }
+      Actions.insert(Object.assign({owner: userId, type: 'speechRecognition'}, defaultAction));
     }
   });
 

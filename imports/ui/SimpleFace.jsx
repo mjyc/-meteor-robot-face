@@ -9,7 +9,6 @@ import {
   SoundPlayAction,
 } from '../api/media.js';
 import {
-  SpeechActions,
   SpeechSynthesisAction,
   SpeechRecognitionAction,
 } from '../api/speech.js';
@@ -46,9 +45,9 @@ class SimpleFace extends Component {
         this.actions[this.props.soundPlay._id]
           = new SoundPlayAction(Actions, this.props.soundPlay._id);
         this.actions[this.props.speechSynthesis._id]
-          = new SpeechSynthesisAction(SpeechActions, this.props.speechSynthesis._id);
+          = new SpeechSynthesisAction(Actions, this.props.speechSynthesis._id);
           this.actions[this.props.speechRecognition._id]
-          = new SpeechRecognitionAction(SpeechActions, this.props.speechRecognition._id);
+          = new SpeechRecognitionAction(Actions, this.props.speechRecognition._id);
         this.actions[this.props.speechbubbleRobot._id]
           = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
         this.actions[this.props.speechbubbleHuman._id]
@@ -137,20 +136,18 @@ class SimpleFace extends Component {
 export default withTracker(({query}) => {
   const actionsHandle = Meteor.subscribe('actions');
   const mediaFilesHandle = Meteor.subscribe('media_files');
-  const speechHandle = Meteor.subscribe('speech_actions');
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const visionActionsHandle = Meteor.subscribe('vision_actions');
 
   const loading = !actionsHandle.ready()
     || !mediaFilesHandle.ready()
-    || !speechHandle.ready()
     || !speechbubblesHandle.ready()
     || !visionActionsHandle.ready();
 
   const facialExpression = Actions.findOne(Object.assign({type: 'facialExpression'}, query));
   const soundPlay = Actions.findOne(Object.assign({type: 'soundPlay'}, query));
-  const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, query));
-  const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, query));
+  const speechSynthesis = Actions.findOne(Object.assign({type: 'speechSynthesis'}, query));
+  const speechRecognition = Actions.findOne(Object.assign({type: 'speechRecognition'}, query));
   const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, query));
   const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, query));
   const videoControl = VisionActions.findOne(Object.assign({type: 'video_control'}, query));
