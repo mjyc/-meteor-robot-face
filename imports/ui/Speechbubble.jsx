@@ -17,6 +17,7 @@ export default class Speechbubble extends Component {
 
   render() {
     const speechbubble = this.props.speechbubble;
+    console.log('speechbubble', speechbubble);
     switch (speechbubble.type) {
       case '':
         return null;

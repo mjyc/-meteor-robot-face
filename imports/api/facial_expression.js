@@ -229,22 +229,3 @@ if (Meteor.isClient) {
   }
 
 }
-
-
-if (Meteor.isServer) {
-
-  Meteor.methods({
-    'actions.insert.facialExpression'(userId = this.userId) {
-      if (!Meteor.users.findOne(userId)) {
-        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
-      }
-
-      if (Actions.findOne({owner: userId, type: 'facialExpression'})) {
-        logger.warn(`Skipping; user ${this.userId} already has facialExpression action documents`);
-        return;
-      }
-      Actions.insert(Object.assign({owner: userId, type: 'facialExpression'}, defaultAction));
-    }
-  });
-
-}

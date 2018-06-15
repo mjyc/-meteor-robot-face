@@ -50,21 +50,6 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  Meteor.methods({
-    'actions.insert.soundPlay'(userId = this.userId) {
-      if (!Meteor.users.findOne(userId)) {
-        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
-      }
-
-      if (Actions.findOne({owner: userId, type: 'soundPlay'})) {
-        logger.warn(`Skipping; user ${this.userId} already has soundPlay action documents`);
-        return;
-      }
-      Actions.insert(Object.assign({owner: userId, type: 'soundPlay'}, defaultAction));
-    }
-  });
-
-
   // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   MediaFiles.allow({
     insert: (userId, doc) => {
@@ -80,7 +65,8 @@ if (Meteor.isServer) {
   });
 
   Meteor.publish('media_files', function mediaFilesPublication() {
-    // TODO: restrict access based on user permission; right now all media files are public!
+    // TODO: restrict access based on user permission; right now docs are public!
     return MediaFiles.find();
   });
+
 }

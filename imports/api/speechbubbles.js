@@ -24,21 +24,11 @@ if (Meteor.isClient) {
     }
 
     resetSpeechbubble(callback = () => {}) {
-      this._collection.update(this._id, {
-        $set: {
-          type: '',
-          data: {},
-        },
-      }, callback);
+      Meteor.call('speechbubbles.set', this._id, '', {}, callback);
     }
 
     goalCB(action) {
-      this._collection.update(this._id, {
-        $set: {
-          type: action.goal.type,
-          data: action.goal.data,
-        }
-      });
+      Meteor.call('speechbubbles.set', this._id, action.goal.type, action.goal.data);
     }
 
     preemptCB() {
@@ -51,52 +41,53 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  Speechbubbles.allow({
-    insert: (userId, doc) => {
-      return false;
-    },
-    update: (userId, doc, fields, modifier) => {
-      return userId &&
-        (doc.owner === userId);
-    },
-    remove: (userId, doc) => {
-       return userId &&
-        (doc.owner === userId);
-    },
-    fetch: ['owner']
-  });
-
-
   Meteor.publish('speechbubbles', function speechbubblesPublication() {
     // TODO: restrict access based on user permission; right now all docs are public!
     return Speechbubbles.find();
   });
 
+  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
+  Speechbubbles.allow({
+    insert: (userId, doc) => {
+      return true;
+    },
+    update: (userId, doc, fields, modifier) => {
+      return true;
+    },
+    remove: (userId, doc) => {
+      return true;
+    },
+    fetch: ['owner']
+  });
 
   Meteor.methods({
-    'speechbubbles.addUser'(userId = this.userId) {
-      if (!Meteor.users.findOne(userId)) {
-        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
+    'speechbubbles.insert'(owner, actionId) {
+      check(owner, String);
+      check(actionId, String);
+
+      if (!Meteor.users.findOne(owner)) {
+        throw new Meteor.Error('invalid-input', `Invalid owner: ${owner}`);
       }
 
-      if (Speechbubbles.findOne({owner: userId})) {
-        logger.warn(`Skipping; user ${this.userId} already has speechbubble documents`);
+      if (Speechbubbles.findOne({owner, actionId})) {
+        logger.warn(`Skipping; user ${owner} already has speechbubble with "actionId: ${actionId}" field`);
         return;
       }
-
-      Speechbubbles.insert(Object.assign({
-        owner: userId,
-        role: 'robot',
-        type: '',
-        data: {},
-      }, defaultAction));
-      Speechbubbles.insert(Object.assign({
-        owner: userId,
-        role: 'human',
-        type: '',
-        data: {},
-      }, defaultAction));
+      Speechbubbles.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
     },
+
+    // 'speechbubbles.set'(actionId, type, data) {
+    //   check(actionId, String);
+    //   check(type, String);
+
+    //   const speechbubble = Speechbubbles.findOne(actionId);
+    //   // TODO: check permission
+    //   // if (speechbubble.private && speechbubble.owner !== this.userId) {
+    //   //   throw new Meteor.Error('not-authorized');
+    //   // }
+
+    //   Speechbubbles.update({actionId}, {$set: {type, data}});
+    // },
   });
 
 }

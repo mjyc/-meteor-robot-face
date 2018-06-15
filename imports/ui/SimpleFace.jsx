@@ -49,9 +49,9 @@ class SimpleFace extends Component {
           this.actions[this.props.speechRecognition._id]
           = new SpeechRecognitionAction(Actions, this.props.speechRecognition._id);
         this.actions[this.props.speechbubbleRobot._id]
-          = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleRobot._id);
+          = new SpeechbubbleAction(Actions, this.props.speechbubbleRobot._id);
         this.actions[this.props.speechbubbleHuman._id]
-          = new SpeechbubbleAction(Speechbubbles, this.props.speechbubbleHuman._id);
+          = new SpeechbubbleAction(Actions, this.props.speechbubbleHuman._id);
         this.setState({ready: true});
       }, 0);
     }
@@ -82,10 +82,11 @@ class SimpleFace extends Component {
       },
     };
 
+    const query = this.props.query;
     const speechbubbleRobot = this.props.speechbubbleRobot;
     const speechbubbleHuman = this.props.speechbubbleHuman;
-    const speechbubbleActionRobot = this.actions[speechbubbleRobot._id];
-    const speechbubbleActionHuman = this.actions[speechbubbleHuman._id];
+    const actionSpeechbubbleRobot = this.actions[speechbubbleRobot._id];
+    const actionSpeechbubbleHuman = this.actions[speechbubbleHuman._id];
     return (
       <div style={styles.face}>
         <div>
@@ -94,10 +95,10 @@ class SimpleFace extends Component {
             {speechbubbleRobot ?
               <Speechbubble
                 key={speechbubbleRobot._id}
-                speechbubble={speechbubbleRobot}
-                reset={speechbubbleActionRobot.resetSpeechbubble.bind(speechbubbleActionRobot)}
-                setSucceeded={speechbubbleActionRobot._as.setSucceeded.bind(speechbubbleActionRobot._as)}
-                setAborted={speechbubbleActionRobot._as.setAborted.bind(speechbubbleActionRobot._as)}
+                speechbubble={Speechbubbles.findOne(Object.assign({actionId: speechbubbleRobot._id}, query))}
+                reset={actionSpeechbubbleRobot.resetSpeechbubble.bind(actionSpeechbubbleRobot)}
+                setSucceeded={actionSpeechbubbleRobot._as.setSucceeded.bind(actionSpeechbubbleRobot._as)}
+                setAborted={actionSpeechbubbleRobot._as.setAborted.bind(actionSpeechbubbleRobot._as)}
               /> : null
             }
           </div>
@@ -106,10 +107,10 @@ class SimpleFace extends Component {
             {speechbubbleHuman ?
               <Speechbubble
                 key={speechbubbleHuman._id}
-                speechbubble={speechbubbleHuman}
-                reset={speechbubbleActionHuman.resetSpeechbubble.bind(speechbubbleActionHuman)}
-                setSucceeded={speechbubbleActionHuman._as.setSucceeded.bind(speechbubbleActionHuman._as)}
-                setAborted={speechbubbleActionHuman._as.setAborted.bind(speechbubbleActionHuman._as)}
+                speechbubble={Speechbubbles.findOne(Object.assign({actionId: speechbubbleHuman._id}, query))}
+                reset={actionSpeechbubbleHuman.resetSpeechbubble.bind(actionSpeechbubbleHuman)}
+                setSucceeded={actionSpeechbubbleHuman._as.setSucceeded.bind(actionSpeechbubbleHuman._as)}
+                setAborted={actionSpeechbubbleHuman._as.setAborted.bind(actionSpeechbubbleHuman._as)}
               /> : null
             }
           </div>
@@ -148,13 +149,14 @@ export default withTracker(({query}) => {
   const soundPlay = Actions.findOne(Object.assign({type: 'soundPlay'}, query));
   const speechSynthesis = Actions.findOne(Object.assign({type: 'speechSynthesis'}, query));
   const speechRecognition = Actions.findOne(Object.assign({type: 'speechRecognition'}, query));
-  const speechbubbleRobot = Speechbubbles.findOne(Object.assign({role: 'robot'}, query));
-  const speechbubbleHuman = Speechbubbles.findOne(Object.assign({role: 'human'}, query));
+  const speechbubbleRobot = Actions.findOne(Object.assign({type: 'speechbubbleRobot'}, query));
+  const speechbubbleHuman = Actions.findOne(Object.assign({type: 'speechbubbleHuman'}, query));
   const videoControl = VisionActions.findOne(Object.assign({type: 'video_control'}, query));
   const poseDetection = VisionActions.findOne(Object.assign({type: 'pose_detection'}, query));
   const faceDetection = VisionActions.findOne(Object.assign({type: 'face_detection'}, query));
 
   return {
+    query,
     loading,
     facialExpression,
     soundPlay,

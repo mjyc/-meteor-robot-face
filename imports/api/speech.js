@@ -107,34 +107,3 @@ if (Meteor.isClient) {
   }
 
 }
-
-
-if (Meteor.isServer) {
-
-  Meteor.methods({
-    'actions.insert.speechSynthesis'(userId = this.userId) {
-      if (!Meteor.users.findOne(userId)) {
-        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
-      }
-
-      if (Actions.findOne({owner: userId, type: 'speechSynthesis'})) {
-        logger.warn(`Skipping; user ${this.userId} already has speechSynthesis action documents`);
-        return;
-      }
-      Actions.insert(Object.assign({owner: userId, type: 'speechSynthesis'}, defaultAction));
-    },
-
-    'actions.insert.speechRecognition'(userId = this.userId) {
-      if (!Meteor.users.findOne(userId)) {
-        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
-      }
-
-      if (Actions.findOne({owner: userId, type: 'speechRecognition'})) {
-        logger.warn(`Skipping; user ${this.userId} already has speechRecognition action documents`);
-        return;
-      }
-      Actions.insert(Object.assign({owner: userId, type: 'speechRecognition'}, defaultAction));
-    }
-  });
-
-}
