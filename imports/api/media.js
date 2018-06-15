@@ -56,8 +56,8 @@ if (Meteor.isServer) {
         throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (Actions.findOne({owner: userId})) {
-        logger.warn(`Skipping; user ${this.userId} already has media action documents`);
+      if (Actions.findOne({owner: userId, type: 'soundPlay'})) {
+        logger.warn(`Skipping; user ${this.userId} already has soundPlay action documents`);
         return;
       }
       Actions.insert(Object.assign({owner: userId, type: 'soundPlay'}, defaultAction));

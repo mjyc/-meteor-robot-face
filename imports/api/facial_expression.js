@@ -1,11 +1,13 @@
 import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
-import { defaultAction, getActionServer } from 'meteor/mjyc:action';
+import {
+  Actions,
+  defaultAction,
+  getActionServer,
+} from 'meteor/mjyc:action';
 
 const logger = log.getLogger('facial_expresison');
-
-export const FacialExpressionActions = new Mongo.Collection('facial_expression_actions');
 
 
 if (Meteor.isClient) {
@@ -231,39 +233,17 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  FacialExpressionActions.allow({
-    insert: (userId, doc) => {
-      return false;
-    },
-    update: (userId, doc, fields, modifier) => {
-      return userId &&
-        (doc.owner === userId);
-    },
-    remove: (userId, doc) => {
-       return userId &&
-        (doc.owner === userId);
-    },
-    fetch: ['owner']
-  });
-
-
-  Meteor.publish('facial_expression_actions', function facialExpressionPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return FacialExpressionActions.find();
-  });
-
-
   Meteor.methods({
-    'facial_expression_actions.addUser'(userId = this.userId) {
+    'actions.insert.facialExpression'(userId = this.userId) {
       if (!Meteor.users.findOne(userId)) {
         throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
       }
 
-      if (FacialExpressionActions.findOne({owner: userId})) {
-        logger.warn(`Skipping; user ${this.userId} already has speech action documents`);
+      if (Actions.findOne({owner: userId, type: 'facialExpression'})) {
+        logger.warn(`Skipping; user ${this.userId} already has facialExpression action documents`);
         return;
       }
-      FacialExpressionActions.insert(Object.assign({owner: userId}, defaultAction));
+      Actions.insert(Object.assign({owner: userId, type: 'facialExpression'}, defaultAction));
     }
   });
 

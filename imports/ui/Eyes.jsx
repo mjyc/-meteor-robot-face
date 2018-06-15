@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
+import { Actions } from 'meteor/mjyc:action';
 
 import {
   EyeController,
   EyeExpressionAction,
-  FacialExpressionActions,
 } from '../api/facial_expression.js';
 
 
@@ -27,7 +27,7 @@ export default class Eyes extends Component {
     });
     eyeController.startBlinking();
     this.actions[this.props.facialExpression._id] = new EyeExpressionAction(
-      FacialExpressionActions,
+      Actions,
       this.props.facialExpression._id,
       eyeController,
     );

@@ -4,7 +4,6 @@ import { Meteor } from 'meteor/meteor';
 import { withTracker } from 'meteor/react-meteor-data';
 import { Actions } from 'meteor/mjyc:action';
 
-import { FacialExpressionActions } from '../api/facial_expression.js';
 import {
   MediaFiles,
   SoundPlayAction,
@@ -137,20 +136,18 @@ class SimpleFace extends Component {
 
 export default withTracker(({query}) => {
   const actionsHandle = Meteor.subscribe('actions');
-  const facialExpressionActionsHandle = Meteor.subscribe('facial_expression_actions');
   const mediaFilesHandle = Meteor.subscribe('media_files');
   const speechHandle = Meteor.subscribe('speech_actions');
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
   const visionActionsHandle = Meteor.subscribe('vision_actions');
 
   const loading = !actionsHandle.ready()
-    || !facialExpressionActionsHandle.ready()
     || !mediaFilesHandle.ready()
     || !speechHandle.ready()
     || !speechbubblesHandle.ready()
     || !visionActionsHandle.ready();
 
-  const facialExpression = FacialExpressionActions.findOne(query);
+  const facialExpression = Actions.findOne(Object.assign({type: 'facialExpression'}, query));
   const soundPlay = Actions.findOne(Object.assign({type: 'soundPlay'}, query));
   const speechSynthesis = SpeechActions.findOne(Object.assign({type: 'synthesis'}, query));
   const speechRecognition = SpeechActions.findOne(Object.assign({type: 'recognition'}, query));
