@@ -8,7 +8,7 @@ Meteor package providing a "face" React component.
 
     ```
     cd your_meteor_app/packages
-    git clone git@gitlab.cs.washington.edu:mjyc/simple-face.git
+    git clone git@gitlab.cs.washington.edu:mjyc/meteor-simple-face.git simple-face
     cd ../
-    meteor add simple-face
+    meteor add mjyc:simple-face
     ```
