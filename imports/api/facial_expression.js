@@ -196,8 +196,6 @@ if (Meteor.isClient) {
 
   export class EyeExpressionAction {
     constructor(collection, id, eyes = new EyeController()) {
-      this._collection = collection;
-      this._id = id;
       this._eyeController = eyes;
 
       this._as = getActionServer(collection, id);

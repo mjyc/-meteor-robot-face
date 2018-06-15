@@ -40,7 +40,7 @@ if (Meteor.isServer) {
       }
 
       if (Actions.findOne({owner, type})) {
-        logger.warn(`Skipping; user ${owner} already has action documents with "type: ${type}" field`);
+        logger.warn(`Skipping; user ${owner} already has an action doc with "type: ${type}" field`);
         return;
       }
       Actions.insert(Object.assign({owner, type}, defaultAction));

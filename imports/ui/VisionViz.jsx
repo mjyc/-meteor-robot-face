@@ -2,7 +2,8 @@ import log from 'meteor/mjyc:loglevel';
 import * as posenet from '@tensorflow-models/posenet';
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
-import { VisionActions } from '../api/vision.js';
+import { Actions } from 'meteor/mjyc:action';
+import { Detections } from '../api/vision.js';
 
 const logger = log.getLogger('VisionViz');
 
@@ -67,12 +68,15 @@ class VisionViz extends Component {
     const height = this.elements.canvas.height;
     let minPoseConfidence;
     let minPartConfidence;
-    if (this.props.poseDetection.data.params.algorithm === 'single-pose') {
-      minPoseConfidence = this.props.poseDetection.data.params.singlePoseDetection.minPoseConfidence;
-      minPartConfidence = this.props.poseDetection.data.params.singlePoseDetection.minPartConfidence;
+
+    const poseDetection = this.props.detections.pose;
+
+    if (poseDetection.data.params.algorithm === 'single-pose') {
+      minPoseConfidence = poseDetection.data.params.singlePoseDetection.minPoseConfidence;
+      minPartConfidence = poseDetection.data.params.singlePoseDetection.minPartConfidence;
     } else {
-      minPoseConfidence = this.props.poseDetection.data.params.multiPoseDetection.minPoseConfidence;
-      minPartConfidence = this.props.poseDetection.data.params.multiPoseDetection.minPartConfidence;
+      minPoseConfidence = poseDetection.data.params.multiPoseDetection.minPoseConfidence;
+      minPartConfidence = poseDetection.data.params.multiPoseDetection.minPartConfidence;
     }
 
     context.clearRect(0, 0, width, height);
@@ -82,7 +86,7 @@ class VisionViz extends Component {
     context.drawImage(this.props.video, 0, 0, width, height);
     context.restore();
 
-    const poses = this.props.poseDetection.data.data;
+    const poses = poseDetection.data.data;
     poses && poses.forEach(({ score, keypoints }) => {
       if (score >= minPoseConfidence) {
         drawKeypoints(keypoints, minPartConfidence, context);
@@ -90,7 +94,8 @@ class VisionViz extends Component {
       }
     });
 
-    const faces = this.props.faceDetection.data.data;
+    const faceDetection = this.props.detections.face;
+    const faces = faceDetection.data.data;
     faces && faces.forEach((rect) => {
       context.strokeStyle = 'magenta';
       context.strokeRect(rect.x, rect.y, rect.width, rect.height);
@@ -114,16 +119,21 @@ class VisionViz extends Component {
   }
 }
 
-export default withTracker(({detectionQuery, video}) => {
-  const visionActionsHandle = Meteor.subscribe('vision_actions');
-  const loading = !visionActionsHandle.ready();
-  const poseDetection = VisionActions.findOne(Object.assign({type: 'pose_detection'}, detectionQuery));
-  const faceDetection = VisionActions.findOne(Object.assign({type: 'face_detection'}, detectionQuery));
+export default withTracker(({query}) => {
+  const actionsHandle = Meteor.subscribe('actions');
+  const detectionsHandle = Meteor.subscribe('detections');
+  const loading = !actionsHandle.ready() || !detectionsHandle.ready();
+  const actions = {
+    poseDetection: Actions.findOne(Object.assign({type: 'poseDetection'}, query)),
+    faceDetection: Actions.findOne(Object.assign({type: 'faceDetection'}, query)),
+  }
+  const detections = {
+    pose: !loading ? Detections.findOne({actionId: actions.poseDetection._id}) : undefined,
+    face: !loading ? Detections.findOne({actionId: actions.faceDetection._id}) : undefined,
+  }
 
   return {
-    video,
     loading,
-    poseDetection,
-    faceDetection,
+    detections,
   };
 })(VisionViz);

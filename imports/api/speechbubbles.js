@@ -14,8 +14,6 @@ if (Meteor.isClient) {
 
   export class SpeechbubbleAction {
     constructor(collection, id) {
-      this._collection = collection;
-      this._id = id;
       this._speechbubbleId = Speechbubbles.findOne({actionId: id})._id;
 
       this._as = getActionServer(collection, id);
@@ -80,7 +78,7 @@ if (Meteor.isServer) {
       }
 
       if (Speechbubbles.findOne({owner, actionId})) {
-        logger.warn(`Skipping; user ${owner} already has speechbubble with "actionId: ${actionId}" field`);
+        logger.warn(`Skipping; user ${owner} already has a speechbubble doc with "actionId: ${actionId}" field`);
         return;
       }
       Speechbubbles.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));

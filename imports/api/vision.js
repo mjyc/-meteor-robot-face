@@ -1,11 +1,12 @@
 import log from 'meteor/mjyc:loglevel';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
+import { check } from 'meteor/check';
 import { defaultAction, getActionServer } from 'meteor/mjyc:action';
 
 const logger = log.getLogger('vision');
 
-export const VisionActions = new Mongo.Collection('vision_actions');
+export const Detections = new Mongo.Collection('detections');
 
 
 if (Meteor.isClient) {
@@ -306,6 +307,8 @@ if (Meteor.isClient) {
     constructor(collection, id, video = document.getElementById('video'), detector = new PoseDetector()) {
       this._video = video;
 
+      this._detectionId = Detections.findOne({actionId: id})._id;
+
       this._as = getActionServer(collection, id);
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
@@ -332,7 +335,7 @@ if (Meteor.isClient) {
       };
       this._detector = detector;
       this._detector.setVideo(this._video);
-      this._as._comm._collection.update(this._as._comm._id, {
+      Detections.update(this._detectionId, {
         $set: {'data.params': this._detector.getParams()},
       });
       return this;
@@ -349,7 +352,7 @@ if (Meteor.isClient) {
           // TODO: store detection outputs in a dedicated collection after
           //   refactoring XXXActions
           const data = await this._detector.detect();
-          this._as._comm._collection.update(this._as._comm._id, {
+          Detections.update(this._detectionId, {
             $set: {'data.data': data},
           });
           this._timeoutID = setTimeout(execute, 0);
@@ -371,52 +374,39 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 
-  VisionActions.allow({
+  Meteor.publish('detections', function detectionsPublication() {
+    // TODO: restrict access based on user permission; right now all docs are public!
+    return Detections.find();
+  });
+
+  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
+  Detections.allow({
     insert: (userId, doc) => {
       return false;
     },
     update: (userId, doc, fields, modifier) => {
-      return userId &&
-        (doc.owner === userId);
+      return true;
     },
     remove: (userId, doc) => {
-       return userId &&
-        (doc.owner === userId);
+      return true;
     },
     fetch: ['owner']
   });
 
-
-  Meteor.publish('vision_actions', function visionActionsPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return VisionActions.find();
-  });
-
-
   Meteor.methods({
-    'vision_actions.addUser'(userId = this.userId) {
-      if (!Meteor.users.findOne(userId)) {
-        throw new Meteor.Error('invalid-input', `Invalid userId: ${userId}`);
+    'detections.insert'(owner, actionId) {
+      check(owner, String);
+      check(actionId, String);
+
+      if (!Meteor.users.findOne(owner)) {
+        throw new Meteor.Error('invalid-input', `Invalid owner: ${owner}`);
       }
 
-      if (VisionActions.findOne({owner: userId})) {
-        logger.warn(`Skipping; user ${this.userId} already has vidion action document`);
+      if (Detections.findOne({owner, actionId})) {
+        logger.warn(`Skipping; user ${owner} already has a detection doc with "actionId: ${actionId}" field`);
         return;
       }
-      VisionActions.insert(Object.assign({
-        owner: userId,
-        type: 'video_control',
-      }, defaultAction));
-      VisionActions.insert(Object.assign({
-        owner: userId,
-        type: 'pose_detection',
-        data: {},
-      }, defaultAction));
-      VisionActions.insert(Object.assign({
-        owner: userId,
-        type: 'face_detection',
-        data: {},
-      }, defaultAction));
+      Detections.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
     },
   });
 

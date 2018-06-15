@@ -16,7 +16,6 @@ import {
   Speechbubbles,
   SpeechbubbleAction,
 } from '../api/speechbubbles.js';
-import { VisionActions } from '../api/vision.js';
 
 import Speechbubble from '../ui/Speechbubble.jsx';
 import Eyes from '../ui/Eyes.jsx';
@@ -117,9 +116,9 @@ class SimpleFace extends Component {
         />
 
         <Vision
-          videoControl={this.props.videoControl}
-          poseDetection={this.props.poseDetection}
-          faceDetection={this.props.faceDetection}
+          videoControl={this.props.actions.videoControl}
+          poseDetection={this.props.actions.poseDetection}
+          faceDetection={this.props.actions.faceDetection}
           setVideo={this.props.setVideo}
         />
       </div>
@@ -131,16 +130,12 @@ export default withTracker(({query}) => {
   const actionsHandle = Meteor.subscribe('actions');
   const mediaFilesHandle = Meteor.subscribe('media_files');
   const speechbubblesHandle = Meteor.subscribe('speechbubbles');
-  const visionActionsHandle = Meteor.subscribe('vision_actions');
+  const detectionsHandle = Meteor.subscribe('detections');
 
   const loading = !actionsHandle.ready()
     || !mediaFilesHandle.ready()  // needed by SoundPlayAction
     || !speechbubblesHandle.ready()  // needed by SpeechbubbleAction
-    || !visionActionsHandle.ready();
-
-  const videoControl = !loading && VisionActions.findOne(Object.assign({type: 'video_control'}, query));
-  const poseDetection = !loading && VisionActions.findOne(Object.assign({type: 'pose_detection'}, query));
-  const faceDetection = !loading && VisionActions.findOne(Object.assign({type: 'face_detection'}, query));
+    || !detectionsHandle.ready();  // needed by Vision
 
   const actions = {
     facialExpression: Actions.findOne(Object.assign({type: 'facialExpression'}, query)),
@@ -149,13 +144,13 @@ export default withTracker(({query}) => {
     speechRecognition: Actions.findOne(Object.assign({type: 'speechRecognition'}, query)),
     speechbubbleRobot: Actions.findOne(Object.assign({type: 'speechbubbleRobot'}, query)),
     speechbubbleHuman: Actions.findOne(Object.assign({type: 'speechbubbleHuman'}, query)),
+    videoControl: Actions.findOne(Object.assign({type: 'videoControl'}, query)),
+    poseDetection: Actions.findOne(Object.assign({type: 'poseDetection'}, query)),
+    faceDetection: Actions.findOne(Object.assign({type: 'faceDetection'}, query)),
   }
 
   return {
     loading,
-    videoControl,
-    poseDetection,
-    faceDetection,
     actions,
   };
 })(SimpleFace);

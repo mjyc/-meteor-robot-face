@@ -1,8 +1,8 @@
 import log from 'meteor/mjyc:loglevel';
 import React, { Component } from 'react';
+import { Actions } from 'meteor/mjyc:action';
 
 import {
-  VisionActions,
   createDetector,
   DetectionAction,
   VideoControlAction,
@@ -22,18 +22,18 @@ export default class Vision extends Component {
 
   componentDidMount() {
     this.actions[this.props.videoControl._id] = new VideoControlAction(
-      VisionActions,
+      Actions,
       this.props.videoControl._id,
       this.elements.video,
     );
     this.actions[this.props.poseDetection._id] = new DetectionAction(
-      VisionActions,
+      Actions,
       this.props.poseDetection._id,
       this.elements.video,
       createDetector('pose'),
     );
     this.actions[this.props.faceDetection._id] = new DetectionAction(
-      VisionActions,
+      Actions,
       this.props.faceDetection._id,
       this.elements.video,
       createDetector('face'),
