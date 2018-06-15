@@ -81,8 +81,18 @@ if (Meteor.isServer) {
         logger.warn(`Skipping; user ${owner} already has a speechbubble doc with "actionId: ${actionId}" field`);
         return;
       }
+
       Speechbubbles.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
     },
+
+    'speechbubbles.remove'(owner) {
+
+      if (this.userId || this.connection) {  // server-side call only
+        throw new Meteor.Error('not-authorized');
+      }
+
+      Speechbubbles.remove({owner});
+    }
   });
 
 }

@@ -406,8 +406,17 @@ if (Meteor.isServer) {
         logger.warn(`Skipping; user ${owner} already has a detection doc with "actionId: ${actionId}" field`);
         return;
       }
+
       Detections.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
     },
+
+    'detections.remove'(owner) {
+      if (this.userId || this.connection) {  // server-side call only
+        throw new Meteor.Error('not-authorized');
+      }
+
+      Detections.remove({owner});
+    }
   });
 
 }

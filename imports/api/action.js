@@ -43,8 +43,17 @@ if (Meteor.isServer) {
         logger.warn(`Skipping; user ${owner} already has an action doc with "type: ${type}" field`);
         return;
       }
+
       Actions.insert(Object.assign({owner, type}, defaultAction));
     },
+
+    'actions.remove'(owner) {
+      if (this.userId || this.connection) {  // server-side call only
+        throw new Meteor.Error('not-authorized');
+      }
+
+      Actions.remove({owner});
+    }
   });
 
 }
