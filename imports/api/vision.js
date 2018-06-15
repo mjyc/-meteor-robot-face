@@ -417,7 +417,7 @@ if (Meteor.isServer) {
         type: 'face_detection',
         data: {},
       }, defaultAction));
-    }
+    },
   });
 
 }

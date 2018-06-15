@@ -207,8 +207,8 @@ if (Meteor.isClient) {
       this._animations = [];
     }
 
-    goalCB(action) {
-      this._animations = this._eyeController.express(action.goal);
+    goalCB(actionGoal) {
+      this._animations = this._eyeController.express(actionGoal.goal);
       const animations = Object.keys(this._animations).map((key) => {
         return new Promise((resolve, reject) => {
           this._animations[key].onfinish = resolve;

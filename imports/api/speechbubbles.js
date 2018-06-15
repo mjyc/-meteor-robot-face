@@ -13,22 +13,32 @@ export const Speechbubbles = new Mongo.Collection('speechbubbles');
 if (Meteor.isClient) {
 
   export class SpeechbubbleAction {
-    constructor(collection, id, mediaFilesCollection) {
+    constructor(collection, id) {
       this._collection = collection;
       this._id = id;
-      this._mediaFilesCollection = mediaFilesCollection;
+      this._speechbubbleId = Speechbubbles.findOne({actionId: id})._id;
 
       this._as = getActionServer(collection, id);
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
     }
 
-    resetSpeechbubble(callback = () => {}) {
-      Meteor.call('speechbubbles.set', this._id, '', {}, callback);
+    getSpeechbubble() {
+      return Speechbubbles.findOne(this._speechbubbleId);
     }
 
-    goalCB(action) {
-      Meteor.call('speechbubbles.set', this._id, action.goal.type, action.goal.data);
+    resetSpeechbubble(callback = () => {}) {
+      Speechbubbles.update(this._speechbubbleId, {$set: {
+        type: '',
+        data: {},
+      }}, callback);
+    }
+
+    goalCB(actionGoal) {
+      Speechbubbles.update(this._speechbubbleId, {$set: {
+        type: actionGoal.goal.type,
+        data: actionGoal.goal.data,
+      }});
     }
 
     preemptCB() {
@@ -49,7 +59,7 @@ if (Meteor.isServer) {
   // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   Speechbubbles.allow({
     insert: (userId, doc) => {
-      return true;
+      return false;
     },
     update: (userId, doc, fields, modifier) => {
       return true;
@@ -75,19 +85,6 @@ if (Meteor.isServer) {
       }
       Speechbubbles.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
     },
-
-    // 'speechbubbles.set'(actionId, type, data) {
-    //   check(actionId, String);
-    //   check(type, String);
-
-    //   const speechbubble = Speechbubbles.findOne(actionId);
-    //   // TODO: check permission
-    //   // if (speechbubble.private && speechbubble.owner !== this.userId) {
-    //   //   throw new Meteor.Error('not-authorized');
-    //   // }
-
-    //   Speechbubbles.update({actionId}, {$set: {type, data}});
-    // },
   });
 
 }

@@ -13,7 +13,7 @@ export default class Eyes extends Component {
     super(props);
 
     this.elements = {};
-    this.actions = {};
+    this.action = null;
   }
 
   componentDidMount() {
@@ -26,9 +26,9 @@ export default class Eyes extends Component {
       lowerRightEyelid: this.elements.lowerRightEyelid,
     });
     eyeController.startBlinking();
-    this.actions[this.props.facialExpression._id] = new EyeExpressionAction(
+    this.action = new EyeExpressionAction(
       Actions,
-      this.props.facialExpression._id,
+      this.props.facialExpressionAction._id,
       eyeController,
     );
   }

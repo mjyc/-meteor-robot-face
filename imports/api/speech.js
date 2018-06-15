@@ -36,7 +36,7 @@ if (Meteor.isClient) {
       this._synth.speak(utterThis);
     }
 
-    preemptCB(cancelGoal) {
+    preemptCB() {
       this._synth.cancel();
       this._as.setPreempted();
     }
@@ -100,7 +100,7 @@ if (Meteor.isClient) {
       this._recognition.start();
     }
 
-    preemptCB(cancelGoal) {
+    preemptCB() {
       this._recognition.cancel();
       this._as.setPreempted();
     }

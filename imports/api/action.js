@@ -14,7 +14,7 @@ if (Meteor.isServer) {
   // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   Actions.allow({
     insert: (userId, doc) => {
-      return true;
+      return false;
     },
     update: (userId, doc, fields, modifier) => {
       return true;
@@ -44,7 +44,7 @@ if (Meteor.isServer) {
         return;
       }
       Actions.insert(Object.assign({owner, type}, defaultAction));
-    }
+    },
   });
 
 }
