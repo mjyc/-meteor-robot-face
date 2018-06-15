@@ -1,6 +1,7 @@
-import '../imports/api/speechbubbles.js'
-export {
-  Speechbubbles as Speechbubbles,
-  DisplayMessageAction as DisplayMessageAction,
-  AskMultipleChoiceAction as AskMultipleChoiceAction,
-} from '../imports/api/speechbubbles.js'
+import '../imports/api/action.js';
+import '../imports/api/facial_expression.js';
+import '../imports/api/speech.js';
+import '../imports/api/speechbubbles.js';
+import '../imports/api/vision.js';
+
+export { MediaFiles } from '../imports/api/media.js'
