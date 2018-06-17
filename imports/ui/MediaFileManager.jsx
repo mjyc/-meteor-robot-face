@@ -147,7 +147,7 @@ class MediaFileManager extends Component {
           <Table
             fixedHeader={true}
             selectable={false}
-            style={{ margin: 0 }}
+            style={{margin: 0}}
           >
             <TableHeader
               displaySelectAll={false}
