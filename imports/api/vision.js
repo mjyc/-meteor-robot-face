@@ -373,13 +373,6 @@ if (Meteor.isClient) {
 
 
 if (Meteor.isServer) {
-
-  Meteor.publish('detections', function detectionsPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return Detections.find();
-  });
-
-  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   Detections.allow({
     insert: (userId, doc) => {
       return false;
@@ -391,6 +384,10 @@ if (Meteor.isServer) {
       return true;
     },
     fetch: ['owner']
+  });
+
+  Meteor.publish('detections', function detectionsPublication() {
+    return Detections.find({owner: this.userId});
   });
 
   Meteor.methods({
@@ -418,5 +415,4 @@ if (Meteor.isServer) {
       Detections.remove({owner});
     }
   });
-
 }

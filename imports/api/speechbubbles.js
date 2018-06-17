@@ -48,24 +48,21 @@ if (Meteor.isClient) {
 
 
 if (Meteor.isServer) {
-
-  Meteor.publish('speechbubbles', function speechbubblesPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return Speechbubbles.find();
-  });
-
-  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   Speechbubbles.allow({
     insert: (userId, doc) => {
       return false;
     },
     update: (userId, doc, fields, modifier) => {
-      return true;
+      return userId && doc.owner === userId;
     },
     remove: (userId, doc) => {
-      return true;
+      return userId && doc.owner === userId;
     },
     fetch: ['owner']
+  });
+
+  Meteor.publish('speechbubbles', function speechbubblesPublication() {
+    return Speechbubbles.find({owner: this.userId});
   });
 
   Meteor.methods({
@@ -84,7 +81,6 @@ if (Meteor.isServer) {
 
       Speechbubbles.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
     },
-
     'speechbubbles.remove'(owner) {
 
       if (this.userId || this.connection) {  // server-side call only
@@ -94,5 +90,4 @@ if (Meteor.isServer) {
       Speechbubbles.remove({owner});
     }
   });
-
 }
