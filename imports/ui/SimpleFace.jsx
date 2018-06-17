@@ -109,7 +109,7 @@ class SimpleFace extends Component {
         </div>
 
         <Eyes
-          facialExpressionAction={this.props.actions.facialExpression}
+          eyeExpressionAction={this.props.actions.eyeExpression}
           eyeColor={eyeColor}
           eyeSize={eyeSize}
           eyelidColor={eyelidColor}
@@ -138,7 +138,7 @@ export default withTracker(({query}) => {
     || !detectionsHandle.ready();  // needed by Vision
 
   const actions = {
-    facialExpression: Actions.findOne(Object.assign({type: 'facialExpression'}, query)),
+    eyeExpression: Actions.findOne(Object.assign({type: 'eyeExpression'}, query)),
     soundPlay: Actions.findOne(Object.assign({type: 'soundPlay'}, query)),
     speechSynthesis: Actions.findOne(Object.assign({type: 'speechSynthesis'}, query)),
     speechRecognition: Actions.findOne(Object.assign({type: 'speechRecognition'}, query)),

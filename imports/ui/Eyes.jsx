@@ -28,7 +28,7 @@ export default class Eyes extends Component {
     eyeController.startBlinking();
     this.action = new EyeExpressionAction(
       Actions,
-      this.props.facialExpressionAction._id,
+      this.props.eyeExpressionAction._id,
       eyeController,
     );
   }

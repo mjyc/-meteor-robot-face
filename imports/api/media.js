@@ -53,7 +53,7 @@ if (Meteor.isServer) {
   // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   MediaFiles.allow({
     insert: (userId, doc) => {
-      return false;
+      return true;
     },
     update: (userId, doc, fields, modifier) => {
       return true;
