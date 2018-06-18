@@ -64,16 +64,16 @@ class SimpleFace extends Component {
     };
 
     const faceColor = 'whitesmoke';
-    const faceHeight = '375px';  // TODO: change to 100vh after moving SimpleFace out from EditPage
-    const faceWidth = '600px';  // TODO: change to 100vw after moving SimpleFace out from EditPage
+    const faceHeight = '100vh';
+    const faceWidth = '100vw';
     const eyeColor = 'black';
-    const eyeSize = '120px';  // TODO: change to 33.33vh after moving SimpleFace out from EditPage
-    const eyelidColor = 'gray';  // for debug, use 'whitesmoke' for production
+    const eyeSize = '33.33vh';
+    const eyelidColor = 'whitesmoke';
 
     const styles = {
       face: {
         backgroundColor: faceColor,
-        // margin: 'auto',  // TODO: uncomment after moving SimpleFace out from EditPage
+        margin: 'auto',
         height: faceHeight,
         width: faceWidth,
         position: 'relative',
