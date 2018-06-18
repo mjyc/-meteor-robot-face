@@ -1,8 +1,8 @@
 Package.describe({
-  name: 'mjyc:simple-face',
+  name: 'mjyc:robot-face',
   version: '0.0.1',
-  summary: 'Meteor package providing a simple face React component.',
-  git: 'https://gitlab.cs.washington.edu/mjyc/simple-face',
+  summary: 'Meteor package providing a robot face React component.',
+  git: 'https://gitlab.cs.washington.edu/mjyc/robot-face',
   documentation: 'README.md'
 });
 
