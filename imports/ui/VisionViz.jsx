@@ -8,6 +8,9 @@ import { Detections } from '../api/vision.js';
 const logger = log.getLogger('VisionViz');
 
 
+// IMPORTANT! This is an experimental feature and hence hidden by default. You
+//  can display the visualizer by manually changing 'display' css property.
+
 const toTuple = ({ y, x }) => {
   return [y, x];
 }
@@ -114,6 +117,7 @@ class VisionViz extends Component {
     return (
       <div>
         <canvas
+          style={{display: 'none' /* change this!*/}}
           ref={(element) => { this.elements['canvas'] = element; }}
           width="600px"
           height="500px"
