@@ -42,15 +42,25 @@ class SimpleFace extends Component {
       //   don't work properly within withTracker
       setTimeout(() => {
         this.actions[this.props.actions.soundPlay._id]
-          = new SoundPlayAction(Actions, this.props.actions.soundPlay._id);
+          = new SoundPlayAction(
+              Actions, this.props.actions.soundPlay._id
+            );
         this.actions[this.props.actions.speechSynthesis._id]
-          = new SpeechSynthesisAction(Actions, this.props.actions.speechSynthesis._id);
+          = new SpeechSynthesisAction(
+              Actions, this.props.actions.speechSynthesis._id
+            );
           this.actions[this.props.actions.speechRecognition._id]
-          = new SpeechRecognitionAction(Actions, this.props.actions.speechRecognition._id);
+          = new SpeechRecognitionAction(
+              Actions, this.props.actions.speechRecognition._id
+            );
         this.actions[this.props.actions.speechbubbleRobot._id]
-          = new SpeechbubbleAction(Actions, this.props.actions.speechbubbleRobot._id);
+          = new SpeechbubbleAction(
+              Actions, this.props.actions.speechbubbleRobot._id
+            );
         this.actions[this.props.actions.speechbubbleHuman._id]
-          = new SpeechbubbleAction(Actions, this.props.actions.speechbubbleHuman._id);
+          = new SpeechbubbleAction(
+              Actions, this.props.actions.speechbubbleHuman._id
+            );
         this.setState({ready: true});
       }, 0);
     }
@@ -81,8 +91,10 @@ class SimpleFace extends Component {
       },
     };
 
-    const speechbubbleRobotAction = this.actions[this.props.actions.speechbubbleRobot._id];
-    const speechbubbleHumanAction = this.actions[this.props.actions.speechbubbleHuman._id];
+    const speechbubbleRobotAction
+      = this.actions[this.props.actions.speechbubbleRobot._id];
+    const speechbubbleHumanAction
+      = this.actions[this.props.actions.speechbubbleHuman._id];
     return (
       <div style={styles.face}>
         <div>
@@ -91,9 +103,15 @@ class SimpleFace extends Component {
             <Speechbubble
               key={this.props.actions.speechbubbleRobot._id}
               speechbubble={speechbubbleRobotAction.getSpeechbubble()}
-              reset={speechbubbleRobotAction.resetSpeechbubble.bind(speechbubbleRobotAction)}
-              setSucceeded={speechbubbleRobotAction._as.setSucceeded.bind(speechbubbleRobotAction._as)}
-              setAborted={speechbubbleRobotAction._as.setAborted.bind(speechbubbleRobotAction._as)}
+              reset={speechbubbleRobotAction.resetSpeechbubble.bind(
+                speechbubbleRobotAction
+              )}
+              setSucceeded={speechbubbleRobotAction._as.setSucceeded.bind(
+                speechbubbleRobotAction._as
+              )}
+              setAborted={speechbubbleRobotAction._as.setAborted.bind(
+                speechbubbleRobotAction._as
+              )}
             />
           </div>
           <div>
@@ -101,9 +119,15 @@ class SimpleFace extends Component {
             <Speechbubble
               key={this.props.actions.speechbubbleHuman._id}
               speechbubble={speechbubbleHumanAction.getSpeechbubble()}
-              reset={speechbubbleHumanAction.resetSpeechbubble.bind(speechbubbleHumanAction)}
-              setSucceeded={speechbubbleHumanAction._as.setSucceeded.bind(speechbubbleHumanAction._as)}
-              setAborted={speechbubbleHumanAction._as.setAborted.bind(speechbubbleHumanAction._as)}
+              reset={speechbubbleHumanAction.resetSpeechbubble.bind(
+                speechbubbleHumanAction
+              )}
+              setSucceeded={speechbubbleHumanAction._as.setSucceeded.bind(
+                speechbubbleHumanAction._as
+              )}
+              setAborted={speechbubbleHumanAction._as.setAborted.bind(
+                speechbubbleHumanAction._as
+              )}
             />
           </div>
         </div>
@@ -137,17 +161,20 @@ export default withTracker(({query}) => {
     || !speechbubblesHandle.ready()  // needed by SpeechbubbleAction
     || !detectionsHandle.ready();  // needed by Vision
 
-  const actions = {
-    eyeExpression: Actions.findOne(Object.assign({type: 'eyeExpression'}, query)),
-    soundPlay: Actions.findOne(Object.assign({type: 'soundPlay'}, query)),
-    speechSynthesis: Actions.findOne(Object.assign({type: 'speechSynthesis'}, query)),
-    speechRecognition: Actions.findOne(Object.assign({type: 'speechRecognition'}, query)),
-    speechbubbleRobot: Actions.findOne(Object.assign({type: 'speechbubbleRobot'}, query)),
-    speechbubbleHuman: Actions.findOne(Object.assign({type: 'speechbubbleHuman'}, query)),
-    videoControl: Actions.findOne(Object.assign({type: 'videoControl'}, query)),
-    poseDetection: Actions.findOne(Object.assign({type: 'poseDetection'}, query)),
-    faceDetection: Actions.findOne(Object.assign({type: 'faceDetection'}, query)),
-  }
+  const actions = {};
+  [
+    'eyeExpression',
+    'soundPlay',
+    'speechSynthesis',
+    'speechRecognition',
+    'speechbubbleRobot',
+    'speechbubbleHuman',
+    'videoControl',
+    'poseDetection',
+    'faceDetection',
+  ].map((type) => {
+    actions[type] = Actions.findOne(Object.assign({type}, query));
+  });
 
   return {
     loading,

@@ -174,7 +174,9 @@ if (Meteor.isClient) {
       };
 
       if (!this._net) {
-        this._net = await posenet.load(Number(this._params.input.mobileNetArchitecture));
+        this._net = await posenet.load(
+          Number(this._params.input.mobileNetArchitecture)
+        );
       }
       if (this._params.changeToArchitecture) {
         this.net.dispose();
@@ -191,7 +193,9 @@ if (Meteor.isClient) {
       let minPartConfidence;
       switch (this._params.algorithm) {
         case 'single-pose':
-          const pose = await this._net.estimateSinglePose(this._video, imageScaleFactor, flipHorizontal, outputStride);
+          const pose = await this._net.estimateSinglePose(
+            this._video, imageScaleFactor, flipHorizontal, outputStride
+          );
           poses.push(pose);
 
           minPoseConfidence = Number(
@@ -200,13 +204,19 @@ if (Meteor.isClient) {
             this._params.singlePoseDetection.minPartConfidence);
           break;
         case 'multi-pose':
-          poses = await this._net.estimateMultiplePoses(this._video, imageScaleFactor, flipHorizontal, outputStride,
+          poses = await this._net.estimateMultiplePoses(
+            this._video,
+            imageScaleFactor,
+            flipHorizontal,
+            outputStride,
             this._params.multiPoseDetection.maxPoseDetections,
             this._params.multiPoseDetection.minPartConfidence,
             this._params.multiPoseDetection.nmsRadius);
 
-          minPoseConfidence = Number(this._params.multiPoseDetection.minPoseConfidence);
-          minPartConfidence = Number(this._params.multiPoseDetection.minPartConfidence);
+          minPoseConfidence
+            = Number(this._params.multiPoseDetection.minPoseConfidence);
+          minPartConfidence
+            = Number(this._params.multiPoseDetection.minPartConfidence);
           break;
         default:
           logger.warn(`Invalid input algorithm: ${this._params.algorithm}`);
@@ -281,9 +291,11 @@ if (Meteor.isClient) {
         return;
       };
 
-      this._context.drawImage(this._video, 0, 0, this._video.width, this._video.height);
+      this._context.drawImage(
+        this._video, 0, 0, this._video.width, this._video.height
+      );
       return new Promise(resolve => {
-        this._tracker.once('track', (result) => {
+        this._tracker.once('track', result => {
           resolve(result.data);
         });
         tracking.trackCanvasInternal_(this._canvas, this._tracker);
@@ -329,7 +341,10 @@ if (Meteor.isClient) {
     }
 
     setDetector(detector) {
-      if (!(detector instanceof PoseDetector) && !(detector instanceof FaceDetector)) {
+      if (
+        !(detector instanceof PoseDetector)
+        && !(detector instanceof FaceDetector)
+      ) {
         logger.warn('Invalid input detector:', detector);
         return this;
       };
@@ -404,7 +419,9 @@ if (Meteor.isServer) {
         return;
       }
 
-      Detections.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
+      Detections.insert(
+        Object.assign({owner, actionId, type: '', data: {}}, defaultAction)
+      );
     },
 
     'detections.remove'(owner) {

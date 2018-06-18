@@ -72,11 +72,15 @@ class VisionViz extends Component {
     const poseDetection = this.props.detections.pose;
 
     if (poseDetection.data.params.algorithm === 'single-pose') {
-      minPoseConfidence = poseDetection.data.params.singlePoseDetection.minPoseConfidence;
-      minPartConfidence = poseDetection.data.params.singlePoseDetection.minPartConfidence;
+      minPoseConfidence
+        = poseDetection.data.params.singlePoseDetection.minPoseConfidence;
+      minPartConfidence
+        = poseDetection.data.params.singlePoseDetection.minPartConfidence;
     } else {
-      minPoseConfidence = poseDetection.data.params.multiPoseDetection.minPoseConfidence;
-      minPartConfidence = poseDetection.data.params.multiPoseDetection.minPartConfidence;
+      minPoseConfidence
+        = poseDetection.data.params.multiPoseDetection.minPoseConfidence;
+      minPartConfidence
+        = poseDetection.data.params.multiPoseDetection.minPartConfidence;
     }
 
     context.clearRect(0, 0, width, height);
@@ -123,13 +127,16 @@ export default withTracker(({query}) => {
   const actionsHandle = Meteor.subscribe('actions');
   const detectionsHandle = Meteor.subscribe('detections');
   const loading = !actionsHandle.ready() || !detectionsHandle.ready();
+
   const actions = {
     poseDetection: Actions.findOne(Object.assign({type: 'poseDetection'}, query)),
     faceDetection: Actions.findOne(Object.assign({type: 'faceDetection'}, query)),
   }
   const detections = {
-    pose: !loading ? Detections.findOne({actionId: actions.poseDetection._id}) : undefined,
-    face: !loading ? Detections.findOne({actionId: actions.faceDetection._id}) : undefined,
+    pose: !loading ? Detections.findOne({actionId: actions.poseDetection._id})
+      : undefined,
+    face: !loading ? Detections.findOne({actionId: actions.faceDetection._id})
+      : undefined,
   }
 
   return {
