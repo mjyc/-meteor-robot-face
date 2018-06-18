@@ -68,9 +68,7 @@ class SimpleFace extends Component {
 
   render() {
     if (this.props.loading || !this.state.ready) {
-      return (
-        <div>Loading...</div>
-      )
+      return null;
     };
 
     const faceColor = 'whitesmoke';

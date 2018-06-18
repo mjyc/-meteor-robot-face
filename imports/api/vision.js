@@ -35,7 +35,7 @@ if (Meteor.isClient) {
     return isAndroid() || isiOS();
   }
 
-  const setupCamera = async (video) => {
+  setupCamera = async (video) => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw 'Browser API navigator.mediaDevices.getUserMedia not available';
     }

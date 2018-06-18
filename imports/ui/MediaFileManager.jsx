@@ -28,8 +28,6 @@ class MediaFileManager extends Component {
       showAll: false,
       skippedFiles: null,
     };
-
-    this.elements = {};
   }
 
   renderMediaFile(mediaFile) {
@@ -65,19 +63,15 @@ class MediaFileManager extends Component {
   }
 
   render() {
-    if (this.props.loading) {
-      return (
-        <div>Loading...</div>
-      )
+    if (this.props.loading || !this.props.currentUser) {
+      return null;
     };
 
     const previewColSpan = 3;
     return (
       <div>
-
         <div>
           <RaisedButton
-            ref={(element) => { this.elements['video'] = element; }}
             containerElement='label'
             label="Upload"
           >
@@ -193,7 +187,6 @@ class MediaFileManager extends Component {
             </TableBody>
           </Table>
         </div>
-
       </div>
     );
   }
