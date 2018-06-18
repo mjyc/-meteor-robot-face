@@ -94,55 +94,59 @@ class SimpleFace extends Component {
     const speechbubbleHumanAction
       = this.actions[this.props.actions.speechbubbleHuman._id];
     return (
-      <div style={styles.face}>
-        <div>
+      <div>
+        <div style={styles.face}>
           <div>
-            <strong>Robot: </strong>
-            <Speechbubble
-              key={this.props.actions.speechbubbleRobot._id}
-              speechbubble={speechbubbleRobotAction.getSpeechbubble()}
-              reset={speechbubbleRobotAction.resetSpeechbubble.bind(
-                speechbubbleRobotAction
-              )}
-              setSucceeded={speechbubbleRobotAction._as.setSucceeded.bind(
-                speechbubbleRobotAction._as
-              )}
-              setAborted={speechbubbleRobotAction._as.setAborted.bind(
-                speechbubbleRobotAction._as
-              )}
-            />
+            <div>
+              <strong>Robot: </strong>
+              <Speechbubble
+                key={this.props.actions.speechbubbleRobot._id}
+                speechbubble={speechbubbleRobotAction.getSpeechbubble()}
+                reset={speechbubbleRobotAction.resetSpeechbubble.bind(
+                  speechbubbleRobotAction
+                )}
+                setSucceeded={speechbubbleRobotAction._as.setSucceeded.bind(
+                  speechbubbleRobotAction._as
+                )}
+                setAborted={speechbubbleRobotAction._as.setAborted.bind(
+                  speechbubbleRobotAction._as
+                )}
+              />
+            </div>
+            <div>
+              <strong>Human: </strong>
+              <Speechbubble
+                key={this.props.actions.speechbubbleHuman._id}
+                speechbubble={speechbubbleHumanAction.getSpeechbubble()}
+                reset={speechbubbleHumanAction.resetSpeechbubble.bind(
+                  speechbubbleHumanAction
+                )}
+                setSucceeded={speechbubbleHumanAction._as.setSucceeded.bind(
+                  speechbubbleHumanAction._as
+                )}
+                setAborted={speechbubbleHumanAction._as.setAborted.bind(
+                  speechbubbleHumanAction._as
+                )}
+              />
+            </div>
           </div>
-          <div>
-            <strong>Human: </strong>
-            <Speechbubble
-              key={this.props.actions.speechbubbleHuman._id}
-              speechbubble={speechbubbleHumanAction.getSpeechbubble()}
-              reset={speechbubbleHumanAction.resetSpeechbubble.bind(
-                speechbubbleHumanAction
-              )}
-              setSucceeded={speechbubbleHumanAction._as.setSucceeded.bind(
-                speechbubbleHumanAction._as
-              )}
-              setAborted={speechbubbleHumanAction._as.setAborted.bind(
-                speechbubbleHumanAction._as
-              )}
-            />
-          </div>
+
+          <Eyes
+            eyeExpressionAction={this.props.actions.eyeExpression}
+            eyeColor={eyeColor}
+            eyeSize={eyeSize}
+            eyelidColor={eyelidColor}
+          />
         </div>
 
-        <Eyes
-          eyeExpressionAction={this.props.actions.eyeExpression}
-          eyeColor={eyeColor}
-          eyeSize={eyeSize}
-          eyelidColor={eyelidColor}
-        />
-
-        <Vision
-          videoControl={this.props.actions.videoControl}
-          poseDetection={this.props.actions.poseDetection}
-          faceDetection={this.props.actions.faceDetection}
-          setVideo={this.props.setVideo}
-        />
+        <div>
+          <Vision
+            videoControl={this.props.actions.videoControl}
+            poseDetection={this.props.actions.poseDetection}
+            faceDetection={this.props.actions.faceDetection}
+            setVideo={this.props.setVideo}
+          />
+        </div>
       </div>
     );
   }
