@@ -40,6 +40,10 @@ if (Meteor.isClient) {
     }
 
     preemptCB() {
+      Speechbubbles.update(this._speechbubbleId, {$set: {
+        type: '',
+        data: {},
+      }});
       this._as.setPreempted();
     }
   }

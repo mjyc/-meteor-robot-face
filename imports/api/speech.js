@@ -101,7 +101,7 @@ if (Meteor.isClient) {
     }
 
     preemptCB() {
-      this._recognition.cancel();
+      this._recognition.stop();
       this._as.setPreempted();
     }
   }
