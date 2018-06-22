@@ -132,7 +132,7 @@ if (Meteor.isClient) {
 
       this._net = null;
       this._params = {
-        algorithm: 'single-pose',
+        algorithm: 'multi-pose',
         input: {
           mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
           outputStride: 16,
