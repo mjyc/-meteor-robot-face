@@ -117,7 +117,7 @@ class VisionViz extends Component {
     return (
       <div>
         <canvas
-          style={{display: 'none' /* change this!*/}}
+          style={{display: 'static' /* TODO: change this!*/}}
           ref={(element) => { this.elements['canvas'] = element; }}
           width="600px"
           height="500px"
