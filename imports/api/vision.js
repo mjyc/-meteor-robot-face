@@ -137,13 +137,13 @@ if (Meteor.isClient) {
           mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
           outputStride: 16,
           flipHorizontal: true,
-          imageScaleFactor: 0.2,
+          imageScaleFactor: 0.5,
         },
-        singlePoseDetection: {
+        'single-pose': {
           minPoseConfidence: 0.1,
           minPartConfidence: 0.5,
         },
-        multiPoseDetection: {
+        'multi-pose': {
           maxPoseDetections: 2,
           minPoseConfidence: 0.1,
           minPartConfidence: 0.3,
@@ -199,9 +199,9 @@ if (Meteor.isClient) {
           poses.push(pose);
 
           minPoseConfidence = Number(
-            this._params.singlePoseDetection.minPoseConfidence);
+            this._params['single-pose'].minPoseConfidence);
           minPartConfidence = Number(
-            this._params.singlePoseDetection.minPartConfidence);
+            this._params['single-pose'].minPartConfidence);
           break;
         case 'multi-pose':
           poses = await this._net.estimateMultiplePoses(
@@ -209,14 +209,14 @@ if (Meteor.isClient) {
             imageScaleFactor,
             flipHorizontal,
             outputStride,
-            this._params.multiPoseDetection.maxPoseDetections,
-            this._params.multiPoseDetection.minPartConfidence,
-            this._params.multiPoseDetection.nmsRadius);
+            this._params['multi-pose'].maxPoseDetections,
+            this._params['multi-pose'].minPartConfidence,
+            this._params['multi-pose'].nmsRadius);
 
           minPoseConfidence
-            = Number(this._params.multiPoseDetection.minPoseConfidence);
+            = Number(this._params['multi-pose'].minPoseConfidence);
           minPartConfidence
-            = Number(this._params.multiPoseDetection.minPartConfidence);
+            = Number(this._params['multi-pose'].minPartConfidence);
           break;
         default:
           logger.warn(`Invalid input algorithm: ${this._params.algorithm}`);
