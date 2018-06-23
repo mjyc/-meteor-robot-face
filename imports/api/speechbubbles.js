@@ -21,6 +21,10 @@ if (Meteor.isClient) {
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
     }
 
+    getActionServer() {
+      return this._as;
+    }
+
     getSpeechbubble() {
       return Speechbubbles.findOne(this._speechbubbleId);
     }

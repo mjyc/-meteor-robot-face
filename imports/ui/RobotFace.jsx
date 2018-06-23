@@ -21,11 +21,11 @@ import Speechbubble from '../ui/Speechbubble.jsx';
 import Eyes from '../ui/Eyes.jsx';
 import Vision from '../ui/Vision.jsx';
 
-const logger = log.getLogger('SimpleFace');
+const logger = log.getLogger('RobotFace');
 
 
-// SimpleFace component - represents the whole app
-class SimpleFace extends Component {
+// RobotFace component - represents the whole app
+class RobotFace extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -105,12 +105,16 @@ class SimpleFace extends Component {
                 reset={speechbubbleRobotAction.resetSpeechbubble.bind(
                   speechbubbleRobotAction
                 )}
-                setSucceeded={speechbubbleRobotAction._as.setSucceeded.bind(
-                  speechbubbleRobotAction._as
-                )}
-                setAborted={speechbubbleRobotAction._as.setAborted.bind(
-                  speechbubbleRobotAction._as
-                )}
+                setSucceeded={
+                  speechbubbleRobotAction.getActionServer().setSucceeded.bind(
+                    speechbubbleRobotAction.getActionServer()
+                  )
+                }
+                setAborted={
+                  speechbubbleRobotAction.getActionServer().setAborted.bind(
+                    speechbubbleRobotAction.getActionServer()
+                  )
+                }
               />
             </div>
             <div>
@@ -121,12 +125,16 @@ class SimpleFace extends Component {
                 reset={speechbubbleHumanAction.resetSpeechbubble.bind(
                   speechbubbleHumanAction
                 )}
-                setSucceeded={speechbubbleHumanAction._as.setSucceeded.bind(
-                  speechbubbleHumanAction._as
-                )}
-                setAborted={speechbubbleHumanAction._as.setAborted.bind(
-                  speechbubbleHumanAction._as
-                )}
+                setSucceeded={
+                  speechbubbleHumanAction.getActionServer().setSucceeded.bind(
+                    speechbubbleHumanAction.getActionServer()
+                  )
+                }
+                setAborted={
+                  speechbubbleHumanAction.getActionServer().setAborted.bind(
+                    speechbubbleHumanAction.getActionServer()
+                  )
+                }
               />
             </div>
           </div>
@@ -182,4 +190,4 @@ export default withTracker(({query}) => {
     loading,
     actions,
   };
-})(SimpleFace);
+})(RobotFace);
