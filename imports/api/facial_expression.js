@@ -13,7 +13,8 @@ const logger = log.getLogger('facial_expresison');
 if (Meteor.isClient) {
 
   export class EyeController {
-    constructor(elements = {}) {
+    constructor(elements = {}, eyeSize = '33.33vh') {
+      this._eyeSize = eyeSize;
       this._blinkTimeoutID = null;
 
       this.setElements(elements);
@@ -44,8 +45,8 @@ if (Meteor.isClient) {
     } = {}) {
       return [
         {transform: `translateY(0px) rotate(0deg)`, offset: 0.0},
-        {transform: `translateY(${tgtTranYVal}vh) rotate(${tgtRotVal}deg)`, offset: enteredOffset},
-        {transform: `translateY(${tgtTranYVal}vh) rotate(${tgtRotVal}deg)`, offset: exitingOffset},
+        {transform: `translateY(${tgtTranYVal}) rotate(${tgtRotVal})`, offset: enteredOffset},
+        {transform: `translateY(${tgtTranYVal}) rotate(${tgtRotVal})`, offset: exitingOffset},
         {transform: `translateY(0px) rotate(0deg)`, offset: 1.0},
       ];
     }
@@ -69,14 +70,14 @@ if (Meteor.isClient) {
         case 'happy':
           return {
             lowerLeftEyelid: this._lowerLeftEyelid.animate(this._createKeyframes({
-              tgtTranYVal: -20,
-              tgtRotVal: 30,
+              tgtTranYVal: `calc(${this._eyeSize} * -2 / 3)`,
+              tgtRotVal: `30deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
             lowerRightEyelid: this._lowerRightEyelid.animate(this._createKeyframes({
-              tgtTranYVal: -20,
-              tgtRotVal: -30,
+              tgtTranYVal: `calc(${this._eyeSize} * -2 / 3)`,
+              tgtRotVal: `-30deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
@@ -85,14 +86,14 @@ if (Meteor.isClient) {
         case 'sad':
           return {
             upperLeftEyelid: this._upperLeftEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 13.33,
-              tgtRotVal: -20,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 3)`,
+              tgtRotVal: `-20deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
             upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 13.33,
-              tgtRotVal: 20,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 3)`,
+              tgtRotVal: `20deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
@@ -101,14 +102,14 @@ if (Meteor.isClient) {
         case 'angry':
           return {
             upperLeftEyelid: this._upperLeftEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 8.33,
-              tgtRotVal: 30,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 4)`,
+              tgtRotVal: `30deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
             upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 8.33,
-              tgtRotVal: -30,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 4)`,
+              tgtRotVal: `-30deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
@@ -117,22 +118,22 @@ if (Meteor.isClient) {
         case 'focused':
           return {
             upperLeftEyelid: this._upperLeftEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 10,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 3)`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
             upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 10,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 3)`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
             lowerLeftEyelid: this._lowerLeftEyelid.animate(this._createKeyframes({
-              tgtTranYVal: -10,
+              tgtTranYVal: `calc(${this._eyeSize} * -1 / 3)`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
             lowerRightEyelid: this._lowerRightEyelid.animate(this._createKeyframes({
-              tgtTranYVal: -10,
+              tgtTranYVal: `calc(${this._eyeSize} * -1 / 3)`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
@@ -141,8 +142,8 @@ if (Meteor.isClient) {
         case 'confused':
           return {
             upperRightEyelid: this._upperRightEyelid.animate(this._createKeyframes({
-              tgtTranYVal: 10,
-              tgtRotVal: -10,
+              tgtTranYVal: `calc(${this._eyeSize} * 1 / 3)`,
+              tgtRotVal: `-10deg`,
               enteredOffset: enterDuration / duration,
               exitingOffset: 1 - (exitDuration / duration),
             }), options),
