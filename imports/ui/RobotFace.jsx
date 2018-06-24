@@ -71,17 +71,18 @@ class RobotFace extends Component {
       return null;
     };
 
-    const faceColor = 'whitesmoke';
-    const faceHeight = '100vh';
-    const faceWidth = '100vw';
-    const eyeColor = 'black';
-    const eyeSize = '33.33vh';
-    const eyelidColor = 'whitesmoke';
+    const {
+      faceColor = 'whitesmoke',
+      faceHeight = '100vh',
+      faceWidth = '100vw',
+      eyeColor = 'black',
+      eyeSize = '33.33vh',
+      eyelidColor = 'whitesmoke'
+    } = this.props.style;
 
     const styles = {
       face: {
         backgroundColor: faceColor,
-        margin: 'auto',
         height: faceHeight,
         width: faceWidth,
         position: 'relative',
