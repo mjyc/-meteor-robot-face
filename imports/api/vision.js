@@ -179,7 +179,7 @@ if (Meteor.isClient) {
       algorithm = defaultPoseDetectorParams.algorithm,
       input = defaultPoseDetectorParams.input,
       singlePoseDetection = defaultPoseDetectorParams.singlePoseDetection,
-      multiPoseDetection = defaultPoseDetectorParams.multiPoseDetections,
+      multiPoseDetection = defaultPoseDetectorParams.multiPoseDetection,
     } = {}) {
       this._params = {
         algorithm: algorithm,
@@ -412,7 +412,9 @@ if (Meteor.isClient) {
           Detections.update(this._detectionId, {
             $set: {
               'data.data': await this._detector.detect(),
-              'data.params': this._detector.setParams(goal.params).getParams(),
+              'data.params': goal.params
+                ? this._detector.setParams(goal.params).getParams()
+                : this._detector.getParams(),
             },
           });
           this._timeoutID = setTimeout(execute, 0);
