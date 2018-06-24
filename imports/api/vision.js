@@ -144,7 +144,7 @@ if (Meteor.isClient) {
   const defaultPoseDetectorParams = {
     algorithm: 'multi-pose',
     input: {
-      mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
+      mobileNetArchitecture: isMobile() ? '0.50' : '0.75',
       outputStride: 16,
       flipHorizontal: true,
       imageScaleFactor: 0.5,
@@ -154,10 +154,10 @@ if (Meteor.isClient) {
       minPartConfidence: 0.5,
     },
     multiPoseDetection: {
-      maxPoseDetections: 2,
-      minPoseConfidence: 0.1,
-      minPartConfidence: 0.3,
-      nmsRadius: 20.0,
+      maxPoseDetections: 5,
+      minPoseConfidence: 0.15,
+      minPartConfidence: 0.1,
+      nmsRadius: 30.0,
     },
   };
 
@@ -370,7 +370,7 @@ if (Meteor.isClient) {
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-      this._intervalId = null;
+      this._timeoutId = null;
 
       this.setDetector(detector);
     }
@@ -405,6 +405,7 @@ if (Meteor.isClient) {
       const fps = (goal.fps && goal.fps > 0) ? goal.fps : 10;
       const interval = 1000 / fps;
       let start = Date.now();
+      this._timeoutId = {};
       const execute = async () => {
         const elapsed = Date.now() - start;
         if (elapsed > interval) {
@@ -417,16 +418,19 @@ if (Meteor.isClient) {
                 : this._detector.getParams(),
             },
           });
-          this._timeoutID = setTimeout(execute, 0);
+          if (!this._timeoutId) return;
+          this._timeoutId = setTimeout(execute, 0);
         } else {
-          this._timeoutID = setTimeout(execute, interval - elapsed);
+          if (!this._timeoutId) return;
+          this._timeoutId = setTimeout(execute, interval - elapsed);
         }
       }
       execute();
     }
 
     preemptCB() {
-      clearTimeout(this._timeoutID);
+      clearTimeout(this._timeoutId);
+      this._timeoutId = null;
       this._as.setPreempted();
     }
   }
