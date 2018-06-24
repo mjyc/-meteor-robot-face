@@ -19,6 +19,10 @@ export default class Vision extends Component {
     super(props);
     this.state = {
       video: null,
+      display: 'none',
+      width: '600px',
+      height: '500px,',
+      showVisionViz: false,
     }
 
     this.actions = {};
@@ -33,6 +37,9 @@ export default class Vision extends Component {
       Actions,
       this.props.videoControl._id,
       this.state.video,
+      ({showVisionViz}) => {
+        this.setState({showVisionViz});
+      }
     );
     this.actions[this.props.poseDetection._id] = new DetectionAction(
       Actions,
@@ -47,7 +54,9 @@ export default class Vision extends Component {
       createDetector('face'),
     );
 
-    if (this.props.setVideo) this.props.setVideo(this.elements.video);
+    if (this.props.setVideo) {
+      this.props.setVideo(this.elements.video);
+    }
   }
 
   render() {
@@ -55,21 +64,24 @@ export default class Vision extends Component {
       <div>
         <div>
           <video
-            style={{display: 'none'}}
+            style={{display: this.state.display}}
             ref={(element) => {
               if (!this.state.video) {
                 this.setState({video: element});
               }
             }}
-            width="600px"
-            height="500px"
+            width={this.state.width}
+            height={this.state.height}
             autoPlay
           ></video>
         </div>
         <div>
-          {this.state.video ? (
+          {(this.state.video) ? (
           <VisionViz
+            show={this.state.showVisionViz}
             video={this.state.video}
+            width={this.state.width}
+            height={this.state.height}
           />
           ) : null}
         </div>

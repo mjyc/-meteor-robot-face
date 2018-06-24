@@ -70,14 +70,18 @@ if (Meteor.isClient) {
   }
 
   export class VideoControlAction {
-    constructor(collection, id, video = document.getElementById('video')) {
-      this._video = video;
-
+    constructor(
+      collection,
+      id,
+      video = document.getElementById('video'),
+      updateConfig = () => {},
+    ) {
       this._as = getActionServer(collection, id);
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-      this.setVideo(this._video);
+      this.setVideo(video);
+      this.setUpdateConfig(updateConfig);
     }
 
     setVideo(video) {
@@ -87,6 +91,10 @@ if (Meteor.isClient) {
       };
       this._video = video;
       return this;
+    }
+
+    setUpdateConfig(updateConfig) {
+      this._updateConfig = updateConfig;
     }
 
     async goalCB({goal} = {}) {
@@ -99,8 +107,9 @@ if (Meteor.isClient) {
             stopCamera(this._video);
             break;
           default:
-            logger.warn(`Invalid input type: ${goal.type}`);
+            throw new Error(`Invalid input type: ${goal.type}`);
         }
+        this._updateConfig(goal.config);
         this._as.setSucceeded();
       } catch (err) {
         this._as.setAborted(err);

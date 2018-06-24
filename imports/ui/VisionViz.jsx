@@ -55,8 +55,6 @@ class VisionViz extends Component {
   constructor(props) {
     super(props);
 
-    this._intervalID = null;
-
     this.elements = {};
   }
 
@@ -106,12 +104,11 @@ class VisionViz extends Component {
 
   render() {
     return (
-      <div>
+      <div style={{display: this.props.show ? 'block' : 'none'}}>
         <canvas
-          style={{display: 'static' /* TODO: change this!*/}}
           ref={(element) => { this.elements['canvas'] = element; }}
-          width="600px"
-          height="500px"
+          width={this.props.width ? this.props.width : "600px"}
+          height={this.props.height ? this.props.height : "500px"}
         ></canvas>
       </div>
     );
