@@ -2,6 +2,7 @@ import log from 'meteor/mjyc:loglevel';
 import util from 'util';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
+import { check } from 'meteor/check';
 import {
   Actions,
   defaultAction,
@@ -49,24 +50,45 @@ if (Meteor.isClient) {
 
 
 if (Meteor.isServer) {
-
-  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   MediaFiles.allow({
     insert: (userId, doc) => {
       return false;
     },
     update: (userId, doc, fields, modifier) => {
-      return true;
+      return userId && doc.owner === userId;
     },
     remove: (userId, doc) => {
-      return true;
+      return userId && doc.owner === userId;
     },
     fetch: ['owner']
   });
 
   Meteor.publish('media_files', function mediaFilesPublication() {
-    // TODO: restrict access based on user permission; right now docs are public!
-    return MediaFiles.find();
+    return MediaFiles.find();  // all media files are public!
   });
 
+  Meteor.methods({
+    'media_files.insert'(name, size, type, data) {
+      check(name, String);
+      check(size, Number);
+      check(type, String);
+      check(data, String);
+
+      if (!this.userId) {
+        throw new Meteor.Error('not-authorized');
+      }
+
+      const currentUser = Meteor.users.findOne(this.userId);
+      MediaFiles.insert({
+        name,
+        size,
+        type,
+        data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        owner: this.userId,
+        username: currentUser.username || currentUser.profile.name,
+      });
+    },
+  });
 }

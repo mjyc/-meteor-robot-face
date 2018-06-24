@@ -1,6 +1,6 @@
 # Meteor Simple Face
 
-Meteor package providing a "face" React component.
+Meteor package providing a robot face React component.
 
 ## Getting started
 
@@ -8,7 +8,7 @@ Meteor package providing a "face" React component.
 
     ```
     cd your_meteor_app/packages
-    git clone git@gitlab.cs.washington.edu:mjyc/simple-face.git
+    git clone git@gitlab.cs.washington.edu:mjyc/meteor-robot-face.git robot-face
     cd ../
-    meteor add simple-face
+    meteor add mjyc:robot-face
     ```

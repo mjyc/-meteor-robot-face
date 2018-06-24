@@ -35,7 +35,7 @@ if (Meteor.isClient) {
     return isAndroid() || isiOS();
   }
 
-  const setupCamera = async (video) => {
+  setupCamera = async (video) => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw 'Browser API navigator.mediaDevices.getUserMedia not available';
     }
@@ -70,14 +70,18 @@ if (Meteor.isClient) {
   }
 
   export class VideoControlAction {
-    constructor(collection, id, video = document.getElementById('video')) {
-      this._video = video;
-
+    constructor(
+      collection,
+      id,
+      video = document.getElementById('video'),
+      setState = () => {},
+    ) {
       this._as = getActionServer(collection, id);
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-      this.setVideo(this._video);
+      this.setVideo(video);
+      this.setSetState(setState);
     }
 
     setVideo(video) {
@@ -87,6 +91,10 @@ if (Meteor.isClient) {
       };
       this._video = video;
       return this;
+    }
+
+    setSetState(setState) {
+      this._setState = setState;
     }
 
     async goalCB({goal} = {}) {
@@ -99,8 +107,11 @@ if (Meteor.isClient) {
             stopCamera(this._video);
             break;
           default:
-            logger.warn(`Invalid input type: ${goal.type}`);
+            throw new Error(`Invalid input type: ${goal.type}`);
         }
+        this._setState({
+          showVisionViz: goal.config && goal.config.showVisionViz
+        });
         this._as.setSucceeded();
       } catch (err) {
         this._as.setAborted(err);
@@ -113,6 +124,10 @@ if (Meteor.isClient) {
   }
 
   class Detector {
+    setParams(params) {
+      new Error('Not implemented');
+    }
+
     getParams() {
       new Error('Not implemented');
     }
@@ -126,36 +141,59 @@ if (Meteor.isClient) {
     }
   }
 
+  const defaultPoseDetectorParams = {
+    algorithm: 'multi-pose',
+    input: {
+      mobileNetArchitecture: isMobile() ? '0.50' : '0.75',
+      outputStride: 16,
+      flipHorizontal: true,
+      imageScaleFactor: 0.5,
+    },
+    singlePoseDetection: {
+      minPoseConfidence: 0.1,
+      minPartConfidence: 0.5,
+    },
+    multiPoseDetection: {
+      maxPoseDetections: 5,
+      minPoseConfidence: 0.15,
+      minPartConfidence: 0.1,
+      nmsRadius: 30.0,
+    },
+  };
+
   class PoseDetector extends Detector {
     constructor(video = document.getElementById('video')) {
       super();
 
       this._net = null;
-      this._params = {
-        algorithm: 'single-pose',
-        input: {
-          mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
-          outputStride: 16,
-          flipHorizontal: true,
-          imageScaleFactor: 0.2,
-        },
-        singlePoseDetection: {
-          minPoseConfidence: 0.1,
-          minPartConfidence: 0.5,
-        },
-        multiPoseDetection: {
-          maxPoseDetections: 2,
-          minPoseConfidence: 0.1,
-          minPartConfidence: 0.3,
-          nmsRadius: 20.0,
-        },
-      };
 
       this.setVideo(this._video);
+      this.setParams(defaultPoseDetectorParams);
     }
 
     getParams() {
       return this._params;
+    }
+
+    setParams({
+      algorithm = defaultPoseDetectorParams.algorithm,
+      input = defaultPoseDetectorParams.input,
+      singlePoseDetection = defaultPoseDetectorParams.singlePoseDetection,
+      multiPoseDetection = defaultPoseDetectorParams.multiPoseDetection,
+    } = {}) {
+      this._params = {
+        algorithm: algorithm,
+        input: Object.assign(defaultPoseDetectorParams.input, input),
+        singlePoseDetection: Object.assign(
+          defaultPoseDetectorParams.singlePoseDetection,
+          singlePoseDetection,
+        ),
+        multiPoseDetection: Object.assign(
+          defaultPoseDetectorParams.multiPoseDetection,
+          multiPoseDetection,
+        ),
+      }
+      return this;
     }
 
     setVideo(video) {
@@ -174,7 +212,9 @@ if (Meteor.isClient) {
       };
 
       if (!this._net) {
-        this._net = await posenet.load(Number(this._params.input.mobileNetArchitecture));
+        this._net = await posenet.load(
+          Number(this._params.input.mobileNetArchitecture)
+        );
       }
       if (this._params.changeToArchitecture) {
         this.net.dispose();
@@ -191,7 +231,9 @@ if (Meteor.isClient) {
       let minPartConfidence;
       switch (this._params.algorithm) {
         case 'single-pose':
-          const pose = await this._net.estimateSinglePose(this._video, imageScaleFactor, flipHorizontal, outputStride);
+          const pose = await this._net.estimateSinglePose(
+            this._video, imageScaleFactor, flipHorizontal, outputStride
+          );
           poses.push(pose);
 
           minPoseConfidence = Number(
@@ -200,19 +242,31 @@ if (Meteor.isClient) {
             this._params.singlePoseDetection.minPartConfidence);
           break;
         case 'multi-pose':
-          poses = await this._net.estimateMultiplePoses(this._video, imageScaleFactor, flipHorizontal, outputStride,
+          poses = await this._net.estimateMultiplePoses(
+            this._video,
+            imageScaleFactor,
+            flipHorizontal,
+            outputStride,
             this._params.multiPoseDetection.maxPoseDetections,
             this._params.multiPoseDetection.minPartConfidence,
             this._params.multiPoseDetection.nmsRadius);
 
-          minPoseConfidence = Number(this._params.multiPoseDetection.minPoseConfidence);
-          minPartConfidence = Number(this._params.multiPoseDetection.minPartConfidence);
+          minPoseConfidence
+            = Number(this._params.multiPoseDetection.minPoseConfidence);
+          minPartConfidence
+            = Number(this._params.multiPoseDetection.minPartConfidence);
           break;
         default:
           logger.warn(`Invalid input algorithm: ${this._params.algorithm}`);
       }
       return poses;
     }
+  }
+
+  const defaultFaceDetectorParams = {
+    initialScale: 4,
+    stepSize: 2,
+    edgesDensity: 0.1,
   }
 
   class FaceDetector extends Detector {
@@ -223,13 +277,9 @@ if (Meteor.isClient) {
       this._tracker = new tracking.ObjectTracker('face');
       this._canvas = document.createElement('canvas');
       this._context = this._canvas.getContext('2d');
-      this._params = {
-        initialScale: 4,
-        stepSize: 2,
-        edgesDensity: 0.1,
-      }
 
       this.setVideo(video);
+      this.setParams(defaultFaceDetectorParams);
     }
 
     get _params() {
@@ -242,10 +292,10 @@ if (Meteor.isClient) {
     }
 
     set _params({
-      edgesDensity = this._tracker.edgesDensity,
-      initialScale = this._tracker.initialScale,
-      scaleFactor = this._tracker.scaleFactor,
-      stepSize = this._tracker.stepSize,
+      edgesDensity = defaultFaceDetectorParams.edgesDensity,
+      initialScale = defaultFaceDetectorParams.initialScale,
+      scaleFactor = defaultFaceDetectorParams.scaleFactor,
+      stepSize = defaultFaceDetectorParams.stepSize,
     } = {}) {
       this._tracker.setEdgesDensity(edgesDensity);
       this._tracker.setInitialScale(initialScale);
@@ -255,6 +305,11 @@ if (Meteor.isClient) {
 
     getParams() {
       return this._params;
+    }
+
+    setParams(params) {
+      this._params = params;
+      return this;
     }
 
     setVideo(video) {
@@ -281,9 +336,11 @@ if (Meteor.isClient) {
         return;
       };
 
-      this._context.drawImage(this._video, 0, 0, this._video.width, this._video.height);
+      this._context.drawImage(
+        this._video, 0, 0, this._video.width, this._video.height
+      );
       return new Promise(resolve => {
-        this._tracker.once('track', (result) => {
+        this._tracker.once('track', result => {
           resolve(result.data);
         });
         tracking.trackCanvasInternal_(this._canvas, this._tracker);
@@ -313,7 +370,7 @@ if (Meteor.isClient) {
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
-      this._intervalId = null;
+      this._timeoutId = null;
 
       this.setDetector(detector);
     }
@@ -329,7 +386,10 @@ if (Meteor.isClient) {
     }
 
     setDetector(detector) {
-      if (!(detector instanceof PoseDetector) && !(detector instanceof FaceDetector)) {
+      if (
+        !(detector instanceof PoseDetector)
+        && !(detector instanceof FaceDetector)
+      ) {
         logger.warn('Invalid input detector:', detector);
         return this;
       };
@@ -345,26 +405,32 @@ if (Meteor.isClient) {
       const fps = (goal.fps && goal.fps > 0) ? goal.fps : 10;
       const interval = 1000 / fps;
       let start = Date.now();
+      this._timeoutId = {};
       const execute = async () => {
         const elapsed = Date.now() - start;
         if (elapsed > interval) {
           start = Date.now();
-          // TODO: store detection outputs in a dedicated collection after
-          //   refactoring XXXActions
-          const data = await this._detector.detect();
           Detections.update(this._detectionId, {
-            $set: {'data.data': data},
+            $set: {
+              'data.data': await this._detector.detect(),
+              'data.params': goal.params
+                ? this._detector.setParams(goal.params).getParams()
+                : this._detector.getParams(),
+            },
           });
-          this._timeoutID = setTimeout(execute, 0);
+          if (!this._timeoutId) return;
+          this._timeoutId = setTimeout(execute, 0);
         } else {
-          this._timeoutID = setTimeout(execute, interval - elapsed);
+          if (!this._timeoutId) return;
+          this._timeoutId = setTimeout(execute, interval - elapsed);
         }
       }
       execute();
     }
 
     preemptCB() {
-      clearTimeout(this._timeoutID);
+      clearTimeout(this._timeoutId);
+      this._timeoutId = null;
       this._as.setPreempted();
     }
   }
@@ -373,13 +439,6 @@ if (Meteor.isClient) {
 
 
 if (Meteor.isServer) {
-
-  Meteor.publish('detections', function detectionsPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return Detections.find();
-  });
-
-  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   Detections.allow({
     insert: (userId, doc) => {
       return false;
@@ -391,6 +450,10 @@ if (Meteor.isServer) {
       return true;
     },
     fetch: ['owner']
+  });
+
+  Meteor.publish('detections', function detectionsPublication() {
+    return Detections.find({owner: this.userId});
   });
 
   Meteor.methods({
@@ -407,7 +470,9 @@ if (Meteor.isServer) {
         return;
       }
 
-      Detections.insert(Object.assign({owner, actionId, type: '', data: {}}, defaultAction));
+      Detections.insert(
+        Object.assign({owner, actionId, type: '', data: {}}, defaultAction)
+      );
     },
 
     'detections.remove'(owner) {
@@ -418,5 +483,4 @@ if (Meteor.isServer) {
       Detections.remove({owner});
     }
   });
-
 }

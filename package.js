@@ -1,8 +1,8 @@
 Package.describe({
-  name: 'mjyc:simple-face',
+  name: 'mjyc:robot-face',
   version: '0.0.1',
-  summary: 'Meteor package providing a simple face React component.',
-  git: 'https://gitlab.cs.washington.edu/mjyc/simple-face',
+  summary: 'Meteor package providing a robot face React component.',
+  git: 'https://gitlab.cs.washington.edu/mjyc/robot-face',
   documentation: 'README.md'
 });
 
@@ -11,7 +11,7 @@ Npm.depends({
   // 'material-ui': '0.20.0', // causes this problem https://reactjs.org/warnings/refs-must-have-owner.html because it pulls some react libraries
   'tracking': '1.1.3',
   '@tensorflow/tfjs': '0.11.4',
-  '@tensorflow-models/posenet': '0.1.1',
+  '@tensorflow-models/posenet': '0.1.2',
   'stats.js': '0.17.0',
   'dat.gui': '0.7.1'
 });

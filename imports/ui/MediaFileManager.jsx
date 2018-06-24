@@ -16,6 +16,7 @@ import {
 } from 'material-ui/Table';
 import FlatButton from 'material-ui/FlatButton';
 import RaisedButton from 'material-ui/RaisedButton';
+import Checkbox from 'material-ui/Checkbox';
 
 const logger = log.getLogger('MediaFileManager');
 
@@ -24,10 +25,9 @@ class MediaFileManager extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      showAll: false,
       skippedFiles: null,
     };
-
-    this.elements = {};
   }
 
   renderMediaFile(mediaFile) {
@@ -63,19 +63,15 @@ class MediaFileManager extends Component {
   }
 
   render() {
-    if (this.props.loading) {
-      return (
-        <div>Loading...</div>
-      )
+    if (this.props.loading || !this.props.currentUser) {
+      return null;
     };
 
     const previewColSpan = 3;
     return (
       <div>
-
         <div>
           <RaisedButton
-            ref={(element) => { this.elements['video'] = element; }}
             containerElement='label'
             label="Upload"
           >
@@ -95,14 +91,7 @@ class MediaFileManager extends Component {
                   const reader  = new FileReader();
                   reader.addEventListener('load', () => {
                     logger.debug('[MediaFileManager] Inserting file:', file);
-                    MediaFiles.insert({
-                      name: file.name,
-                      size: file.size,
-                      type: file.type,
-                      createdAt: new Date(),
-                      updatedAt: new Date(),
-                      data: reader.result,
-                    });
+                    Meteor.call('media_files.insert', file.name, file.size, file.type, reader.result);
                   });
                   reader.readAsDataURL(file);
                 }
@@ -113,6 +102,14 @@ class MediaFileManager extends Component {
               }}
             />
           </RaisedButton>
+
+          <Checkbox
+            label="Show All"
+            defaultChecked={this.state.showAll}
+            onCheck={(event, isInputChecked) => {
+              this.setState({showAll: isInputChecked});
+            }}
+          />
 
           <Dialog
             actions={[
@@ -147,7 +144,7 @@ class MediaFileManager extends Component {
           <Table
             fixedHeader={true}
             selectable={false}
-            style={{ margin: 0 }}
+            style={{margin: 0}}
           >
             <TableHeader
               displaySelectAll={false}
@@ -156,6 +153,7 @@ class MediaFileManager extends Component {
               <TableRow>
                 <TableHeaderColumn>ID</TableHeaderColumn>
                 <TableHeaderColumn>Name</TableHeaderColumn>
+                <TableHeaderColumn>Owner</TableHeaderColumn>
                 <TableHeaderColumn>Size</TableHeaderColumn>
                 <TableHeaderColumn>MIME type</TableHeaderColumn>
                 <TableHeaderColumn>Last modified</TableHeaderColumn>
@@ -164,11 +162,12 @@ class MediaFileManager extends Component {
             </TableHeader>
             <TableBody displayRowCheckbox={false}>
             {
-              this.props.mediaFiles.map((mediaFile) => {
+              this.props.mediaFiles.filter((mediaFile) => {return this.state.showAll || (this.props.currentUser && mediaFile.owner === this.props.currentUser._id)}).map((mediaFile) => {
                 return (
                   <TableRow key={mediaFile._id} >
                     <TableRowColumn>{mediaFile._id}</TableRowColumn>
                     <TableRowColumn>{mediaFile.name}</TableRowColumn>
+                    <TableRowColumn>{mediaFile.username}</TableRowColumn>
                     <TableRowColumn>{mediaFile.size}</TableRowColumn>
                     <TableRowColumn>{mediaFile.type}</TableRowColumn>
                     <TableRowColumn>
@@ -188,7 +187,6 @@ class MediaFileManager extends Component {
             </TableBody>
           </Table>
         </div>
-
       </div>
     );
   }
@@ -198,10 +196,12 @@ export default withTracker(({maxFileSize}) => {
   const mediaFilesHandle = Meteor.subscribe('media_files');
   const loading = !mediaFilesHandle.ready();
   const mediaFiles = MediaFiles.find().fetch();
+  const currentUser = Meteor.user();
 
   return {
     maxFileSize,
     loading,
     mediaFiles,
+    currentUser,
   };
 })(MediaFileManager);

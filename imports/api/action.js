@@ -10,24 +10,21 @@ const logger = log.getLogger('action');
 
 
 if (Meteor.isServer) {
-
-  // TODO: remove or update after prototyping, e.g., only "admin" should be able to edit this collection
   Actions.allow({
     insert: (userId, doc) => {
       return false;
     },
     update: (userId, doc, fields, modifier) => {
-      return true;
+      return userId && doc.owner === userId;
     },
     remove: (userId, doc) => {
-      return true;
+      return userId && doc.owner === userId;
     },
     fetch: ['owner']
   });
 
   Meteor.publish('actions', function actionsPublication() {
-    // TODO: restrict access based on user permission; right now all docs are public!
-    return Actions.find();
+    return Actions.find({owner: this.userId});
   });
 
   Meteor.methods({
@@ -40,7 +37,7 @@ if (Meteor.isServer) {
       }
 
       if (Actions.findOne({owner, type})) {
-        logger.warn(`Skipping; user ${owner} already has an action doc with "type: ${type}" field`);
+        logger.warn(`Skipping; user ${owner} already has an action doc with type: ${type}" field`);
         return;
       }
 

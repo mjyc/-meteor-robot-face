@@ -8,6 +8,9 @@ import { Detections } from '../api/vision.js';
 const logger = log.getLogger('VisionViz');
 
 
+// IMPORTANT! This is an experimental feature and hence hidden by default. You
+//  can display the visualizer by manually changing 'display' css property.
+
 const toTuple = ({ y, x }) => {
   return [y, x];
 }
@@ -52,8 +55,6 @@ class VisionViz extends Component {
   constructor(props) {
     super(props);
 
-    this._intervalID = null;
-
     this.elements = {};
   }
 
@@ -66,17 +67,27 @@ class VisionViz extends Component {
     const context = this.elements.canvas.getContext('2d');
     const width = this.elements.canvas.width;
     const height = this.elements.canvas.height;
-    let minPoseConfidence;
-    let minPartConfidence;
 
     const poseDetection = this.props.detections.pose;
-
-    if (poseDetection.data.params.algorithm === 'single-pose') {
-      minPoseConfidence = poseDetection.data.params.singlePoseDetection.minPoseConfidence;
-      minPartConfidence = poseDetection.data.params.singlePoseDetection.minPartConfidence;
-    } else {
-      minPoseConfidence = poseDetection.data.params.multiPoseDetection.minPoseConfidence;
-      minPartConfidence = poseDetection.data.params.multiPoseDetection.minPartConfidence;
+    let minPoseConfidence;
+    let minPartConfidence;
+    switch(poseDetection.data.params.algorithm) {
+      case 'single-pose':
+        minPoseConfidence
+          = poseDetection.data.params.singlePoseDetection.minPoseConfidence;
+        minPartConfidence
+          = poseDetection.data.params.singlePoseDetection.minPartConfidence;
+        break;
+      case 'multi-pose':
+        minPoseConfidence
+          = poseDetection.data.params.multiPoseDetection.minPoseConfidence;
+        minPartConfidence
+          = poseDetection.data.params.multiPoseDetection.minPartConfidence;
+        break;
+      default:
+        logger.warn(`Invalid input algorithm: ${poseDetection.data.params.algorithm}; setting minPoseConfidence and minPartConfidence to 1.0`);
+        minPoseConfidence = 1.0;
+        minPartConfidence = 1.0;
     }
 
     context.clearRect(0, 0, width, height);
@@ -108,11 +119,11 @@ class VisionViz extends Component {
 
   render() {
     return (
-      <div>
+      <div style={{display: this.props.show ? 'block' : 'none'}}>
         <canvas
           ref={(element) => { this.elements['canvas'] = element; }}
-          width="600px"
-          height="500px"
+          width={this.props.width ? this.props.width : "600px"}
+          height={this.props.height ? this.props.height : "500px"}
         ></canvas>
       </div>
     );
@@ -123,13 +134,16 @@ export default withTracker(({query}) => {
   const actionsHandle = Meteor.subscribe('actions');
   const detectionsHandle = Meteor.subscribe('detections');
   const loading = !actionsHandle.ready() || !detectionsHandle.ready();
+
   const actions = {
     poseDetection: Actions.findOne(Object.assign({type: 'poseDetection'}, query)),
     faceDetection: Actions.findOne(Object.assign({type: 'faceDetection'}, query)),
   }
   const detections = {
-    pose: !loading ? Detections.findOne({actionId: actions.poseDetection._id}) : undefined,
-    face: !loading ? Detections.findOne({actionId: actions.faceDetection._id}) : undefined,
+    pose: !loading ? Detections.findOne({actionId: actions.poseDetection._id})
+      : undefined,
+    face: !loading ? Detections.findOne({actionId: actions.faceDetection._id})
+      : undefined,
   }
 
   return {
