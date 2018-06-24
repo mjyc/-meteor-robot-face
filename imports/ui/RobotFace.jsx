@@ -96,8 +96,11 @@ class RobotFace extends Component {
       = this.actions[this.props.actions.speechbubbleHuman._id];
     return (
       <div>
-        <div style={styles.face}>
-          <div>
+        <div style={styles.face} >
+          <div style={{
+            position: 'absolute',
+            zIndex: 2,  /* eyeLid has zIndex = 2*/
+          }} >
             <div>
               <strong>Robot: </strong>
               <Speechbubble
