@@ -74,14 +74,14 @@ if (Meteor.isClient) {
       collection,
       id,
       video = document.getElementById('video'),
-      updateConfig = () => {},
+      setState = () => {},
     ) {
       this._as = getActionServer(collection, id);
       this._as.registerGoalCallback(this.goalCB.bind(this));
       this._as.registerPreemptCallback(this.preemptCB.bind(this));
 
       this.setVideo(video);
-      this.setUpdateConfig(updateConfig);
+      this.setSetState(setState);
     }
 
     setVideo(video) {
@@ -93,8 +93,8 @@ if (Meteor.isClient) {
       return this;
     }
 
-    setUpdateConfig(updateConfig) {
-      this._updateConfig = updateConfig;
+    setSetState(setState) {
+      this._setState = setState;
     }
 
     async goalCB({goal} = {}) {
@@ -109,7 +109,9 @@ if (Meteor.isClient) {
           default:
             throw new Error(`Invalid input type: ${goal.type}`);
         }
-        this._updateConfig(goal.config);
+        this._setState({
+          showVisionViz: goal.config && goal.config.showVisionViz
+        });
         this._as.setSucceeded();
       } catch (err) {
         this._as.setAborted(err);
@@ -164,17 +166,20 @@ if (Meteor.isClient) {
       super();
 
       this._net = null;
-      this._params = defaultPoseDetectorParams;
 
       this.setVideo(this._video);
+      this.setParams(defaultPoseDetectorParams);
     }
 
-    // TODO: use "recursive Object.assign" instead of using assign manually
+    getParams() {
+      return this._params;
+    }
+
     setParams({
       algorithm = defaultPoseDetectorParams.algorithm,
       input = defaultPoseDetectorParams.input,
       singlePoseDetection = defaultPoseDetectorParams.singlePoseDetection,
-      multiPoseDetection = defaultPoseDetectorParam.multiPoseDetections,
+      multiPoseDetection = defaultPoseDetectorParams.multiPoseDetections,
     } = {}) {
       this._params = {
         algorithm: algorithm,
@@ -188,10 +193,7 @@ if (Meteor.isClient) {
           multiPoseDetection,
         ),
       }
-    }
-
-    getParams() {
-      return this._params;
+      return this;
     }
 
     setVideo(video) {
@@ -261,6 +263,12 @@ if (Meteor.isClient) {
     }
   }
 
+  const defaultFaceDetectorParams = {
+    initialScale: 4,
+    stepSize: 2,
+    edgesDensity: 0.1,
+  }
+
   class FaceDetector extends Detector {
     constructor(video = document.getElementById('video'), flipHorizontal=true) {
       super();
@@ -269,13 +277,9 @@ if (Meteor.isClient) {
       this._tracker = new tracking.ObjectTracker('face');
       this._canvas = document.createElement('canvas');
       this._context = this._canvas.getContext('2d');
-      this._params = {
-        initialScale: 4,
-        stepSize: 2,
-        edgesDensity: 0.1,
-      }
 
       this.setVideo(video);
+      this.setParams(defaultFaceDetectorParams);
     }
 
     get _params() {
@@ -288,10 +292,10 @@ if (Meteor.isClient) {
     }
 
     set _params({
-      edgesDensity = this._tracker.edgesDensity,
-      initialScale = this._tracker.initialScale,
-      scaleFactor = this._tracker.scaleFactor,
-      stepSize = this._tracker.stepSize,
+      edgesDensity = defaultFaceDetectorParams.edgesDensity,
+      initialScale = defaultFaceDetectorParams.initialScale,
+      scaleFactor = defaultFaceDetectorParams.scaleFactor,
+      stepSize = defaultFaceDetectorParams.stepSize,
     } = {}) {
       this._tracker.setEdgesDensity(edgesDensity);
       this._tracker.setInitialScale(initialScale);
@@ -301,6 +305,11 @@ if (Meteor.isClient) {
 
     getParams() {
       return this._params;
+    }
+
+    setParams(params) {
+      this._params = params;
+      return this;
     }
 
     setVideo(video) {
@@ -400,11 +409,11 @@ if (Meteor.isClient) {
         const elapsed = Date.now() - start;
         if (elapsed > interval) {
           start = Date.now();
-          // TODO: store detection outputs in a dedicated collection after
-          //   refactoring XXXActions
-          const data = await this._detector.detect();
           Detections.update(this._detectionId, {
-            $set: {'data.data': data},
+            $set: {
+              'data.data': await this._detector.detect(),
+              'data.params': this._detector.setParams(goal.params).getParams(),
+            },
           });
           this._timeoutID = setTimeout(execute, 0);
         } else {

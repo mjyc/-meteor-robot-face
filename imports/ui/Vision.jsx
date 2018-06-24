@@ -37,9 +37,7 @@ export default class Vision extends Component {
       Actions,
       this.props.videoControl._id,
       this.state.video,
-      ({showVisionViz}) => {
-        this.setState({showVisionViz});
-      }
+      this.setState.bind(this),
     );
     this.actions[this.props.poseDetection._id] = new DetectionAction(
       Actions,
