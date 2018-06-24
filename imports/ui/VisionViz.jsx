@@ -69,11 +69,26 @@ class VisionViz extends Component {
     const height = this.elements.canvas.height;
 
     const poseDetection = this.props.detections.pose;
-    const algorithm = poseDetection.data.params.algorithm;
-    let minPoseConfidence
-      = poseDetection.data.params[algorithm].minPoseConfidence;
-    let minPartConfidence
-      = poseDetection.data.params[algorithm].minPartConfidence;
+    let minPoseConfidence;
+    let minPartConfidence;
+    switch(poseDetection.data.params.algorithm) {
+      case 'single-pose':
+        minPoseConfidence
+          = poseDetection.data.params.singlePoseDetection.minPoseConfidence;
+        minPartConfidence
+          = poseDetection.data.params.singlePoseDetection.minPartConfidence;
+        break;
+      case 'multi-pose':
+        minPoseConfidence
+          = poseDetection.data.params.multiPoseDetection.minPoseConfidence;
+        minPartConfidence
+          = poseDetection.data.params.multiPoseDetection.minPartConfidence;
+        break;
+      default:
+        logger.warn(`Invalid input algorithm: ${poseDetection.data.params.algorithm}; setting minPoseConfidence and minPartConfidence to 1.0`);
+        minPoseConfidence = 1.0;
+        minPartConfidence = 1.0;
+    }
 
     context.clearRect(0, 0, width, height);
     context.save();

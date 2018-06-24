@@ -122,6 +122,10 @@ if (Meteor.isClient) {
   }
 
   class Detector {
+    setParams(params) {
+      new Error('Not implemented');
+    }
+
     getParams() {
       new Error('Not implemented');
     }
@@ -135,32 +139,55 @@ if (Meteor.isClient) {
     }
   }
 
+  const defaultPoseDetectorParams = {
+    algorithm: 'multi-pose',
+    input: {
+      mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
+      outputStride: 16,
+      flipHorizontal: true,
+      imageScaleFactor: 0.5,
+    },
+    singlePoseDetection: {
+      minPoseConfidence: 0.1,
+      minPartConfidence: 0.5,
+    },
+    multiPoseDetection: {
+      maxPoseDetections: 2,
+      minPoseConfidence: 0.1,
+      minPartConfidence: 0.3,
+      nmsRadius: 20.0,
+    },
+  };
+
   class PoseDetector extends Detector {
     constructor(video = document.getElementById('video')) {
       super();
 
       this._net = null;
-      this._params = {
-        algorithm: 'multi-pose',
-        input: {
-          mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
-          outputStride: 16,
-          flipHorizontal: true,
-          imageScaleFactor: 0.5,
-        },
-        'single-pose': {
-          minPoseConfidence: 0.1,
-          minPartConfidence: 0.5,
-        },
-        'multi-pose': {
-          maxPoseDetections: 2,
-          minPoseConfidence: 0.1,
-          minPartConfidence: 0.3,
-          nmsRadius: 20.0,
-        },
-      };
+      this._params = defaultPoseDetectorParams;
 
       this.setVideo(this._video);
+    }
+
+    // TODO: use "recursive Object.assign" instead of using assign manually
+    setParams({
+      algorithm = defaultPoseDetectorParams.algorithm,
+      input = defaultPoseDetectorParams.input,
+      singlePoseDetection = defaultPoseDetectorParams.singlePoseDetection,
+      multiPoseDetection = defaultPoseDetectorParam.multiPoseDetections,
+    } = {}) {
+      this._params = {
+        algorithm: algorithm,
+        input: Object.assign(defaultPoseDetectorParams.input, input),
+        singlePoseDetection: Object.assign(
+          defaultPoseDetectorParams.singlePoseDetection,
+          singlePoseDetection,
+        ),
+        multiPoseDetection: Object.assign(
+          defaultPoseDetectorParams.multiPoseDetection,
+          multiPoseDetection,
+        ),
+      }
     }
 
     getParams() {
@@ -208,9 +235,9 @@ if (Meteor.isClient) {
           poses.push(pose);
 
           minPoseConfidence = Number(
-            this._params['single-pose'].minPoseConfidence);
+            this._params.singlePoseDetection.minPoseConfidence);
           minPartConfidence = Number(
-            this._params['single-pose'].minPartConfidence);
+            this._params.singlePoseDetection.minPartConfidence);
           break;
         case 'multi-pose':
           poses = await this._net.estimateMultiplePoses(
@@ -218,14 +245,14 @@ if (Meteor.isClient) {
             imageScaleFactor,
             flipHorizontal,
             outputStride,
-            this._params['multi-pose'].maxPoseDetections,
-            this._params['multi-pose'].minPartConfidence,
-            this._params['multi-pose'].nmsRadius);
+            this._params.multiPoseDetection.maxPoseDetections,
+            this._params.multiPoseDetection.minPartConfidence,
+            this._params.multiPoseDetection.nmsRadius);
 
           minPoseConfidence
-            = Number(this._params['multi-pose'].minPoseConfidence);
+            = Number(this._params.multiPoseDetection.minPoseConfidence);
           minPartConfidence
-            = Number(this._params['multi-pose'].minPartConfidence);
+            = Number(this._params.multiPoseDetection.minPartConfidence);
           break;
         default:
           logger.warn(`Invalid input algorithm: ${this._params.algorithm}`);
