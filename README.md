@@ -8,7 +8,7 @@ Meteor package providing a robot face React component.
 
     ```
     cd your_meteor_app/packages
-    git clone git@gitlab.cs.washington.edu:mjyc/meteor-robot-face.git robot-face
+    git clone git@github.com:mjyc/meteor-robot-face.git robot-face
     cd ../
     meteor add mjyc:robot-face
     ```
